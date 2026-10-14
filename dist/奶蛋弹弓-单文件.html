@@ -1798,11 +1798,29 @@ window.BossLevel = {
     });
   };
 
+  /**
+   * 从当前段往后找"第一个还有奶蛙的段"，没有就返回 -1。
+   * 为什么要往后扫而不是直接 +1：玩家可能先用大弧线把**后面的段**清了
+   * （比如第 1 发就砸掉最后一段），这时候再按 +1 推进，就会把弹弓推到一段空地上——
+   * 玩家必须再补一发才结算，看着就像"打空了还不结束"。
+   */
+  const nextStageWithPigs = () => {
+    for (let s = stageIndex + 1; s < stageCount(); s++) {
+      if (pigs.some((p) => (p.game.stage || 0) === s)) return s;
+    }
+    return -1;
+  };
   /** 一段清完了：把弹弓（连同待发的奶蛋）往前推到下一段 */
-  const advanceStage = () => {
+  const advanceStage = (target) => {
+    const next = target === undefined ? nextStageWithPigs() : target;
+    if (next < 0) {
+      // 保险：后面已经一段不剩了（后面的段提前被打光），直接结算，别空推
+      win(Math.max(0, birdsLeft));
+      return;
+    }
     // 弹弓马上要整根挪到下一段：手上正攥着的拉弓作废（奶蛋要跟着回到弓上）
     dropDrag('转波次');
-    setStage(stageIndex + 1);
+    setStage(next);
     // 弓上还架着一颗没发射的：把它一起挪到新弹弓上（它要跟着走，不是被换掉）
     if (activeBird && !activeBird.game.launched) {
       Body.setPosition(activeBird, slingAnchor());
@@ -2412,11 +2430,12 @@ window.BossLevel = {
     const remaining = Math.max(0, birdsLeft);
     // 这一段清完了：还有下一段就推着弹弓往前走，否则结算本关
     if (stageCleared()) {
-      const hasNextStage = stageIndex + 1 < stageCount();
+      // 后面还得"真剩着奶蛙"才往前推——玩家要是先把后面几段清了，就别把他推到空地上
+      const next = nextStageWithPigs();
       // 有下一段、而且还有奶蛋，才往前推；否则当场结算
       // （这里以前漏判了 remaining，推进完没弹可上，loadBird 直接 return，回合就卡在 settling 不动了）
-      if (hasNextStage && remaining > 0) {
-        advanceStage();
+      if (next >= 0 && remaining > 0) {
+        advanceStage(next);
         return;
       }
       if (pigs.length === 0) {
@@ -4224,6 +4243,12 @@ window.BossLevel = {
     clearStage: () => {
       pigs.filter((p) => (p.game.stage || 0) === stageIndex).forEach((p) => destroy(p));
       return stageIndex + 1;
+    },
+    /** 清掉指定的那一段（默认当前段）——用来复现"先把后面的波次打光" */
+    clearStageAt: (s) => {
+      const at = s === undefined ? stageIndex : s;
+      pigs.filter((p) => (p.game.stage || 0) === at).forEach((p) => destroy(p));
+      return at + 1;
     },
     /** boss 关测试用：把当前 boss 的塔腿全打断，看它一层层摔下来 */
     breakTower: () => {

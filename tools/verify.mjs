@@ -733,6 +733,38 @@ const main = async () => {
     }
     await shot(page, '09b-stage-advance.png');
 
+    // ---------------------------------------------------------- 先打死后面的波次，再清前面那波
+    // 回归：老代码在"这一段清完"时无条件 +1 推进，于是把弹弓推到一个空段上，
+    // 玩家必须再补一发才结算——看着就像"最后一波打完了游戏还不结束"。
+    const reverseClear = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      window.__nai.loadEndless(4, 4242);        // 两段推进
+      window.__nai.skipIntro();
+      await window.__still();
+      const first = window.__nai.state();
+      window.__nai.clearStageAt(first.stageCount - 1);   // 先把最后一段的奶蛙全清掉
+      await wait(900);
+      const mid = window.__nai.state();
+      window.__nai.clearStage();                          // 再清当前这一段
+      let settled = null;
+      for (let i = 0; i < 60; i++) {                      // 一弹不发，只等它自己结算
+        await wait(100);
+        const s = window.__nai.state();
+        if (s.state !== 'aim') { settled = s; break; }
+      }
+      return {
+        stageCount: first.stageCount,
+        mid: { stage: mid.stage, state: mid.state, pigs: mid.pigsAlive },
+        settled: settled ? { state: settled.state, stage: settled.stage, pigs: settled.pigsAlive } : null,
+      };
+    });
+    report.reverseClear = reverseClear;
+    if (reverseClear.stageCount < 2) problems.push('"先清后段"用例需要多段关卡（用例本身没跑起来）');
+    if (reverseClear.mid.stage !== 1) problems.push(`先清掉最后一段之后不该推进（跑到第 ${reverseClear.mid.stage} 段了）`);
+    if (reverseClear.mid.pigs === 0) problems.push('清掉后段之后场上就没奶蛙了（用例选关不对）');
+    if (!reverseClear.settled) problems.push('先清后段、再清前段之后没有结算——还得再补一发才结束（老 bug）');
+    else if (reverseClear.settled.pigs !== 0) problems.push('结算时场上还有奶蛙');
+
     // ---------------------------------------------------------- 转波次时手上还攥着拖拽
     // 回归：清掉这一段后的 0.95 秒里玩家就开始拉弓，弹弓推进到下一段之后才松手。
     // 以前这一下会拿"上一段的拉弓位置"去减"新弹弓位置"，算出一个反向的巨大拉力——
