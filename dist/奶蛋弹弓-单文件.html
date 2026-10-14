@@ -1362,7 +1362,7 @@ window.BossLevel = {
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-14 · 转场不再丢弹';
+  const BUILD = '2026-10-14 · 满弓抖动减弱';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -2974,8 +2974,9 @@ window.BossLevel = {
         addSpark(activeBird.position.x, activeBird.position.y, 16, '#ffe6a8', 'star');
         shake(3.2);
       }
-      // 满弓时弓身嗡嗡发抖
-      if (drag.charge > 0.05) shake(0.34 * drag.charge);
+      // 满弓时弓身嗡嗡发抖（0.18 会让相机抖稳定在 ±1.5px 左右；
+      // 原来是 0.34 ≈ ±2.8px，抖得有点晕，这里收细一点，保留"绷紧了"的手感）
+      if (drag.charge > 0.05) shake(0.18 * drag.charge);
     }
 
     // 开场动画：镜头按时间轴走，物理照常跑（让结构自己落稳）
@@ -3328,7 +3329,7 @@ window.BossLevel = {
     ctx.translate(b.position.x, b.position.y);
     // 满弓时奶蛋自己也在抖
     if (drag && drag.charge > 0.15 && state === 'aim') {
-      const j = drag.charge * 2.4;
+      const j = drag.charge * 1.3;   // 原来是 2.4，跟着一起收细
       ctx.translate(rand(-j, j), rand(-j, j));
     }
     ctx.rotate(b.angle);
@@ -4105,6 +4106,7 @@ window.BossLevel = {
       bombs: bombs.length,
       explosions: explosions.length,
       charge: drag ? Math.round((drag.charge || 0) * 100) / 100 : 0,
+      camShake: Math.round(CAM.shake * 100) / 100,
       pullPower: drag ? Math.round((drag.power || 0) * 100) / 100 : 0,
       /** 等候区奶蛋的待机姿态（测试用：能看出它们是不是真的在动、有没有翻整圈） */
       queueIdle: birdQueue.slice(0, 3).map((k, i) => {

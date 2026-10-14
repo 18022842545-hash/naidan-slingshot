@@ -42,8 +42,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-14 · 奶皇血量 7 折",
-    "stamp": "版本 2026-10-14 · 奶皇血量 7 折"
+    "build": "2026-10-14 · 转场不再丢弹",
+    "stamp": "版本 2026-10-14 · 转场不再丢弹"
   },
   "world": {
     "worldW": 2720,
@@ -96,9 +96,9 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 22,
-    "minDy": -62.7,
-    "maxDeg": 350
+    "distinctPoses": 21,
+    "minDy": -62.6,
+    "maxDeg": 359
   },
   "initialDrift": 1,
   "fallDamage": {
@@ -120,7 +120,8 @@
   },
   "chargeFx": {
     "power": 1,
-    "charge": 0.99
+    "charge": 0.98,
+    "shakePeak": 1.32
   },
   "sweep": [
     {
@@ -238,10 +239,10 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.59,
-      "vxMid": 24.23,
-      "xMid": 733,
-      "xSoon": 1231
+      "vxBefore": 24.66,
+      "vxMid": 24.29,
+      "xMid": 709,
+      "xSoon": 1222
     },
     {
       "type": "dash",
@@ -254,12 +255,12 @@
       "blocksBefore": 3,
       "blocksAfter": 1,
       "pigsBefore": 1,
-      "pigsAfter": 0,
+      "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.84,
-      "vxMid": 33.53,
-      "xMid": 766,
-      "xSoon": 1329
+      "vxBefore": 24.79,
+      "vxMid": 33.51,
+      "xMid": 791,
+      "xSoon": 1389
     },
     {
       "type": "split",
@@ -311,9 +312,9 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.48,
-      "vxMid": 24.07,
-      "xMid": 731,
-      "xSoon": 1234
+      "vxMid": 24.14,
+      "xMid": 707,
+      "xSoon": 1222
     },
     {
       "type": "milk",
@@ -326,12 +327,12 @@
       "blocksBefore": 3,
       "blocksAfter": 2,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.62,
+      "vxBefore": 24.55,
       "vxMid": 13.33,
-      "xMid": 643,
-      "xSoon": 977
+      "xMid": 654,
+      "xSoon": 988
     },
     {
       "type": "back",
@@ -346,10 +347,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.71,
-      "vxMid": -25.85,
-      "xMid": 432,
-      "xSoon": 93
+      "vxBefore": 24.77,
+      "vxMid": -25.91,
+      "xMid": 407,
+      "xSoon": 101
     },
     {
       "type": "seek",
@@ -364,10 +365,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.87,
-      "vxMid": 28.03,
-      "xMid": 720,
-      "xSoon": 1523
+      "vxBefore": 24.92,
+      "vxMid": 28.06,
+      "xMid": 695,
+      "xSoon": 1469
     }
   ],
   "plowTest": {
@@ -381,20 +382,20 @@
   "seekAim": {
     "used": true,
     "dir": {
-      "nx": 0.928,
-      "ny": -0.374
+      "nx": 0.927,
+      "ny": -0.375
     },
     "wantN": {
       "x": 0.927,
-      "y": -0.374
+      "y": -0.376
     },
-    "straight": 0.8,
-    "guidedFrames": 13,
+    "straight": 0.9,
+    "guidedFrames": 14,
     "maxV": 30,
     "marks": 1
   },
   "spinTest": {
-    "samples": 46,
+    "samples": 48,
     "peak": 0.036,
     "restAv": 0.003
   },
@@ -535,7 +536,7 @@
     {
       "seed": 7,
       "level": 5,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 4,
       "blocks": 16,
       "birds": 5,
@@ -551,7 +552,7 @@
     {
       "seed": 7,
       "level": 6,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 5,
       "blocks": 12,
       "birds": 5,
@@ -615,7 +616,7 @@
     {
       "seed": 7,
       "level": 12,
-      "drift": 5.1,
+      "drift": 4.1,
       "pigs": 8,
       "blocks": 27,
       "birds": 7,
@@ -663,7 +664,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5.1,
+      "drift": 5,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1028,15 +1029,16 @@
   },
   "bossCutIn": {
     "label": "BOSS",
-    "maxZoom": 2.35,
+    "maxZoom": 2.349,
     "barShown": true
   },
   "bossDamage": {
     "maxHp": 980,
     "direct": 85,
     "towerIntact": true,
-    "fall": 288,
-    "fallKind": "direct",
+    "fall": 286,
+    "fallPeak": 7.21,
+    "fallKind": "fall",
     "barWidth": "91.3%"
   },
   "bossBlast": {
@@ -1170,8 +1172,8 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
-        "dash",
         "split",
+        "dash",
         "bomb"
       ]
     }

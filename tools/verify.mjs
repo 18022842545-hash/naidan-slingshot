@@ -281,9 +281,16 @@ const main = async () => {
     }
     await sleep(420);
     const charged = await page.evaluate(() => window.__nai.state());
-    report.chargeFx = { power: charged.pullPower, charge: charged.charge };
+    // 满弓时相机会嗡嗡抖：抖太狠会晕，这里卡一个上限（0.18 的强度稳定在 ±1.5px 左右）
+    let shakePeak = 0;
+    for (let i = 0; i < 10; i++) {
+      shakePeak = Math.max(shakePeak, await page.evaluate(() => window.__nai.state().camShake));
+      await sleep(40);
+    }
+    report.chargeFx = { power: charged.pullPower, charge: charged.charge, shakePeak: Math.round(shakePeak * 100) / 100 };
     if (charged.pullPower < 0.95) problems.push(`拖拽没能拉满弓（power=${charged.pullPower}）`);
     if (charged.charge < 0.6) problems.push(`拉满弓之后力量特效没起来（charge=${charged.charge}）`);
+    if (shakePeak > 2.0) problems.push(`满弓的相机抖动太大（峰值 ${shakePeak.toFixed(2)}px，上限 2.0）`);
     await shot(page, '04-drag.png');
     await page.mouse.up();
     await sleep(320);
