@@ -23,6 +23,10 @@
     boss_laugh: 'boss_laugh.png',
   };
   const ASSET_BASE = window.ASSET_BASE || 'assets/';
+  // 唯一一个"真实音频素材"：击败 boss 的那声大笑（见 tools/make-boss-laugh.mjs）。
+  // 其余音效全是 WebAudio 现场合成的，所以这里单独走一条 <audio> 的路子。
+  const AUDIO_FILES = { boss_laugh: 'boss_laugh.mp3' };
+  const audioUrl = (name) => (window.INLINE_AUDIO && window.INLINE_AUDIO[name]) || ASSET_BASE + AUDIO_FILES[name];
   const assetUrl = (name) => (window.INLINE_ASSETS && window.INLINE_ASSETS[name]) || ASSET_BASE + ASSET_FILES[name];
   const IMG = {};
   const loadImages = () =>
@@ -40,6 +44,26 @@
             IMG[k] = im;
           })
       )    );
+  // boss 那声大笑：一个 <audio> 元素就够（file:// 下能读同目录音频，跟 <img> 一样；
+  // 单文件版会换成 base64 内联，完全不碰网络）
+  let bossLaughEl = null;
+  let bossLaughAttempts = 0;
+  let bossLaughPlays = 0;
+  const loadAudio = () => {
+    bossLaughEl = new Audio(audioUrl('boss_laugh'));
+    bossLaughEl.preload = 'auto';
+    bossLaughEl.volume = 0.85;
+  };
+  /** 放真实的那声大笑；没加载好（或者静音中）就返回 false，让合成音效兜底 */
+  const playBossLaugh = () => {
+    bossLaughAttempts += 1;
+    if (!bossLaughEl || AudioKit.muted || bossLaughEl.readyState < 2) return false;
+    try {
+      bossLaughEl.currentTime = 0;
+    } catch (e) { /* 还没拿到时长，忽略 */ }
+    bossLaughEl.play().then(() => { bossLaughPlays += 1; }).catch(() => {});
+    return true;
+  };
   // ---------------------------------------------------------------- 常量
   const W = 1280;
   const H = 720;
@@ -149,7 +173,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-14 · 满弓抖动减弱';
+  const BUILD = '2026-10-14 · 击败 boss 有真笑声了';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -479,12 +503,14 @@
           life: 1,
           r: info.r,
         });
-        // 倒下这一下：它自己那声拖长的大笑，再叠上奶蛙们的招牌大笑
-        // （场上还剩下的奶蛙跟着起哄，错开一点点，一路笑到它飞出画面）
-        AudioKit.bossLaugh();
-        afterDelay(420, () => AudioKit.laugh());
-        afterDelay(1500, () => AudioKit.laugh());
-        pigs.slice(0, 2).forEach((p, i) => afterDelay(700 + i * 180, () => AudioKit.laugh()));
+        // 倒下这一下放那声真实的大笑（素材前 3 秒，见 tools/make-boss-laugh.mjs）。
+        // 万一音频没加载好 / 被静音，就退回合成的"长笑 + 奶蛙起哄"，别让这一下哑掉。
+        if (!playBossLaugh()) {
+          AudioKit.bossLaugh();
+          afterDelay(420, () => AudioKit.laugh());
+          afterDelay(1500, () => AudioKit.laugh());
+          pigs.slice(0, 2).forEach((p, i) => afterDelay(700 + i * 180, () => AudioKit.laugh()));
+        }
         burst(body.position.x, body.position.y, 40, '#ffe9a8', 'cream');
         confetti(body.position.x, body.position.y, 70);
         shake(20);
@@ -2894,6 +2920,13 @@
       explosions: explosions.length,
       charge: drag ? Math.round((drag.charge || 0) * 100) / 100 : 0,
       camShake: Math.round(CAM.shake * 100) / 100,
+      /** boss 笑声素材的状态（测试用：确认它真的加载了、真的被播了） */
+      bossLaugh: {
+        ready: bossLaughEl ? bossLaughEl.readyState : -1,
+        attempts: bossLaughAttempts,
+        plays: bossLaughPlays,
+        muted: AudioKit.muted,
+      },
       pullPower: drag ? Math.round((drag.power || 0) * 100) / 100 : 0,
       /** 等候区奶蛋的待机姿态（测试用：能看出它们是不是真的在动、有没有翻整圈） */
       queueIdle: birdQueue.slice(0, 3).map((k, i) => {
@@ -3145,6 +3178,7 @@
   // 启动：先把素材读进来，再等玩家点开始
   loadImages().then(() => {
     buildRoster();
+    loadAudio();   // boss 笑声预先读进来（35KB，不差这点）
     if (el.buildStamp) el.buildStamp.textContent = `版本 ${BUILD}`;
     state = 'title';
     render();

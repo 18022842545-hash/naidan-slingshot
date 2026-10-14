@@ -25,6 +25,9 @@ const ASSETS = [
   'boss_laugh',
 ];
 
+// 真实音频素材（只有击败 boss 的那声大笑）：内联成 data URI，file:// 直接双击也能出声
+const AUDIO = ['boss_laugh'];
+
 const main = async () => {
   let html = await read('index.html');
   const inline = async (rel) => `<script>\n${await read(rel)}\n</script>`;
@@ -38,7 +41,13 @@ const main = async () => {
     const buf = await fs.readFile(path.join(root, 'assets', `${name}.png`));
     assets[name] = `data:image/png;base64,${buf.toString('base64')}`;
   }
-  const assetScript = `<script>window.INLINE_ASSETS=${JSON.stringify(assets)};</script>`;
+  const audio = {};
+  for (const name of AUDIO) {
+    const buf = await fs.readFile(path.join(root, 'assets', `${name}.mp3`));
+    audio[name] = `data:audio/mpeg;base64,${buf.toString('base64')}`;
+  }
+  const assetScript =
+    `<script>window.INLINE_ASSETS=${JSON.stringify(assets)};window.INLINE_AUDIO=${JSON.stringify(audio)};</script>`;
   html = html.replace('<script src="js/levels.js"></script>', assetScript + '\n  ' + (await inline('js/levels.js')));
   html = html.replace('<script src="js/game.js"></script>', await inline('js/game.js'));
 

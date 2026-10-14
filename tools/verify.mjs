@@ -107,6 +107,11 @@ const main = async () => {
     report.build = build;
     if (!/^\d{4}-\d{2}-\d{2}/.test(String(build.build))) problems.push(`window.__nai.build 版本戳不对（${build.build}）`);
     if (!build.stamp.includes(build.build)) problems.push(`标题页没显示版本号（${build.stamp}）`);
+    // boss 笑声素材：真加载出来（不是 404 / 坏 base64）
+    await page.waitForFunction(() => window.__nai.state().bossLaugh.ready >= 2, null, { timeout: 8000 }).catch(() => {});
+    const laughAudio = await page.evaluate(() => window.__nai.state().bossLaugh);
+    report.bossLaughAudio = laughAudio;
+    if (laughAudio.ready < 2) problems.push(`boss 笑声素材没加载出来（readyState=${laughAudio.ready}）`);
     await shot(page, '00-title.png');
 
     // ---------------------------------------------------------- 地图尺寸与自由缩放
@@ -1208,11 +1213,16 @@ const main = async () => {
         hpAfterFall,
         falls,
         shots,
+        laugh: window.__nai.state().bossLaugh,
       };
     });
     report.bossKill = bossKill;
     if (bossKill.boss.boss) problems.push('boss 打不死（血量还没清零）');
     if (bossKill.after - bossKill.before < 30000) problems.push(`boss 击杀分数不对（${bossKill.after - bossKill.before}）`);
+    if (!(bossKill.laugh && bossKill.laugh.attempts >= 1)) problems.push('击败 boss 没有触发那声大笑');
+    if (bossKill.laugh && bossKill.laugh.plays < 1) {
+      problems.push(`笑声素材被尝试播放但没有真的响（attempts=${bossKill.laugh.attempts} plays=${bossKill.laugh.plays}）`);
+    }
     await shot(page, '15-boss-dead.png');
 
     // 容错：boss 关打不过要给一次重打机会

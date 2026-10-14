@@ -42,8 +42,14 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-14 · 转场不再丢弹",
-    "stamp": "版本 2026-10-14 · 转场不再丢弹"
+    "build": "2026-10-14 · 满弓抖动减弱",
+    "stamp": "版本 2026-10-14 · 满弓抖动减弱"
+  },
+  "bossLaughAudio": {
+    "ready": 4,
+    "attempts": 0,
+    "plays": 0,
+    "muted": false
   },
   "world": {
     "worldW": 2720,
@@ -96,11 +102,11 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 21,
-    "minDy": -62.6,
+    "distinctPoses": 17,
+    "minDy": -62.8,
     "maxDeg": 359
   },
-  "initialDrift": 1,
+  "initialDrift": 1.4,
   "fallDamage": {
     "low": {
       "max": 141,
@@ -120,8 +126,8 @@
   },
   "chargeFx": {
     "power": 1,
-    "charge": 0.98,
-    "shakePeak": 1.32
+    "charge": 0.97,
+    "shakePeak": 1.31
   },
   "sweep": [
     {
@@ -242,7 +248,7 @@
       "vxBefore": 24.66,
       "vxMid": 24.29,
       "xMid": 709,
-      "xSoon": 1222
+      "xSoon": 1213
     },
     {
       "type": "dash",
@@ -260,7 +266,7 @@
       "vxBefore": 24.79,
       "vxMid": 33.51,
       "xMid": 791,
-      "xSoon": 1389
+      "xSoon": 1407
     },
     {
       "type": "split",
@@ -273,12 +279,12 @@
       "blocksBefore": 3,
       "blocksAfter": 0,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.63,
-      "vxMid": 23.25,
-      "xMid": 693,
-      "xSoon": 1186
+      "vxBefore": 24.69,
+      "vxMid": 23.1,
+      "xMid": 690,
+      "xSoon": 1177
     },
     {
       "type": "bomb",
@@ -327,12 +333,12 @@
       "blocksBefore": 3,
       "blocksAfter": 2,
       "pigsBefore": 1,
-      "pigsAfter": 0,
+      "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.55,
+      "vxBefore": 24.62,
       "vxMid": 13.33,
-      "xMid": 654,
-      "xSoon": 988
+      "xMid": 643,
+      "xSoon": 965
     },
     {
       "type": "back",
@@ -365,10 +371,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.92,
-      "vxMid": 28.06,
-      "xMid": 695,
-      "xSoon": 1469
+      "vxBefore": 24.87,
+      "vxMid": 28.03,
+      "xMid": 720,
+      "xSoon": 1493
     }
   ],
   "plowTest": {
@@ -382,20 +388,20 @@
   "seekAim": {
     "used": true,
     "dir": {
-      "nx": 0.927,
-      "ny": -0.375
+      "nx": 0.928,
+      "ny": -0.374
     },
     "wantN": {
       "x": 0.927,
-      "y": -0.376
+      "y": -0.374
     },
     "straight": 0.9,
-    "guidedFrames": 14,
+    "guidedFrames": 18,
     "maxV": 30,
     "marks": 1
   },
   "spinTest": {
-    "samples": 48,
+    "samples": 59,
     "peak": 0.036,
     "restAv": 0.003
   },
@@ -552,7 +558,7 @@
     {
       "seed": 7,
       "level": 6,
-      "drift": 5.1,
+      "drift": 4.1,
       "pigs": 5,
       "blocks": 12,
       "birds": 5,
@@ -616,7 +622,7 @@
     {
       "seed": 7,
       "level": 12,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 8,
       "blocks": 27,
       "birds": 7,
@@ -664,7 +670,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1029,16 +1035,15 @@
   },
   "bossCutIn": {
     "label": "BOSS",
-    "maxZoom": 2.349,
+    "maxZoom": 2.35,
     "barShown": true
   },
   "bossDamage": {
     "maxHp": 980,
-    "direct": 85,
+    "direct": 86,
     "towerIntact": true,
-    "fall": 286,
-    "fallPeak": 7.21,
-    "fallKind": "fall",
+    "fall": 347,
+    "fallKind": "direct",
     "barWidth": "91.3%"
   },
   "bossBlast": {
@@ -1108,9 +1113,15 @@
     "hpAfterFall": 765,
     "falls": [
       765,
-      642
+      640
     ],
-    "shots": 3
+    "shots": 6,
+    "laugh": {
+      "ready": 4,
+      "attempts": 1,
+      "plays": 1,
+      "muted": false
+    }
   },
   "bossRetry": {
     "failed": "over",
@@ -1172,8 +1183,8 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
-        "split",
-        "dash",
+        "naidan",
+        "seek",
         "bomb"
       ]
     }

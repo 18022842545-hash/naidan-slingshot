@@ -11,9 +11,11 @@
     "variants": "node tools/make-variants.mjs",
     "boss-art": "node tools/make-boss.mjs",
     "check": "node tools/check-prefabs.mjs",
-    "verify": "node tools/verify.mjs"
+    "verify": "node tools/verify.mjs",
+    "boss-laugh": "node tools/make-boss-laugh.mjs"
   },
   "devDependencies": {
+    "ffmpeg-static": "^5.3.0",
     "matter-js": "^0.20.0",
     "playwright-core": "^1.64.0",
     "sharp": "^0.35.5"
