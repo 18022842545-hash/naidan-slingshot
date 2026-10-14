@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>奶蛋弹弓 · 第一关</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='18' r='11' fill='%23ffe08a'/%3E%3Cpath d='M9 12a8 8 0 0114 0z' fill='%23fff6e4'/%3E%3Ccircle cx='12' cy='18' r='1.6' fill='%23543a22'/%3E%3Ccircle cx='20' cy='18' r='1.6' fill='%23543a22'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --cream: #fff6e4;
+    --jam: #ff8a5b;
+    --jam-dark: #e2632f;
+    --ink: #4a3527;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: #2c2118;
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Noto Sans SC", system-ui, sans-serif;
+    color: var(--ink);
+    user-select: none;
+    touch-action: none;
+  }
+  #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; box-shadow: 0 18px 60px rgba(0,0,0,.5); border-radius: 10px; }
+
+  .layer {
+    position: absolute; inset: 0; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .panel {
+    pointer-events: auto;
+    background: var(--cream);
+    border: 3px solid rgba(74,53,39,.16);
+    border-radius: 26px;
+    padding: 26px 34px;
+    box-shadow: 0 20px 50px rgba(60,38,20,.35);
+    text-align: center;
+    max-width: min(88vw, 560px);
+  }
+  .panel h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: 2px; }
+  .panel h2 { margin: 0 0 10px; font-size: 26px; }
+  .panel p { margin: 8px 0; font-size: 15px; line-height: 1.7; color: #6b5444; }
+  .panel .big { font-size: 22px; font-weight: 700; color: var(--jam-dark); }
+  .stars { font-size: 40px; letter-spacing: 8px; color: #ffc94d; margin: 4px 0 8px; }
+  .row { display: flex; gap: 12px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+  button {
+    font: inherit; font-weight: 700; letter-spacing: 1px;
+    border: none; border-radius: 999px; padding: 12px 26px; cursor: pointer;
+    background: var(--jam); color: #fff; box-shadow: 0 6px 0 var(--jam-dark);
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  button:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--jam-dark); }
+  button.ghost { background: #fff; color: var(--jam-dark); box-shadow: 0 6px 0 rgba(74,53,39,.18); }
+  .hide { display: none !important; }
+
+  #hud {
+    position: absolute; left: 0; right: 0; top: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 18px 24px; pointer-events: none;
+  }
+  #hudLeft { display: flex; flex-direction: column; gap: 6px; }
+  #score {
+    align-self: flex-start;
+    font-size: 28px; font-weight: 800; color: #fff;
+    font-variant-numeric: tabular-nums;
+    background: rgba(255,246,228,.92);
+    color: var(--jam-dark);
+    padding: 6px 20px; border-radius: 999px;
+    box-shadow: 0 5px 0 rgba(74,53,39,.22);
+  }
+  #hudRight { display: flex; gap: 10px; pointer-events: auto; align-items: center; }
+  #ammo { display: flex; gap: 7px; padding-left: 8px; }
+  #ammo i {
+    display: block; width: 19px; height: 25px;
+    border-radius: 50% 50% 46% 46% / 56% 56% 44% 44%;
+    background: linear-gradient(#fff6d6, #ffd45f);
+    box-shadow: inset -2px -3px 0 rgba(206,152,42,.4), 0 2px 0 rgba(74,53,39,.22);
+    position: relative;
+  }
+  #ammo i::before {
+    content: ''; position: absolute; left: -2px; top: 3px;
+    width: 7px; height: 8px; border-radius: 50%;
+    background: #fffaf0;
+  }
+  .iconBtn {
+    width: 44px; height: 44px; border-radius: 14px; border: none; cursor: pointer;
+    background: rgba(255,246,228,.9); color: var(--ink); font-size: 20px; line-height: 1;
+    box-shadow: 0 4px 0 rgba(74,53,39,.25);
+  }
+  .iconBtn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(74,53,39,.25); }
+  .iconBtn.small { height: 36px; padding: 0 10px; font-size: 15px; border-radius: 11px; }
+  #zoomBox {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,246,228,.9); border-radius: 16px; padding: 4px 8px;
+    box-shadow: 0 4px 0 rgba(74,53,39,.22);
+  }
+  #zoomLabel {
+    font-size: 13px; font-weight: 800; color: #7a5b42;
+    min-width: 40px; text-align: center; font-variant-numeric: tabular-nums;
+  }
+  #zoomBox .iconBtn { box-shadow: none; background: rgba(255,255,255,.75); }
+
+  #hint {
+    position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+    background: rgba(255,246,228,.94); padding: 10px 20px; border-radius: 999px;
+    font-size: 14px; font-weight: 600; color: #7a5b42;
+    box-shadow: 0 8px 20px rgba(60,38,20,.25);
+    transition: opacity .5s ease;
+  }
+  #levelChip {
+    align-self: flex-start;
+    font-size: 14px; font-weight: 700; color: #7a5b42;
+    background: rgba(255,246,228,.92);
+    padding: 4px 14px; border-radius: 999px;
+    box-shadow: 0 4px 0 rgba(74,53,39,.18);
+  }
+  #skillChip {
+    position: absolute; left: 24px; bottom: 26px;
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,246,228,.95);
+    padding: 8px 16px 8px 10px; border-radius: 999px;
+    font-size: 14px; font-weight: 700; color: #7a5b42;
+    box-shadow: 0 8px 20px rgba(60,38,20,.28);
+    opacity: 0; transition: opacity .3s ease, transform .3s ease;
+    transform: translateY(8px);
+  }
+  #skillChip.on { opacity: 1; transform: translateY(0); }
+  #skillChip img { height: 34px; display: block; }
+  #skillChip b { color: var(--jam-dark); }
+  #introLabel {
+    position: absolute; left: 0; right: 0; top: 7%;
+    text-align: center; opacity: 0;
+    transition: opacity .45s ease, transform .45s ease;
+    transform: translateY(10px);
+    pointer-events: none;
+  }
+  #introLabel.on { opacity: 1; transform: translateY(0); }
+  #introLabel .tag {
+    display: inline-block; padding: 10px 26px; border-radius: 999px;
+    font-size: 24px; font-weight: 800; letter-spacing: 4px;
+    background: rgba(255,246,228,.94); color: #6b4a30;
+    box-shadow: 0 10px 26px rgba(60,38,20,.28);
+  }
+  #introLabel .sub { display: block; margin-top: 8px; font-size: 15px; font-weight: 700; color: #8a6a50; text-shadow: 0 2px 0 rgba(255,255,255,.7); }
+  /* boss 特写：标签更凶 */
+  #introLabel.boss .tag {
+    font-size: 34px; letter-spacing: 8px; color: #fff6e4;
+    background: linear-gradient(180deg, #d8342a, #7d1512);
+    box-shadow: 0 10px 30px rgba(120,10,10,.5), 0 0 0 3px rgba(255,226,170,.65) inset;
+    transform: scale(1.06);
+  }
+  #introLabel.boss .sub { color: #6b2b1c; font-size: 16px; }
+  #bossBar {
+    position: absolute; left: 50%; top: 14px; transform: translateX(-50%);
+    width: min(560px, 60vw); padding: 8px 14px 10px;
+    background: rgba(24,10,14,.82); border-radius: 16px;
+    box-shadow: 0 10px 26px rgba(0,0,0,.45), 0 0 0 2px rgba(255,206,150,.35) inset;
+    transition: opacity .3s ease;
+  }
+  #bossBar .bossTop { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  #bossBar .tag {
+    font-size: 11px; font-weight: 800; letter-spacing: 2px; color: #ffe9c9;
+    background: linear-gradient(180deg, #d8342a, #7d1512); padding: 2px 8px; border-radius: 6px;
+  }
+  #bossBar b { color: #ffe9c9; font-size: 15px; letter-spacing: 2px; }
+  #bossBar .bossTrack { height: 12px; background: rgba(255,255,255,.16); border-radius: 999px; overflow: hidden; }
+  #bossBar .bossTrack i {
+    display: block; height: 100%; width: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, #ffd35e, #ff7a2f 60%, #d8342a);
+    transition: width .18s ease;
+  }
+  #bossBar.flash { animation: bossHit .22s ease; }
+  @keyframes bossHit { 0% { filter: brightness(2.4); } 100% { filter: none; } }
+  #skipTip {
+    position: absolute; right: 26px; bottom: 26px;
+    font-size: 13px; font-weight: 700; color: rgba(122,91,66,.85);
+    background: rgba(255,246,228,.8); padding: 6px 14px; border-radius: 999px;
+    opacity: 0; transition: opacity .3s ease;
+  }
+  #skipTip.on { opacity: 1; }
+  #roster { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  #roster .card {
+    background: rgba(255,255,255,.72); border-radius: 16px; padding: 8px 6px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    box-shadow: inset 0 0 0 2px rgba(206,152,42,.14);
+  }
+  #roster img { height: 54px; display: block; }
+  #roster .nm { font-size: 13px; font-weight: 800; color: #6b4a30; }
+  #roster .tg { font-size: 10.5px; line-height: 1.35; color: #8a6a50; text-align: center; }
+  #pickRoster { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0 4px; }
+  #pickRoster .card {
+    cursor: pointer; background: rgba(255,255,255,.75); border-radius: 16px; padding: 8px 6px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    box-shadow: inset 0 0 0 2px rgba(206,152,42,.14);
+    transition: transform .1s ease, box-shadow .1s ease, background .1s ease;
+    border: none; font: inherit;
+  }
+  #pickRoster .card:hover { background: #fffdf5; box-shadow: inset 0 0 0 2px rgba(255,138,91,.5), 0 6px 16px rgba(120,80,40,.18); }
+  #pickRoster .card:active { transform: translateY(2px) scale(.98); }
+  #pickRoster img { height: 52px; display: block; pointer-events: none; }
+  #pickRoster .nm { font-size: 12.5px; font-weight: 800; color: #6b4a30; }
+  #pickRoster .sk { font-size: 10.5px; color: #8a6a50; }
+  #toast {
+    position: absolute; left: 50%; top: 16%; transform: translateX(-50%);
+    font-size: 26px; font-weight: 800; color: #fff; opacity: 0;
+    text-shadow: 0 3px 0 rgba(120,80,40,.5);
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div class="layer" id="hud">
+      <div id="hudLeft">
+        <div id="score">0</div>
+        <div id="ammo"></div>
+        <div id="levelChip" class="hide">第 1 关</div>
+      </div>
+      <div id="hudRight">
+        <div id="zoomBox">
+          <button class="iconBtn small" id="btnZoomOut" title="缩小（看全图）">－</button>
+          <span id="zoomLabel">100%</span>
+          <button class="iconBtn small" id="btnZoomIn" title="放大">＋</button>
+          <button class="iconBtn small" id="btnZoomFit" title="一键看全图（F）">全图</button>
+        </div>
+        <button class="iconBtn" id="btnSound" title="音效开关">🔊</button>
+        <button class="iconBtn" id="btnRestart" title="重开本关">↻</button>
+      </div>
+    </div>
+    <div class="layer" id="titleScreen">
+      <div class="panel">
+        <h1>奶蛋弹弓</h1>
+        <p class="big">按住奶蛋往后拉，松手发射，把奶蛙全撞翻</p>
+        <p style="font-size:13px">飞行中<b>点一下屏幕</b>可以放技能 · 每撞飞一只奶蛙 +5000 分 · 剩一发奶蛋 +10000 分</p>
+        <div id="roster"></div>
+        <div class="row">
+          <button id="btnStart">第一关</button>
+          <button id="btnEndless" class="ghost">无尽模式</button>
+        </div>
+        <p id="buildStamp" style="font-size:11px;color:#a89383;margin:12px 0 0"></p>
+      </div>
+    </div>
+    <div class="layer hide" id="endScreen">
+      <div class="panel">
+        <h2 id="endTitle">通关！</h2>
+        <div class="stars" id="endStars">★★★</div>
+        <p class="big" id="endScore">0 分</p>
+        <p id="endNote">奶蛙们笑得更大声了。</p>
+        <div class="row">
+          <button id="btnAgain">再来一次</button>
+          <button id="btnBackMenu" class="ghost">回主菜单</button>
+        </div>
+      </div>
+    </div>
+    <div class="layer hide" id="pickScreen">
+      <div class="panel">
+        <h2>开局挑一颗奶蛋</h2>
+        <p id="pickSub" style="font-size:13px">挑中的这颗首发，这一局每关都多带一颗它</p>
+        <div id="pickRoster"></div>
+        <div class="row"><button id="btnPickRandom" class="ghost">随便来一颗</button></div>
+      </div>
+    </div>
+    <div id="hint">按住奶蛋往后拉 → 松手发射 ｜ <b>点排队里的奶蛋</b>可以先打它 ｜ 滚轮缩放、拖空白处看地图</div>
+    <div id="toast"></div>
+    <div id="introLabel"><span class="tag"></span><span class="sub"></span></div>
+    <div id="bossBar" class="hide">
+      <div class="bossTop"><span class="tag">BOSS</span><b id="bossBarName">奶皇</b></div>
+      <div class="bossTrack"><i id="bossBarFill"></i></div>
+    </div>
+    <div id="skipTip">点一下跳过开场</div>
+    <div id="skillChip"><img alt="" /><span></span></div>
+  </div>
+
+  <script src="vendor/matter.min.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/birds.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

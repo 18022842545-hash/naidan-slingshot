@@ -1,0 +1,21 @@
+{
+  "name": "naidan-slingshot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "奶蛋弹弓 —— 一关版愤怒的小鸟式弹射游戏（奶蛋当小鸟，奶蛙当猪）",
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/serve.mjs",
+    "build": "node tools/build-single.mjs",
+    "assets": "node tools/prepare-assets.mjs",
+    "variants": "node tools/make-variants.mjs",
+    "boss-art": "node tools/make-boss.mjs",
+    "check": "node tools/check-prefabs.mjs",
+    "verify": "node tools/verify.mjs"
+  },
+  "devDependencies": {
+    "matter-js": "^0.20.0",
+    "playwright-core": "^1.64.0",
+    "sharp": "^0.35.5"
+  }
+}

@@ -1,0 +1,1212 @@
+{
+  "base": "http://127.0.0.1:8849/",
+  "problems": [],
+  "shots": [
+    "00-title.png",
+    "00b-pick.png",
+    "01-intro-ally.png",
+    "02-intro-enemy.png",
+    "03b-queue-idle.png",
+    "03-aim.png",
+    "04-drag.png",
+    "05-fly.png",
+    "06-after-shot.png",
+    "07-lose.png",
+    "08-skill-sandbox.png",
+    "09-endless-level.png",
+    "09b-stage-advance.png",
+    "13-boss-arena.png",
+    "14-boss-fall.png",
+    "15-boss-dead.png",
+    "16-boss-retry.png",
+    "10-endless-over.png",
+    "09b-pick-endless.png",
+    "09c-queue-swap.png",
+    "11-file-source.png",
+    "12-file-single.png"
+  ],
+  "images": {
+    "naidan_idle": 319,
+    "naidan_blink": 319,
+    "naidan_dash": 319,
+    "naidan_split": 319,
+    "naidan_bomb": 319,
+    "naidan_heavy": 319,
+    "naidan_milk": 319,
+    "naidan_back": 319,
+    "naidan_seek": 319,
+    "naiwa_angry": 324,
+    "naiwa_happy": 322,
+    "boss_idle": 494,
+    "boss_laugh": 494
+  },
+  "rosterCards": 8,
+  "build": {
+    "build": "2026-10-14 · 奶皇血量 7 折",
+    "stamp": "版本 2026-10-14 · 奶皇血量 7 折"
+  },
+  "world": {
+    "worldW": 2720,
+    "zoomRange": {
+      "min": 0.45,
+      "max": 1.7
+    }
+  },
+  "zoomProbe": {
+    "far": {
+      "zoom": 0.45,
+      "camX": -124,
+      "camY": -440
+    },
+    "near": 1.7,
+    "normal": 1
+  },
+  "pickPanel": {
+    "cards": 8,
+    "state": "pick",
+    "shown": true,
+    "birdsLeft": 4
+  },
+  "pickResult": {
+    "state": "intro",
+    "shown": false,
+    "currentBird": "bomb",
+    "birdsLeft": 4,
+    "levelBirds": [
+      "bomb",
+      "naidan",
+      "dash",
+      "bomb"
+    ]
+  },
+  "introStart": {
+    "state": "intro",
+    "zoom": 1.9,
+    "label": "我方"
+  },
+  "introEnemy": {
+    "zoom": 1.47,
+    "camX": 647,
+    "label": "敌方"
+  },
+  "introEnd": {
+    "state": "aim",
+    "zoom": 1,
+    "camX": 0
+  },
+  "queueIdle": {
+    "samples": 70,
+    "distinctPoses": 22,
+    "minDy": -62.7,
+    "maxDeg": 350
+  },
+  "initialDrift": 1,
+  "fallDamage": {
+    "low": {
+      "max": 141,
+      "left": 132,
+      "gone": false
+    },
+    "high": {
+      "max": 141,
+      "left": 34,
+      "gone": false
+    },
+    "ice": {
+      "max": 113,
+      "left": 0,
+      "gone": true
+    }
+  },
+  "chargeFx": {
+    "power": 1,
+    "charge": 0.99
+  },
+  "sweep": [
+    {
+      "angle": -2,
+      "pigsKilled": 2,
+      "blocksBroken": 1,
+      "score": 10500,
+      "left": [
+        "1290,480"
+      ]
+    },
+    {
+      "angle": 0,
+      "pigsKilled": 2,
+      "blocksBroken": 1,
+      "score": 10500,
+      "left": [
+        "1290,480"
+      ]
+    },
+    {
+      "angle": 2,
+      "pigsKilled": 2,
+      "blocksBroken": 1,
+      "score": 10500,
+      "left": [
+        "1290,480"
+      ]
+    },
+    {
+      "angle": 8,
+      "pigsKilled": 1,
+      "blocksBroken": 1,
+      "score": 5500,
+      "left": [
+        "968,600",
+        "1290,480"
+      ]
+    },
+    {
+      "angle": 12,
+      "pigsKilled": 1,
+      "blocksBroken": 0,
+      "score": 5000,
+      "left": [
+        "933,600",
+        "1285,480"
+      ]
+    },
+    {
+      "angle": 14,
+      "pigsKilled": 2,
+      "blocksBroken": 0,
+      "score": 10000,
+      "left": [
+        "926,600"
+      ]
+    },
+    {
+      "angle": 16,
+      "pigsKilled": 1,
+      "blocksBroken": 0,
+      "score": 5000,
+      "left": [
+        "926,600",
+        "1290,480"
+      ]
+    },
+    {
+      "angle": 20,
+      "pigsKilled": 0,
+      "blocksBroken": 0,
+      "score": 0,
+      "left": [
+        "926,600",
+        "929,436",
+        "1290,480"
+      ]
+    }
+  ],
+  "sweepSummary": {
+    "anglesThatKill": 7,
+    "best": {
+      "angle": -2,
+      "pigsKilled": 2,
+      "blocksBroken": 1,
+      "score": 10500,
+      "left": [
+        "1290,480"
+      ]
+    }
+  },
+  "twoShot": [
+    {
+      "line": "0°+14°",
+      "cleared": true,
+      "score": 35500
+    }
+  ],
+  "loseTest": {
+    "state": "over",
+    "pigsAlive": 3
+  },
+  "skillTests": [
+    {
+      "type": "naidan",
+      "used": false,
+      "speedBefore": 25,
+      "speedMid": 24,
+      "inFlightMid": 1,
+      "bombsMid": 0,
+      "bombsAfter": 0,
+      "blocksBefore": 3,
+      "blocksAfter": 1,
+      "pigsBefore": 1,
+      "pigsAfter": 0,
+      "shockwave": 0,
+      "vxBefore": 24.59,
+      "vxMid": 24.23,
+      "xMid": 733,
+      "xSoon": 1231
+    },
+    {
+      "type": "dash",
+      "used": true,
+      "speedBefore": 25,
+      "speedMid": 34,
+      "inFlightMid": 1,
+      "bombsMid": 0,
+      "bombsAfter": 0,
+      "blocksBefore": 3,
+      "blocksAfter": 1,
+      "pigsBefore": 1,
+      "pigsAfter": 0,
+      "shockwave": 0,
+      "vxBefore": 24.84,
+      "vxMid": 33.53,
+      "xMid": 766,
+      "xSoon": 1329
+    },
+    {
+      "type": "split",
+      "used": true,
+      "speedBefore": 25,
+      "speedMid": 23,
+      "inFlightMid": 3,
+      "bombsMid": 0,
+      "bombsAfter": 0,
+      "blocksBefore": 3,
+      "blocksAfter": 0,
+      "pigsBefore": 1,
+      "pigsAfter": 1,
+      "shockwave": 0,
+      "vxBefore": 24.63,
+      "vxMid": 23.25,
+      "xMid": 693,
+      "xSoon": 1186
+    },
+    {
+      "type": "bomb",
+      "used": true,
+      "speedBefore": 24,
+      "speedMid": 0,
+      "inFlightMid": 0,
+      "bombsMid": 0,
+      "bombsAfter": 0,
+      "blocksBefore": 3,
+      "blocksAfter": 2,
+      "pigsBefore": 1,
+      "pigsAfter": 1,
+      "shockwave": 1,
+      "vxBefore": 23.68,
+      "vxMid": 0,
+      "xMid": 0,
+      "xSoon": 0
+    },
+    {
+      "type": "heavy",
+      "used": false,
+      "speedBefore": 25,
+      "speedMid": 24,
+      "inFlightMid": 1,
+      "bombsMid": 0,
+      "bombsAfter": 0,
+      "blocksBefore": 3,
+      "blocksAfter": 1,
+      "pigsBefore": 1,
+      "pigsAfter": 0,
+      "shockwave": 0,
+      "vxBefore": 24.48,
+      "vxMid": 24.07,
+      "xMid": 731,
+      "xSoon": 1234
+    },
+    {
+      "type": "milk",
+      "used": true,
+      "speedBefore": 25,
+      "speedMid": 14,
+      "inFlightMid": 1,
+      "bombsMid": 1,
+      "bombsAfter": 0,
+      "blocksBefore": 3,
+      "blocksAfter": 2,
+      "pigsBefore": 1,
+      "pigsAfter": 1,
+      "shockwave": 0,
+      "vxBefore": 24.62,
+      "vxMid": 13.33,
+      "xMid": 643,
+      "xSoon": 977
+    },
+    {
+      "type": "back",
+      "used": true,
+      "speedBefore": 25,
+      "speedMid": 26,
+      "inFlightMid": 1,
+      "bombsMid": 0,
+      "bombsAfter": 0,
+      "blocksBefore": 3,
+      "blocksAfter": 3,
+      "pigsBefore": 1,
+      "pigsAfter": 1,
+      "shockwave": 0,
+      "vxBefore": 24.71,
+      "vxMid": -25.85,
+      "xMid": 432,
+      "xSoon": 93
+    },
+    {
+      "type": "seek",
+      "used": true,
+      "speedBefore": 25,
+      "speedMid": 28,
+      "inFlightMid": 1,
+      "bombsMid": 0,
+      "bombsAfter": 0,
+      "blocksBefore": 3,
+      "blocksAfter": 3,
+      "pigsBefore": 1,
+      "pigsAfter": 1,
+      "shockwave": 0,
+      "vxBefore": 24.87,
+      "vxMid": 28.03,
+      "xMid": 720,
+      "xSoon": 1523
+    }
+  ],
+  "plowTest": {
+    "naidan": 2,
+    "heavy": 3
+  },
+  "skillPower": {
+    "milk": 2,
+    "split": 3
+  },
+  "seekAim": {
+    "used": true,
+    "dir": {
+      "nx": 0.928,
+      "ny": -0.374
+    },
+    "wantN": {
+      "x": 0.927,
+      "y": -0.374
+    },
+    "straight": 0.8,
+    "guidedFrames": 13,
+    "maxV": 30,
+    "marks": 1
+  },
+  "spinTest": {
+    "samples": 46,
+    "peak": 0.036,
+    "restAv": 0.003
+  },
+  "bonusPig": {
+    "rate": 0.249,
+    "total": 1773,
+    "marked": 441,
+    "effect": {
+      "level": 1,
+      "bonusCount": 1,
+      "ammoBefore": 4,
+      "ammoAfter": 5
+    }
+  },
+  "waveRule": [
+    {
+      "level": 1,
+      "stages": 1,
+      "worldW": 2200,
+      "pigs": 2,
+      "blocks": 9,
+      "hpScale": 1
+    },
+    {
+      "level": 4,
+      "stages": 2,
+      "worldW": 3176,
+      "pigs": 4,
+      "blocks": 11,
+      "hpScale": 1
+    },
+    {
+      "level": 7,
+      "stages": 3,
+      "worldW": 4702,
+      "pigs": 5,
+      "blocks": 15,
+      "hpScale": 1
+    },
+    {
+      "level": 10,
+      "stages": 2,
+      "worldW": 2800,
+      "pigs": 3,
+      "blocks": 9,
+      "hpScale": 1
+    },
+    {
+      "level": 13,
+      "stages": 3,
+      "worldW": 4720,
+      "pigs": 8,
+      "blocks": 21,
+      "hpScale": 1.05
+    },
+    {
+      "level": 20,
+      "stages": 2,
+      "worldW": 2800,
+      "pigs": 5,
+      "blocks": 15,
+      "hpScale": 1
+    },
+    {
+      "level": 26,
+      "stages": 3,
+      "worldW": 4720,
+      "pigs": 12,
+      "blocks": 38,
+      "hpScale": 1.7000000000000002
+    }
+  ],
+  "genStability": [
+    {
+      "seed": 7,
+      "level": 1,
+      "drift": 5.1,
+      "pigs": 2,
+      "blocks": 9,
+      "birds": 4,
+      "structure": "第 1 关",
+      "span": 166,
+      "far": 803,
+      "worldW": 2200,
+      "stages": 1,
+      "slingX": 200,
+      "stagePigDist": 520,
+      "bossDrift": 0
+    },
+    {
+      "seed": 7,
+      "level": 2,
+      "drift": 4.1,
+      "pigs": 3,
+      "blocks": 10,
+      "birds": 4,
+      "structure": "第 2 关",
+      "span": 504,
+      "far": 1141,
+      "worldW": 2200,
+      "stages": 1,
+      "slingX": 200,
+      "stagePigDist": 863,
+      "bossDrift": 0
+    },
+    {
+      "seed": 7,
+      "level": 3,
+      "drift": 5,
+      "pigs": 3,
+      "blocks": 6,
+      "birds": 4,
+      "structure": "第 3 关",
+      "span": 416,
+      "far": 1058,
+      "worldW": 2200,
+      "stages": 1,
+      "slingX": 200,
+      "stagePigDist": 957,
+      "bossDrift": 0
+    },
+    {
+      "seed": 7,
+      "level": 4,
+      "drift": 5.1,
+      "pigs": 4,
+      "blocks": 17,
+      "birds": 5,
+      "structure": "第 4 关",
+      "span": 1884,
+      "far": 2570,
+      "worldW": 3176,
+      "stages": 2,
+      "slingX": 200,
+      "stagePigDist": 739,
+      "bossDrift": 0
+    },
+    {
+      "seed": 7,
+      "level": 5,
+      "drift": 5,
+      "pigs": 4,
+      "blocks": 16,
+      "birds": 5,
+      "structure": "第 5 关",
+      "span": 1818,
+      "far": 2455,
+      "worldW": 3220,
+      "stages": 2,
+      "slingX": 200,
+      "stagePigDist": 805,
+      "bossDrift": 0
+    },
+    {
+      "seed": 7,
+      "level": 6,
+      "drift": 4.1,
+      "pigs": 5,
+      "blocks": 12,
+      "birds": 5,
+      "structure": "第 6 关",
+      "span": 1747,
+      "far": 2384,
+      "worldW": 3264,
+      "stages": 2,
+      "slingX": 200,
+      "stagePigDist": 841,
+      "bossDrift": 0
+    },
+    {
+      "seed": 7,
+      "level": 7,
+      "drift": 5.1,
+      "pigs": 5,
+      "blocks": 12,
+      "birds": 6,
+      "structure": "第 7 关",
+      "span": 3158,
+      "far": 3820,
+      "worldW": 4702,
+      "stages": 3,
+      "slingX": 200,
+      "stagePigDist": 552,
+      "bossDrift": 0
+    },
+    {
+      "seed": 7,
+      "level": 8,
+      "drift": 5.1,
+      "pigs": 6,
+      "blocks": 14,
+      "birds": 6,
+      "structure": "第 8 关",
+      "span": 3354,
+      "far": 3991,
+      "worldW": 4720,
+      "stages": 3,
+      "slingX": 200,
+      "stagePigDist": 550,
+      "bossDrift": 0
+    },
+    {
+      "seed": 7,
+      "level": 10,
+      "drift": 1,
+      "pigs": 4,
+      "blocks": 10,
+      "birds": 10,
+      "structure": "第 10 关 · BOSS",
+      "span": 1585,
+      "far": 2260,
+      "worldW": 2800,
+      "stages": 2,
+      "slingX": 186,
+      "stagePigDist": 894,
+      "bossDrift": 11
+    },
+    {
+      "seed": 7,
+      "level": 12,
+      "drift": 5.1,
+      "pigs": 8,
+      "blocks": 27,
+      "birds": 7,
+      "structure": "第 12 关",
+      "span": 3312,
+      "far": 3949,
+      "worldW": 4720,
+      "stages": 3,
+      "slingX": 200,
+      "stagePigDist": 520,
+      "bossDrift": 0
+    },
+    {
+      "seed": 12345,
+      "level": 1,
+      "drift": 5.1,
+      "pigs": 2,
+      "blocks": 12,
+      "birds": 4,
+      "structure": "第 1 关",
+      "span": 339,
+      "far": 1025,
+      "worldW": 2200,
+      "stages": 1,
+      "slingX": 200,
+      "stagePigDist": 742,
+      "bossDrift": 0
+    },
+    {
+      "seed": 12345,
+      "level": 2,
+      "drift": 1,
+      "pigs": 3,
+      "blocks": 10,
+      "birds": 4,
+      "structure": "第 2 关",
+      "span": 608,
+      "far": 1241,
+      "worldW": 2200,
+      "stages": 1,
+      "slingX": 200,
+      "stagePigDist": 938,
+      "bossDrift": 0
+    },
+    {
+      "seed": 12345,
+      "level": 3,
+      "drift": 5.1,
+      "pigs": 3,
+      "blocks": 9,
+      "birds": 4,
+      "structure": "第 3 关",
+      "span": 508,
+      "far": 1145,
+      "worldW": 2200,
+      "stages": 1,
+      "slingX": 200,
+      "stagePigDist": 842,
+      "bossDrift": 0
+    },
+    {
+      "seed": 12345,
+      "level": 4,
+      "drift": 5.1,
+      "pigs": 4,
+      "blocks": 10,
+      "birds": 5,
+      "structure": "第 4 关",
+      "span": 1959,
+      "far": 2601,
+      "worldW": 3176,
+      "stages": 2,
+      "slingX": 200,
+      "stagePigDist": 735,
+      "bossDrift": 0
+    },
+    {
+      "seed": 12345,
+      "level": 5,
+      "drift": 5.1,
+      "pigs": 4,
+      "blocks": 13,
+      "birds": 5,
+      "structure": "第 5 关",
+      "span": 1769,
+      "far": 2455,
+      "worldW": 3220,
+      "stages": 2,
+      "slingX": 200,
+      "stagePigDist": 705,
+      "bossDrift": 0
+    },
+    {
+      "seed": 12345,
+      "level": 6,
+      "drift": 5.1,
+      "pigs": 5,
+      "blocks": 20,
+      "birds": 5,
+      "structure": "第 6 关",
+      "span": 2115,
+      "far": 2752,
+      "worldW": 3264,
+      "stages": 2,
+      "slingX": 200,
+      "stagePigDist": 778,
+      "bossDrift": 0
+    },
+    {
+      "seed": 12345,
+      "level": 7,
+      "drift": 5.1,
+      "pigs": 5,
+      "blocks": 12,
+      "birds": 6,
+      "structure": "第 7 关",
+      "span": 3249,
+      "far": 3891,
+      "worldW": 4702,
+      "stages": 3,
+      "slingX": 200,
+      "stagePigDist": 545,
+      "bossDrift": 0
+    },
+    {
+      "seed": 12345,
+      "level": 8,
+      "drift": 5.1,
+      "pigs": 6,
+      "blocks": 19,
+      "birds": 6,
+      "structure": "第 8 关",
+      "span": 3354,
+      "far": 3991,
+      "worldW": 4720,
+      "stages": 3,
+      "slingX": 200,
+      "stagePigDist": 550,
+      "bossDrift": 0
+    },
+    {
+      "seed": 12345,
+      "level": 10,
+      "drift": 5.1,
+      "pigs": 3,
+      "blocks": 9,
+      "birds": 10,
+      "structure": "第 10 关 · BOSS",
+      "span": 1528,
+      "far": 2260,
+      "worldW": 2800,
+      "stages": 2,
+      "slingX": 186,
+      "stagePigDist": 894,
+      "bossDrift": 11
+    },
+    {
+      "seed": 12345,
+      "level": 12,
+      "drift": 5.1,
+      "pigs": 8,
+      "blocks": 23,
+      "birds": 7,
+      "structure": "第 12 关",
+      "span": 3261,
+      "far": 3898,
+      "worldW": 4720,
+      "stages": 3,
+      "slingX": 200,
+      "stagePigDist": 803,
+      "bossDrift": 0
+    }
+  ],
+  "endlessRamp": {
+    "pigCounts": [
+      2,
+      3,
+      3,
+      4,
+      4,
+      5,
+      5,
+      6,
+      4,
+      8
+    ],
+    "birdCounts": [
+      4,
+      4,
+      4,
+      5,
+      5,
+      5,
+      6,
+      6,
+      10,
+      7
+    ],
+    "spans": [
+      166,
+      504,
+      416,
+      1884,
+      1818,
+      1747,
+      3158,
+      3354,
+      1585,
+      3312
+    ],
+    "worlds": [
+      2200,
+      2200,
+      2200,
+      3176,
+      3220,
+      3264,
+      4702,
+      4720,
+      2800,
+      4720
+    ],
+    "stages": [
+      1,
+      1,
+      1,
+      2,
+      2,
+      2,
+      3,
+      3,
+      2,
+      3
+    ]
+  },
+  "stageFlow": [
+    {
+      "stage": 1,
+      "stageCount": 3,
+      "slingX": 200,
+      "stagePigs": 2,
+      "state": "aim"
+    },
+    {
+      "stage": 2,
+      "stageCount": 3,
+      "slingX": 1767,
+      "stagePigs": 2,
+      "state": "aim"
+    },
+    {
+      "stage": 3,
+      "stageCount": 3,
+      "slingX": 3334,
+      "stagePigs": 1,
+      "state": "aim"
+    },
+    {
+      "stage": 3,
+      "stageCount": 3,
+      "slingX": 3334,
+      "stagePigs": 0,
+      "state": "clearing"
+    }
+  ],
+  "dragAcrossStage": {
+    "midStage": 2,
+    "midState": "settling",
+    "stageAtRelease": 2,
+    "slingX": 1788,
+    "pullPower": 0,
+    "birdBefore": {
+      "cur": "naidan",
+      "total": 5,
+      "left": 5,
+      "bonus": 1
+    },
+    "birdAfter": {
+      "cur": "naidan",
+      "total": 6,
+      "left": 6,
+      "bonus": 1
+    },
+    "stateAfterRelease": "aim",
+    "birdX": 1788,
+    "birdVx": 0
+  },
+  "bombExplode": {
+    "picked": {
+      "level": 4,
+      "index": 2,
+      "birds": [
+        "naidan",
+        "dash",
+        "bomb",
+        "bomb"
+      ]
+    },
+    "after": {
+      "stage": 2,
+      "state": "aim",
+      "slingX": 1788,
+      "birds": [
+        {
+          "x": 1788,
+          "y": 470,
+          "launched": false,
+          "type": "dash"
+        }
+      ],
+      "currentBird": "dash"
+    }
+  },
+  "stageDrain": {
+    "afterDrain": "over",
+    "hung": false,
+    "settledMs": 0,
+    "finalState": "over",
+    "endTitle": "无尽模式结束",
+    "midStage": 2,
+    "lastStage": {
+      "state": "clearing",
+      "ms": 0
+    }
+  },
+  "bossGen": [
+    {
+      "level": 10,
+      "isBoss": true,
+      "tier": 1,
+      "hp": 980,
+      "birds": 9,
+      "floors": 2,
+      "legs": 4,
+      "mood": "boss",
+      "stages": 2,
+      "launchPoints": [
+        186,
+        1236
+      ],
+      "prePigs": 2,
+      "bossStage": 1,
+      "lastStagePigs": 2
+    },
+    {
+      "level": 20,
+      "isBoss": true,
+      "tier": 2,
+      "hp": 1050,
+      "birds": 9,
+      "floors": 3,
+      "legs": 6,
+      "mood": "boss",
+      "stages": 2,
+      "launchPoints": [
+        186,
+        1236
+      ],
+      "prePigs": 2,
+      "bossStage": 1,
+      "lastStagePigs": 3
+    },
+    {
+      "level": 30,
+      "isBoss": true,
+      "tier": 3,
+      "hp": 1120,
+      "birds": 10,
+      "floors": 3,
+      "legs": 7,
+      "mood": "boss",
+      "stages": 2,
+      "launchPoints": [
+        186,
+        1236
+      ],
+      "prePigs": 2,
+      "bossStage": 1,
+      "lastStagePigs": 3
+    },
+    {
+      "level": 15,
+      "isBoss": false,
+      "tier": 0,
+      "hp": 0,
+      "birds": 7,
+      "floors": 0,
+      "legs": 0,
+      "mood": "day",
+      "stages": 3,
+      "launchPoints": [
+        200,
+        1773,
+        3346
+      ],
+      "prePigs": 3,
+      "bossStage": -1,
+      "lastStagePigs": 3
+    }
+  ],
+  "bossAdvance": {
+    "stageBefore": 1,
+    "prePigsBefore": 2,
+    "stageAfter": 2,
+    "stagePigsAfter": 2,
+    "slingX": 1236,
+    "bossAlive": true,
+    "bossHp": 980,
+    "distToBoss": 905
+  },
+  "bossCutIn": {
+    "label": "BOSS",
+    "maxZoom": 2.35,
+    "barShown": true
+  },
+  "bossDamage": {
+    "maxHp": 980,
+    "direct": 85,
+    "towerIntact": true,
+    "fall": 288,
+    "fallKind": "direct",
+    "barWidth": "91.3%"
+  },
+  "bossBlast": {
+    "hp0": 980,
+    "probe": {
+      "before": 980,
+      "after": 823,
+      "dmg": 157
+    },
+    "hpAfter": 823,
+    "k": 0.28
+  },
+  "bossSkill": {
+    "maxHp": 980,
+    "twoShots": {
+      "shots": 2,
+      "summons": 0
+    },
+    "lowHp": 100,
+    "afterThree": {
+      "shots": 3,
+      "summons": 1,
+      "hp": 345,
+      "x": 2137
+    },
+    "heal": 245,
+    "pigsBefore": 2,
+    "pigsAfter": 3,
+    "summonPos": {
+      "x": 1820,
+      "y": 600
+    },
+    "summonStage": 1,
+    "summonHp": 85,
+    "settledHp": 85,
+    "nearFull": 979,
+    "cappedHp": 980,
+    "cappedSummons": 2,
+    "thirdSummons": 3,
+    "thirdGuardDelta": 0
+  },
+  "bossKill": {
+    "before": 10000,
+    "after": 43000,
+    "boss": {
+      "boss": false,
+      "alive": false,
+      "name": "奶皇",
+      "tier": 1,
+      "hp": 0,
+      "maxHp": 0,
+      "x": 0,
+      "y": 0,
+      "vy": 0,
+      "legs": 0,
+      "retryUsed": false,
+      "barShown": true,
+      "barWidth": "0%",
+      "lastImpact": null,
+      "shots": 0,
+      "summons": 0,
+      "directK": 0,
+      "blastK": 0,
+      "fallK": 0
+    },
+    "state": "aim",
+    "hpAfterFall": 765,
+    "falls": [
+      765,
+      642
+    ],
+    "shots": 3
+  },
+  "bossRetry": {
+    "failed": "over",
+    "retryUsed": true,
+    "note": "奶皇 还站着…",
+    "hpBefore": 980,
+    "hpAfterRetry": 980,
+    "birdsAfterRetry": 10,
+    "stageAfterRetry": 1,
+    "finalState": "over",
+    "finalTitle": "无尽模式结束"
+  },
+  "endlessFlow": {
+    "levels": [
+      {
+        "level": 1,
+        "pigs": 2,
+        "blocks": 7,
+        "birds": 4,
+        "score": 0,
+        "name": "第 1 关"
+      },
+      {
+        "level": 2,
+        "pigs": 3,
+        "blocks": 7,
+        "birds": 4,
+        "score": 60000,
+        "name": "第 2 关"
+      },
+      {
+        "level": 3,
+        "pigs": 3,
+        "blocks": 12,
+        "birds": 4,
+        "score": 115000,
+        "name": "第 3 关"
+      }
+    ],
+    "reached": 4,
+    "score": 180000,
+    "endState": "over",
+    "endNote": 4
+  },
+  "endlessPick": {
+    "first": {
+      "state": "pick",
+      "shown": true,
+      "birdsLeft": 4,
+      "expect": 4,
+      "level": 1
+    },
+    "second": {
+      "state": "intro",
+      "shown": false,
+      "level": 2,
+      "birdsLeft": 4,
+      "expect": 4,
+      "lead": "naidan",
+      "levelBirds": [
+        "naidan",
+        "dash",
+        "split",
+        "bomb"
+      ]
+    }
+  },
+  "queueClick": {
+    "before": {
+      "cur": "naidan",
+      "slots": [
+        "dash",
+        "seek",
+        "seek",
+        "seek"
+      ]
+    },
+    "after": {
+      "cur": "seek",
+      "queue": [
+        "dash",
+        "seek",
+        "naidan",
+        "seek"
+      ]
+    }
+  },
+  "源码版": {
+    "canvas": true,
+    "roster": 8,
+    "images": true,
+    "state": "intro"
+  },
+  "单文件版": {
+    "canvas": true,
+    "roster": 8,
+    "images": true,
+    "state": "intro"
+  },
+  "ok": true
+}

@@ -1,0 +1,12 @@
+# 依赖：npm install 就能装回来
+node_modules/
+
+# 联网扒来的原始素材（原图 + 抠图中间产物，约 4MB）
+# 运行只需要 assets/ 里处理好的那 15 张，原始图不入库
+art-source/
+
+# 临时 / 调试产物
+shots/_*.png
+*.log
+.DS_Store
+Thumbs.db

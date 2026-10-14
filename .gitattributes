@@ -1,0 +1,7 @@
+# 仓库里统一用 LF（Windows 上 checkout 也不会被换成 CRLF，免得 diff 全是整行变更）
+* text=auto eol=lf
+
+# 二进制素材别做换行/文本处理
+*.png binary
+*.jpg binary
+*.jpeg binary
