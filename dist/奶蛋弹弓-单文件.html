@@ -4388,8 +4388,12 @@ window.BossLevel = {
       el.roster.appendChild(card);
     });
   };
-  // 启动：先把素材读进来，再等玩家点开始
-  loadImages().then(() => {
+  // 启动：素材读进来再放玩家进来，但**不能傻等**——国内直连 github.io 时这 13 张立绘
+  // 实测要 35 秒才下完，那样玩家对着空画面干等。所以最多等 BOOT_WAIT 就先开局，
+  // 没到的立绘继续在后台下载、画到就出现（drawBird/drawPig 本来就判了 img.width）。
+  const BOOT_WAIT = 2500;
+  const bootReady = Promise.race([loadImages(), new Promise((r) => setTimeout(r, BOOT_WAIT))]);
+  bootReady.then(() => {
     buildRoster();
     loadAudio();   // boss 笑声预先读进来（35KB，不差这点）
     if (el.buildStamp) el.buildStamp.textContent = `版本 ${BUILD}`;

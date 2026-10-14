@@ -42,8 +42,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-14 · 满弓抖动减弱",
-    "stamp": "版本 2026-10-14 · 满弓抖动减弱"
+    "build": "2026-10-14 · 击败 boss 有真笑声了",
+    "stamp": "版本 2026-10-14 · 击败 boss 有真笑声了"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -102,11 +102,11 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 17,
-    "minDy": -62.8,
+    "distinctPoses": 22,
+    "minDy": -62.9,
     "maxDeg": 359
   },
-  "initialDrift": 1.4,
+  "initialDrift": 1,
   "fallDamage": {
     "low": {
       "max": 141,
@@ -126,7 +126,7 @@
   },
   "chargeFx": {
     "power": 1,
-    "charge": 0.97,
+    "charge": 0.98,
     "shakePeak": 1.31
   },
   "sweep": [
@@ -261,12 +261,12 @@
       "blocksBefore": 3,
       "blocksAfter": 1,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.79,
-      "vxMid": 33.51,
-      "xMid": 791,
-      "xSoon": 1407
+      "vxBefore": 24.84,
+      "vxMid": 33.53,
+      "xMid": 766,
+      "xSoon": 1329
     },
     {
       "type": "split",
@@ -317,10 +317,10 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.48,
+      "vxBefore": 24.54,
       "vxMid": 24.14,
       "xMid": 707,
-      "xSoon": 1222
+      "xSoon": 1210
     },
     {
       "type": "milk",
@@ -338,7 +338,7 @@
       "vxBefore": 24.62,
       "vxMid": 13.33,
       "xMid": 643,
-      "xSoon": 965
+      "xSoon": 977
     },
     {
       "type": "back",
@@ -362,7 +362,7 @@
       "type": "seek",
       "used": true,
       "speedBefore": 25,
-      "speedMid": 28,
+      "speedMid": 29,
       "inFlightMid": 1,
       "bombsMid": 0,
       "bombsAfter": 0,
@@ -371,10 +371,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.87,
-      "vxMid": 28.03,
-      "xMid": 720,
-      "xSoon": 1493
+      "vxBefore": 24.92,
+      "vxMid": 28.69,
+      "xMid": 723,
+      "xSoon": 1469
     }
   ],
   "plowTest": {
@@ -558,7 +558,7 @@
     {
       "seed": 7,
       "level": 6,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 5,
       "blocks": 12,
       "birds": 5,
@@ -670,7 +670,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5.1,
+      "drift": 5,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1042,9 +1042,9 @@
     "maxHp": 980,
     "direct": 86,
     "towerIntact": true,
-    "fall": 347,
+    "fall": 338,
     "fallKind": "direct",
-    "barWidth": "91.3%"
+    "barWidth": "91.2%"
   },
   "bossBlast": {
     "hp0": 980,
@@ -1067,7 +1067,7 @@
       "shots": 3,
       "summons": 1,
       "hp": 345,
-      "x": 2137
+      "x": 2138
     },
     "heal": 245,
     "pigsBefore": 2,
@@ -1183,8 +1183,8 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
+        "milk",
         "naidan",
-        "seek",
         "bomb"
       ]
     }
