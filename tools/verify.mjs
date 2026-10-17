@@ -2031,6 +2031,19 @@ const main = async () => {
     // ---------------------------------------------------------- 手机端旋转按钮
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
     mobile.on('pageerror', (e) => problems.push(`[手机端] pageerror: ${e.message}`));
+    await mobile.route('https://abacus.jasoncameron.dev/**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"value":3}' });
+    });
+    await mobile.route('https://buueozmrxfjqcaiqyzhq.supabase.co/**', async (route) => {
+      const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'apikey, content-type, prefer',
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Content-Type': 'application/json',
+      };
+      if (route.request().method() === 'OPTIONS') await route.fulfill({ status: 204, headers, body: '' });
+      else await route.fulfill({ status: 200, headers, body: '[]' });
+    });
     await mobile.goto(base, { waitUntil: 'load' });
     await mobile.waitForFunction(() => window.__nai && window.__nai.imagesReady(), null, { timeout: 20000 });
     await mobile.evaluate(() => {
@@ -2058,7 +2071,65 @@ const main = async () => {
     }
     await mobile.screenshot({ path: path.join(shots, '17-mobile-rotate.png') });
     report.shots.push('17-mobile-rotate.png');
+    await mobile.evaluate(() => window.__nai.workshop.back());
+    await mobile.waitForFunction(
+      () => window.__nai.workshop.community().state === 'ready' && !window.__nai.workshop.community().loadingStats,
+      null,
+      { timeout: 10000 }
+    );
+    await sleep(180);
+    const mobileWorkshop = await mobile.evaluate(() => {
+      const card = document.querySelector('#wkWeekly .wkCard');
+      const box = card ? card.getBoundingClientRect() : null;
+      const preview = card ? card.querySelector('.wkPreview') : null;
+      return {
+        columns: getComputedStyle(document.getElementById('wkWeekly')).gridTemplateColumns.split(' ').length,
+        cardWidth: box ? Math.round(box.width) : 0,
+        cardHeight: box ? Math.round(box.height) : 0,
+        previewHeight: preview ? Math.round(preview.getBoundingClientRect().height) : 0,
+        cards: document.querySelectorAll('#wkWeekly .wkCard').length,
+      };
+    });
+    report.mobileWorkshop = mobileWorkshop;
+    if (mobileWorkshop.columns !== 2) problems.push(`手机端创意工坊不是两列布局（${mobileWorkshop.columns} 列）`);
+    if (mobileWorkshop.cardWidth > 190 || mobileWorkshop.cardHeight > 185) {
+      problems.push(`手机端创意工坊卡片过大（${mobileWorkshop.cardWidth}×${mobileWorkshop.cardHeight}）`);
+    }
+    if (mobileWorkshop.previewHeight > 70) problems.push(`手机端缩略图过高（${mobileWorkshop.previewHeight}px）`);
+    await mobile.screenshot({ path: path.join(shots, '18-mobile-workshop.png') });
+    report.shots.push('18-mobile-workshop.png');
     await mobile.close();
+
+    // 全部 0 赞时，本周热门区域必须为空，不能用 0 赞关卡填满前 6
+    const zeroWeekly = await browser.newPage({ viewport: { width: 1200, height: 800 } });
+    await zeroWeekly.route('https://abacus.jasoncameron.dev/**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"value":0}' });
+    });
+    await zeroWeekly.route('https://buueozmrxfjqcaiqyzhq.supabase.co/**', async (route) => {
+      const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'apikey, content-type, prefer',
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Content-Type': 'application/json',
+      };
+      if (route.request().method() === 'OPTIONS') await route.fulfill({ status: 204, headers, body: '' });
+      else await route.fulfill({ status: 200, headers, body: '[]' });
+    });
+    await zeroWeekly.goto(base, { waitUntil: 'load' });
+    await zeroWeekly.waitForFunction(() => window.__nai && window.__nai.imagesReady(), null, { timeout: 20000 });
+    await zeroWeekly.click('#btnWorkshop');
+    await zeroWeekly.waitForFunction(
+      () => window.__nai.workshop.community().state === 'ready' && !window.__nai.workshop.community().loadingStats,
+      null,
+      { timeout: 10000 }
+    );
+    const zeroWeeklyState = await zeroWeekly.evaluate(() => ({
+      ids: window.__nai.workshop.community().weeklyIds.length,
+      hidden: document.getElementById('wkWeeklySection').classList.contains('hide'),
+    }));
+    report.zeroWeekly = zeroWeeklyState;
+    if (zeroWeeklyState.ids !== 0 || !zeroWeeklyState.hidden) problems.push('0 赞关卡仍然占用了本周前 6 的位置');
+    await zeroWeekly.close();
 
     report.ok = problems.length === 0;
     await fs.writeFile(path.join(shots, 'verify-report.json'), JSON.stringify(report, null, 2), 'utf8');

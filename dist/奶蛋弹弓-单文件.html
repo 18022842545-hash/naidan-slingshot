@@ -323,16 +323,55 @@
   #edStatus.bad { color: #c2410c; }
   #edRotateFloat { display: none; }
   @media (max-width: 700px) {
-    #edTop { max-width: calc(100vw - 12px); gap: 6px; padding: 7px; font-size: 11px; }
+    #hint, #edHint { display: none; }
+    #score { font-size: 22px; padding: 5px 15px; }
+    #hudRight { gap: 5px; }
+    .iconBtn { width: 38px; height: 38px; font-size: 17px; }
+    .iconBtn.small { height: 32px; font-size: 13px; }
+    #zoomBox { gap: 4px; padding: 3px 6px; }
+    #zoomLabel { min-width: 34px; font-size: 11px; }
+    #edTop {
+      max-width: calc(100vw - 12px); gap: 6px; padding: 7px; font-size: 11px;
+      flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+      align-items: center; touch-action: pan-x; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    #edTop::-webkit-scrollbar { display: none; }
+    #edTop .grp { flex: none; }
     #edTop button { min-height: 38px; padding: 7px 9px; font-size: 11px; touch-action: manipulation; }
     #edTop input[type=text] { width: 118px; min-height: 38px; }
+    #edStatus {
+      max-width: calc(100vw - 24px); bottom: 48px; padding: 6px 12px;
+      font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
     #edRotateFloat:not(.hide) {
-      display: block; position: absolute; right: 14px; bottom: 160px; z-index: 4;
-      pointer-events: auto; min-width: 116px; min-height: 48px;
-      background: var(--jam); color: #fff; font-size: 14px;
+      display: block; position: absolute; right: 10px; bottom: 105px; z-index: 4;
+      pointer-events: auto; min-width: 108px; min-height: 44px;
+      background: var(--jam); color: #fff; font-size: 13px;
       box-shadow: 0 5px 0 var(--jam-dark), 0 8px 20px rgba(60,38,20,.25);
       touch-action: manipulation;
     }
+    #workshopScreen .panel.wide { padding: 14px 10px; border-radius: 18px; }
+    #workshopScreen .wkTop h2 { font-size: 22px; }
+    #workshopScreen .sub { font-size: 11px; line-height: 1.45; }
+    #workshopScreen .wkTop button { padding: 8px 14px; font-size: 12px; }
+    #wkCommunity, #wkWeekly { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .wkPreview { height: 64px; }
+    .wkCardBody { padding: 6px 7px 7px; gap: 3px; }
+    .wkCardTitle { font-size: 12px; }
+    .wkCardAuthor { font-size: 9.5px; }
+    .wkCardMeta { font-size: 9px; }
+    .wkCardInfo { display: none; }
+    .wkCardFoot { gap: 4px; }
+    .wkPlay { padding: 6px 4px; font-size: 11px; }
+    .wkLike { min-width: 44px; padding: 6px 4px; font-size: 10.5px; }
+    .wkSectionHead { margin: 10px 2px 6px; }
+    .wkSectionHead b { font-size: 12px; }
+    .wkSectionHead span { font-size: 9.5px; }
+    .wkToolbar { gap: 6px; }
+    #wkSearch { min-width: 125px; padding: 7px 9px; font-size: 11px; }
+    #wkSort button { padding: 5px 7px; font-size: 10px; }
+    #btnWkRefresh { padding: 6px 8px; font-size: 11px; }
   }
   #edHint {
     pointer-events: none; position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
@@ -2514,7 +2553,7 @@ window.WorkshopCommunity = (() => {
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 蓝色瞄准辅助线';
+  const BUILD = '2026-10-17 · 移动端优化与周榜过滤';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -5507,7 +5546,7 @@ window.WorkshopCommunity = (() => {
     author.className = 'wkCardAuthor';
     author.textContent = `作者 · ${entry.author}`;
     const meta = document.createElement('div');
-    meta.className = 'wkCardMeta';
+    meta.className = 'wkCardMeta wkCardInfo';
     meta.textContent = `${entry.def.pigs.length} 奶蛙 · ${entry.def.blocks.length} 方块 · ${entry.def.birds.length} 发 · ${entry.def.launchPoints.length} 段`;
     const counts = document.createElement('div');
     counts.className = 'wkCardMeta';
@@ -5613,17 +5652,26 @@ window.WorkshopCommunity = (() => {
   const prepareWeekly = async () => {
     const period = window.WorkshopCommunity.weeklyPeriod();
     wkWeeklyKey = period.key;
-    let ids = await window.WorkshopCommunity.loadWeeklySnapshot(period.key);
-    if (!ids) {
-      const when = (entry) => new Date(entry.submittedAt || 0).getTime() || 0;
-      ids = wkEntries.slice().sort((a, b) =>
+    const loaded = await window.WorkshopCommunity.loadWeeklySnapshot(period.key);
+    const when = (entry) => new Date(entry.submittedAt || 0).getTime() || 0;
+    const positive = wkEntries
+      .filter((entry) => communityStat(entry).likes > 0)
+      .sort((a, b) =>
         communityStat(b).likes - communityStat(a).likes
         || communityStat(b).plays - communityStat(a).plays
         || when(b) - when(a)
-      ).slice(0, 6).map((entry) => entry.id);
-      if (ids.length) await window.WorkshopCommunity.saveWeeklySnapshot(period.key, ids);
+      )
+      .map((entry) => entry.id);
+    let ids = Array.isArray(loaded)
+      ? loaded.filter((id) => positive.includes(id)).slice(0, 6)
+      : [];
+    if (ids.length < 6) {
+      ids.push(...positive.filter((id) => !ids.includes(id)).slice(0, 6 - ids.length));
     }
-    wkWeeklyIds = Array.isArray(ids) ? ids.slice(0, 6) : [];
+    wkWeeklyIds = ids;
+    if (ids.length && (!loaded || ids.some((id, i) => loaded[i] !== id) || ids.length !== loaded.length)) {
+      await window.WorkshopCommunity.saveWeeklySnapshot(period.key, ids);
+    }
   };
 
   const loadCommunity = async (force = false) => {

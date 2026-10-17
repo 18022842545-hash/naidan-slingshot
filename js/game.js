@@ -249,7 +249,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 蓝色瞄准辅助线';
+  const BUILD = '2026-10-17 · 移动端优化与周榜过滤';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3242,7 +3242,7 @@
     author.className = 'wkCardAuthor';
     author.textContent = `作者 · ${entry.author}`;
     const meta = document.createElement('div');
-    meta.className = 'wkCardMeta';
+    meta.className = 'wkCardMeta wkCardInfo';
     meta.textContent = `${entry.def.pigs.length} 奶蛙 · ${entry.def.blocks.length} 方块 · ${entry.def.birds.length} 发 · ${entry.def.launchPoints.length} 段`;
     const counts = document.createElement('div');
     counts.className = 'wkCardMeta';
@@ -3348,17 +3348,26 @@
   const prepareWeekly = async () => {
     const period = window.WorkshopCommunity.weeklyPeriod();
     wkWeeklyKey = period.key;
-    let ids = await window.WorkshopCommunity.loadWeeklySnapshot(period.key);
-    if (!ids) {
-      const when = (entry) => new Date(entry.submittedAt || 0).getTime() || 0;
-      ids = wkEntries.slice().sort((a, b) =>
+    const loaded = await window.WorkshopCommunity.loadWeeklySnapshot(period.key);
+    const when = (entry) => new Date(entry.submittedAt || 0).getTime() || 0;
+    const positive = wkEntries
+      .filter((entry) => communityStat(entry).likes > 0)
+      .sort((a, b) =>
         communityStat(b).likes - communityStat(a).likes
         || communityStat(b).plays - communityStat(a).plays
         || when(b) - when(a)
-      ).slice(0, 6).map((entry) => entry.id);
-      if (ids.length) await window.WorkshopCommunity.saveWeeklySnapshot(period.key, ids);
+      )
+      .map((entry) => entry.id);
+    let ids = Array.isArray(loaded)
+      ? loaded.filter((id) => positive.includes(id)).slice(0, 6)
+      : [];
+    if (ids.length < 6) {
+      ids.push(...positive.filter((id) => !ids.includes(id)).slice(0, 6 - ids.length));
     }
-    wkWeeklyIds = Array.isArray(ids) ? ids.slice(0, 6) : [];
+    wkWeeklyIds = ids;
+    if (ids.length && (!loaded || ids.some((id, i) => loaded[i] !== id) || ids.length !== loaded.length)) {
+      await window.WorkshopCommunity.saveWeeklySnapshot(period.key, ids);
+    }
   };
 
   const loadCommunity = async (force = false) => {
