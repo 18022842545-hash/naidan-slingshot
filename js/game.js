@@ -17,6 +17,7 @@
     naidan_milk: 'naidan_milk.png',
     naidan_back: 'naidan_back.png',
     naidan_seek: 'naidan_seek.png',
+    naidan_nuke: 'naidan_nuke.png',
     naiwa_angry: 'naiwa_angry.png',
     naiwa_happy: 'naiwa_happy.png',
     boss_idle: 'boss_idle.png',
@@ -251,7 +252,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 核爆蛋逐位概率';
+  const BUILD = '2026-10-18 · 核爆蛋流光外观';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | restartConfirm | over
   let score = 0;
   let birdsLeft = 0;
@@ -1107,7 +1108,14 @@
         const ph = clamp(k * 1.35 - i * 0.18, 0, 1);
         if (ph <= 0) continue;
         ctx.globalAlpha = (1 - ph) * (i ? 0.5 : 0.95);
-      ctx.strokeStyle = e.nuke ? (i ? '#8bdcff' : '#effdff') : (i ? '#ffd9a0' : '#fff6de');
+        if (e.nuke && typeof ctx.createConicGradient === 'function') {
+          const rainbow = ctx.createConicGradient(timeMs / 260 + i, e.x, e.y);
+          ['#ff5f6d', '#ffc371', '#f8ff72', '#56ff9a', '#55ddff', '#8e7dff', '#ff6ee7', '#ff5f6d']
+            .forEach((color, n, arr) => rainbow.addColorStop(n / (arr.length - 1), color));
+          ctx.strokeStyle = rainbow;
+        } else {
+          ctx.strokeStyle = e.nuke ? (i ? '#8bdcff' : '#effdff') : (i ? '#ffd9a0' : '#fff6de');
+        }
         ctx.lineWidth = (i ? 3 : 7) * (1 - ph) + 1;
         ctx.beginPath();
         ctx.arc(e.x, e.y, e.radius * (0.22 + ph * 0.95), 0, Math.PI * 2);
@@ -2646,23 +2654,47 @@
     if (info.type === 'nuke') {
       const pulse = 0.72 + 0.28 * Math.sin(timeMs / 150);
       const glow = ctx.createRadialGradient(0, 0, radius * 0.55, 0, 0, radius * 2.25);
-      glow.addColorStop(0, `rgba(180,255,220,${0.28 * pulse})`);
-      glow.addColorStop(0.55, `rgba(80,220,255,${0.2 * pulse})`);
+      glow.addColorStop(0, `rgba(180,255,220,${0.34 * pulse})`);
+      glow.addColorStop(0.45, `rgba(80,220,255,${0.24 * pulse})`);
+      glow.addColorStop(0.75, `rgba(255,110,240,${0.12 * pulse})`);
       glow.addColorStop(1, 'rgba(40,180,255,0)');
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
       ctx.fillStyle = glow;
       ctx.beginPath();
       ctx.arc(0, 0, radius * 2.25, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = `rgba(180,255,220,${0.75 * pulse})`;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-      ctx.beginPath();
-      ctx.arc(0, 0, radius * 1.65, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      if (typeof ctx.createConicGradient === 'function') {
+        // 彩色环用正常混合，别和底下的高光一起被“加亮”成白色
+        ctx.globalCompositeOperation = 'source-over';
+        const rainbow = ctx.createConicGradient(timeMs / 720, 0, 0);
+        ['#ff5f6d', '#ffc371', '#f8ff72', '#56ff9a', '#55ddff', '#8e7dff', '#ff6ee7', '#ff5f6d']
+          .forEach((color, i, a) => rainbow.addColorStop(i / (a.length - 1), color));
+        ctx.strokeStyle = rainbow;
+        ctx.globalAlpha = 0.98;
+        ctx.lineWidth = 6.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 1.82, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 0.42;
+        ctx.lineWidth = 16;
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = `rgba(180,255,220,${0.75 * pulse})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * 1.65, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
     if (img && img.width) {
+      if (info.type === 'nuke') {
+        ctx.filter = `hue-rotate(${((timeMs * 0.055) % 360).toFixed(1)}deg) saturate(1.16)`;
+      }
       ctx.drawImage(img, -spriteW / 2, -spriteH * BIRD_ANCHOR_Y, spriteW, spriteH);
+      if (info.type === 'nuke') ctx.filter = 'none';
     } else {
       ctx.fillStyle = '#ffe27a';
       ctx.beginPath();
@@ -2799,13 +2831,31 @@
         const pulse = 0.72 + 0.28 * Math.sin(timeMs / 150 + i);
         const glow = ctx.createRadialGradient(0, 0, spriteW * 0.2, 0, 0, spriteW * 0.78);
         glow.addColorStop(0, `rgba(190,255,225,${0.35 * pulse})`);
-        glow.addColorStop(1, 'rgba(50,190,255,0)');
+        glow.addColorStop(0.55, `rgba(120,210,255,${0.2 * pulse})`);
+        glow.addColorStop(1, 'rgba(255,100,240,0)');
         ctx.fillStyle = glow;
         ctx.beginPath();
         ctx.arc(0, 0, spriteW * 0.78, 0, Math.PI * 2);
         ctx.fill();
+        if (typeof ctx.createConicGradient === 'function') {
+          const rainbow = ctx.createConicGradient(timeMs / 900 + i, 0, 0);
+          ['#ff5f6d', '#ffc371', '#f8ff72', '#56ff9a', '#55ddff', '#8e7dff', '#ff6ee7', '#ff5f6d']
+            .forEach((color, n, arr) => rainbow.addColorStop(n / (arr.length - 1), color));
+          ctx.strokeStyle = rainbow;
+          ctx.globalAlpha *= 0.85;
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.arc(0, 0, spriteW * 0.63, 0, Math.PI * 2);
+          ctx.stroke();
+        }
       }
-      if (img && img.width) ctx.drawImage(img, -spriteW / 2, -spriteH * 0.5, spriteW, spriteH);
+      if (img && img.width) {
+        if (typeKey === 'nuke') {
+          ctx.filter = `hue-rotate(${((timeMs * 0.055) % 360).toFixed(1)}deg) saturate(1.16)`;
+        }
+        ctx.drawImage(img, -spriteW / 2, -spriteH * 0.5, spriteW, spriteH);
+        if (typeKey === 'nuke') ctx.filter = 'none';
+      }
       ctx.restore();
     });
   };
@@ -4428,6 +4478,7 @@
       matchSeed,
       carriedNuke,
       nukeFlash: Math.round(nukeFlash * 100) / 100,
+      nukeColorFlow: Math.round((timeMs * 0.055) % 360),
       endlessResume: endlessResume ? {
         state: endlessResume.state,
         level: endlessResume.level,

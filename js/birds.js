@@ -111,7 +111,7 @@ window.BIRDS = {
   nuke: {
     key: 'nuke',
     name: '核爆奶蛋',
-    sprite: 'naidan_bomb',
+    sprite: 'naidan_nuke',
     r: 32,
     density: 0.004,
     restitution: 0.18,

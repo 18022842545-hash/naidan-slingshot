@@ -63,6 +63,7 @@ const badges = {
   uturn: `<path d="M72 72 A 26 26 0 1 0 72 28" fill="none" stroke-width="10" stroke-linecap="round"/><path d="M72 28 l 16 12 h -32 z"/>`,
   // 靶心：朝你点的地方直着冲过去
   reticle: `<circle cx="50" cy="52" r="23" fill="none" stroke-width="9"/><circle cx="50" cy="52" r="7"/><path d="M50 12 v12 M50 80 v12 M10 52 h12 M78 52 h12" stroke-width="9" stroke-linecap="round"/>`,
+  nuclear: `<circle cx="50" cy="50" r="7"/><g transform="rotate(0 50 50)"><path d="M50 50 L24 17 A38 38 0 0 1 76 17 Z"/></g><g transform="rotate(120 50 50)"><path d="M50 50 L24 17 A38 38 0 0 1 76 17 Z"/></g><g transform="rotate(240 50 50)"><path d="M50 50 L24 17 A38 38 0 0 1 76 17 Z"/></g>`,
 };
 
 const makeBadge = (shape, color) =>
@@ -71,6 +72,21 @@ const makeBadge = (shape, color) =>
        <g fill="${color}" stroke="${color}">${shape}</g>
      </svg>`
   );
+
+const makeNuclearBadge = () => Buffer.from(
+  `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="ng" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fff36a"/>
+        <stop offset=".35" stop-color="#62ffac"/>
+        <stop offset=".7" stop-color="#63d8ff"/>
+        <stop offset="1" stop-color="#ff74e8"/>
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="46" fill="#15131f" stroke="url(#ng)" stroke-width="5"/>
+    <g fill="url(#ng)">${badges.nuclear}</g>
+  </svg>`
+);
 
 /**
  * VARIANTS：body = 身体目标色相/饱和增益；hat = 帽子染色；
@@ -121,6 +137,12 @@ const VARIANTS = [
     hat: [104, 196, 240],
     badge: { shape: badges.reticle, color: '#e2497f', size: 0.31 },
   },
+  {
+    key: 'naidan_nuke',
+    rainbow: true,
+    hat: [154, 84, 224],
+    badge: { nuclear: true, size: 0.34 },
+  },
 ];
 
 const buildVariant = async (v) => {
@@ -139,6 +161,14 @@ const buildVariant = async (v) => {
       const [h, s, l] = rgb2hsl(r, g, b);
 
       if (y < hatTop && s < 0.34) {
+        if (v.rainbow) {
+          const hue = (x / W * 220 + y / H * 50 + 275) % 360;
+          const [nr, ng, nb] = hsl2rgb(hue, 0.72, clamp01(0.28 + l * 0.5));
+          px[i] = mix(r, nr, 0.9);
+          px[i + 1] = mix(g, ng, 0.9);
+          px[i + 2] = mix(b, nb, 0.9);
+          continue;
+        }
         // 帽子：把奶白布料整体染成帽子色，保留明暗
         const k = clamp01((0.34 - s) / 0.34);
         const shade = 0.55 + l * 0.55;
@@ -150,6 +180,14 @@ const buildVariant = async (v) => {
       // 身体：只动黄色系（色相 25~75），其余（深色五官、白抱枕）保持原样
       const isBody = h >= 22 && h <= 82 && s > 0.12;
       if (!isBody) continue;
+      if (v.rainbow) {
+        const hue = (x / W * 350 + y / H * 90 + 12) % 360;
+        const [nr, ng, nb] = hsl2rgb(hue, 0.76, clamp01(l * 1.04));
+        px[i] = mix(r, nr, 0.94);
+        px[i + 1] = mix(g, ng, 0.94);
+        px[i + 2] = mix(b, nb, 0.94);
+        continue;
+      }
       const targetS = clamp01(s * (v.body.sat / 0.55));
       const targetL = clamp01(l * v.body.light);
       const [nr, ng, nb] = hsl2rgb(v.body.hue, targetS, targetL);
@@ -167,7 +205,8 @@ const buildVariant = async (v) => {
   }
   if (v.badge) {
     const size = Math.round(H * v.badge.size);
-    const badge = await sharp(makeBadge(v.badge.shape, v.badge.color))
+    const badgeSource = v.badge.nuclear ? makeNuclearBadge() : makeBadge(v.badge.shape, v.badge.color);
+    const badge = await sharp(badgeSource)
       .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .png()
       .toBuffer();

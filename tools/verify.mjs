@@ -1526,6 +1526,9 @@ const main = async () => {
       window.__nai.skipIntro();
       const equipped = window.__nai.equipQueueType('nuke');
       const armed = window.__nai.state();
+      const flowA = armed.nukeColorFlow;
+      await wait(320);
+      const flowB = window.__nai.state().nukeColorFlow;
       window.__nai.shoot(8, 1);
       await wait(1100);
       const blasted = window.__nai.state();
@@ -1542,7 +1545,7 @@ const main = async () => {
           current: carried.currentBird,
         },
         equipped,
-        armed: { current: armed.currentBird, state: armed.state },
+        armed: { current: armed.currentBird, state: armed.state, flowA, flowB },
         blasted: {
           state: blasted.state,
           pigs: blasted.pigsAlive,
@@ -1562,6 +1565,7 @@ const main = async () => {
       problems.push('未发射的核爆蛋没有保留到下一关');
     }
     if (!nuke.equipped || nuke.armed.current !== 'nuke') problems.push('核爆蛋无法从队列调到弹弓');
+    if (nuke.armed.flowA === nuke.armed.flowB) problems.push('核爆蛋立绘颜色没有持续流动');
     if (nuke.blasted.pigs !== 0 || nuke.blasted.blocks !== 0) {
       problems.push(`核爆没有清屏（奶蛙 ${nuke.blasted.pigs}，方块 ${nuke.blasted.blocks}）`);
     }

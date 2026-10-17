@@ -19,6 +19,7 @@ const ASSETS = [
   'naidan_milk',
   'naidan_back',
   'naidan_seek',
+  'naidan_nuke',
   'naiwa_angry',
   'naiwa_happy',
   'boss_idle',
