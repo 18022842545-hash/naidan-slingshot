@@ -1556,6 +1556,33 @@ const main = async () => {
       const W = window.__nai.workshop;
       W.open();
       const hub = window.__nai.state().state;
+      const limitDef = {
+        name: '上限测试',
+        worldW: 6200,
+        blocks: Array.from({ length: 200 }, (_, i) => ({
+          x: 300 + (i % 20) * 90,
+          y: 570 - Math.floor(i / 20) * 20,
+          w: 90,
+          h: 20,
+          material: 'wood',
+        })),
+        pigs: Array.from({ length: 40 }, (_, i) => ({
+          x: 320 + (i % 20) * 40,
+          y: 620 - Math.floor(i / 20) * 30,
+          r: 20,
+        })),
+        birds: ['naidan', 'bomb'],
+      };
+      W.edit(limitDef);
+      const limitBefore = W.info();
+      W.tap(5000, 500);
+      const blockLimitToast = document.getElementById('toast').textContent;
+      const blocksAfterLimit = W.info().blocks;
+      W.setTool('pig');
+      W.tap(5000, 500);
+      const pigLimitToast = document.getElementById('toast').textContent;
+      const pigsAfterLimit = W.info().pigs;
+      W.create();
       for (let i = 0; i < 80; i++) {
         const c = W.community();
         if (c.state === 'ready' && !c.loadingStats) break;
@@ -1684,6 +1711,14 @@ const main = async () => {
       return {
         hub,
         moderationProbe,
+        placementLimit: {
+          beforeBlocks: limitBefore.blocks,
+          afterBlocks: blocksAfterLimit,
+          beforePigs: limitBefore.pigs,
+          afterPigs: pigsAfterLimit,
+          blockToast: blockLimitToast,
+          pigToast: pigLimitToast,
+        },
         badNameErrors,
         badNamePlayDisabled,
         community: {
@@ -1731,6 +1766,14 @@ const main = async () => {
     });
     report.workshop = wk;
     if (wk.hub !== 'workshop') problems.push('创意工坊打不开');
+    if (wk.placementLimit.beforeBlocks !== 200 || wk.placementLimit.afterBlocks !== 200) {
+      problems.push(`方块上限没有禁止继续放置（${wk.placementLimit.beforeBlocks} → ${wk.placementLimit.afterBlocks}）`);
+    }
+    if (wk.placementLimit.beforePigs !== 40 || wk.placementLimit.afterPigs !== 40) {
+      problems.push(`奶蛙上限没有禁止继续放置（${wk.placementLimit.beforePigs} → ${wk.placementLimit.afterPigs}）`);
+    }
+    if (!wk.placementLimit.blockToast.includes('方块已达上限')) problems.push('方块上限没有明确提示');
+    if (!wk.placementLimit.pigToast.includes('奶蛙已达上限')) problems.push('奶蛙上限没有明确提示');
     if (!(wk.moderationProbe.clean && !wk.moderationProbe.bad && !wk.moderationProbe.spaced && !wk.moderationProbe.ad)) {
       problems.push(`违禁词基础判断不对：${JSON.stringify(wk.moderationProbe)}`);
     }

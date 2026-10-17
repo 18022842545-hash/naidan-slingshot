@@ -44,8 +44,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-17 · 返回与无尽续关",
-    "stamp": "版本 2026-10-17 · 返回与无尽续关"
+    "build": "2026-10-17 · 选蛋独占弹窗",
+    "stamp": "版本 2026-10-17 · 选蛋独占弹窗"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -102,11 +102,11 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 15,
+    "distinctPoses": 26,
     "minDy": -62.5,
-    "maxDeg": 360
+    "maxDeg": 357
   },
-  "initialDrift": 1.4,
+  "initialDrift": 0,
   "fallDamage": {
     "low": {
       "max": 141,
@@ -127,7 +127,7 @@
   "chargeFx": {
     "power": 1,
     "charge": 0.98,
-    "shakePeak": 1.31
+    "shakePeak": 1.32
   },
   "sweep": [
     {
@@ -245,9 +245,9 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.59,
-      "vxMid": 24.23,
-      "xMid": 733,
+      "vxBefore": 24.66,
+      "vxMid": 24.29,
+      "xMid": 709,
       "xSoon": 1222
     },
     {
@@ -261,12 +261,12 @@
       "blocksBefore": 3,
       "blocksAfter": 1,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.79,
-      "vxMid": 33.51,
-      "xMid": 791,
-      "xSoon": 1407
+      "vxBefore": 24.84,
+      "vxMid": 33.53,
+      "xMid": 766,
+      "xSoon": 1329
     },
     {
       "type": "split",
@@ -279,12 +279,12 @@
       "blocksBefore": 3,
       "blocksAfter": 0,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.63,
-      "vxMid": 23.2,
-      "xMid": 716,
-      "xSoon": 1199
+      "vxBefore": 24.69,
+      "vxMid": 23.1,
+      "xMid": 690,
+      "xSoon": 1191
     },
     {
       "type": "bomb",
@@ -333,12 +333,12 @@
       "blocksBefore": 3,
       "blocksAfter": 2,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.62,
+      "vxBefore": 24.55,
       "vxMid": 13.3,
-      "xMid": 656,
-      "xSoon": 977
+      "xMid": 667,
+      "xSoon": 988
     },
     {
       "type": "back",
@@ -354,9 +354,9 @@
       "pigsAfter": 1,
       "shockwave": 0,
       "vxBefore": 24.71,
-      "vxMid": -25.91,
-      "xMid": 458,
-      "xSoon": 93
+      "vxMid": -25.85,
+      "xMid": 432,
+      "xSoon": 100
     },
     {
       "type": "seek",
@@ -388,20 +388,20 @@
   "seekAim": {
     "used": true,
     "dir": {
-      "nx": 0.927,
-      "ny": -0.375
+      "nx": 0.928,
+      "ny": -0.374
     },
     "wantN": {
       "x": 0.927,
-      "y": -0.376
+      "y": -0.374
     },
-    "straight": 0.8,
-    "guidedFrames": 18,
+    "straight": 0.9,
+    "guidedFrames": 14,
     "maxV": 30,
     "marks": 1
   },
   "spinTest": {
-    "samples": 51,
+    "samples": 52,
     "peak": 0.033,
     "restAv": 0.003
   },
@@ -670,7 +670,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1055,7 +1055,7 @@
     "maxHp": 980,
     "direct": 86,
     "towerIntact": true,
-    "fall": 347,
+    "fall": 288,
     "fallKind": "direct",
     "barWidth": "91.3%"
   },
@@ -1123,10 +1123,10 @@
       "fallK": 0
     },
     "state": "aim",
-    "hpAfterFall": 765,
+    "hpAfterFall": 764,
     "falls": [
-      765,
-      642
+      764,
+      639
     ],
     "shots": 3,
     "laugh": {
@@ -1150,16 +1150,16 @@
   "endlessResume": {
     "beforeLevel": 5,
     "beforeBirds": 4,
-    "flyingX": 475,
+    "flyingX": 499,
     "pausedState": "title",
     "pausedLevel": 5,
-    "pausedBirdX": 475,
+    "pausedBirdX": 499,
     "resumeShown": true,
     "resumeText": "继续无尽 · 第 5 关",
     "resumedState": "fly",
     "resumedLevel": 5,
     "resumedBirds": 4,
-    "resumedBirdX": 819
+    "resumedBirdX": 849
   },
   "endlessFlow": {
     "levels": [
@@ -1210,8 +1210,8 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
-        "seek",
-        "seek",
+        "back",
+        "split",
         "bomb"
       ]
     }
@@ -1243,6 +1243,14 @@
       "bad": false,
       "spaced": false,
       "ad": false
+    },
+    "placementLimit": {
+      "beforeBlocks": 200,
+      "afterBlocks": 200,
+      "beforePigs": 40,
+      "afterPigs": 40,
+      "blockToast": "方块已达上限（200 块），请先删除一块",
+      "pigToast": "奶蛙已达上限（40 只），请先删除一只"
     },
     "badNameErrors": [
       "关卡名包含违禁词「傻逼」"
@@ -1316,7 +1324,7 @@
       "id": "mock-1",
       "name": "验收小关",
       "author": "匿名测试员",
-      "submittedAt": "2026-10-17T08:09:03.846Z",
+      "submittedAt": "2026-10-17T08:18:45.237Z",
       "stats": {
         "likes": 0,
         "plays": 0

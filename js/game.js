@@ -238,7 +238,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 选蛋独占弹窗';
+  const BUILD = '2026-10-17 · 放置上限提示';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3540,8 +3540,11 @@
   const openEditor = (def, opts = {}) => {
     clearEndlessResume();
     passedCode = opts.passed || null;
+    const raw = def || starterLevel();
+    const overBlocks = Array.isArray(raw.blocks) && raw.blocks.length > window.WorkshopLevel.LIMITS.blocks;
+    const overPigs = Array.isArray(raw.pigs) && raw.pigs.length > window.WorkshopLevel.LIMITS.pigs;
     editor = {
-      def: window.WorkshopLevel.normalize(def || starterLevel()),
+      def: window.WorkshopLevel.normalize(raw),
       tool: 'block', material: 'wood', size: 'm', bonus: false,
       selected: null, undo: [], redo: [], press: null, drag: null,
     };
@@ -3564,6 +3567,16 @@
     updateZoomLabel();
     syncEditorUI();
     persistDraft();
+    if (overBlocks || overPigs) {
+      toast(
+        overBlocks && overPigs
+          ? '关卡超过上限，只保留前 200 方块和 40 奶蛙'
+          : overBlocks
+            ? '方块超过上限，只保留前 200 块'
+            : '奶蛙超过上限，只保留前 40 只',
+        3000
+      );
+    }
   };
   const leaveEditor = () => {
     el.editor.classList.add('hide');
@@ -3596,12 +3609,20 @@
     const x = Math.round(p.x / 10) * 10;
     const y = Math.round(p.y / 10) * 10;
     if (editor.tool === 'block') {
+      if (editor.def.blocks.length >= window.WorkshopLevel.LIMITS.blocks) {
+        toast(`方块已达上限（${window.WorkshopLevel.LIMITS.blocks} 块），请先删除一块`, 2400);
+        return;
+      }
       const [w, h] = BLOCK_SIZES[editor.size] || BLOCK_SIZES.m;
       editorSnapshot();
       editor.def.blocks.push({ x: Math.max(40, x), y: Math.min(GROUND_Y - h / 2, y), w, h, material: editor.material });
       editor.selected = { kind: 'block', index: editor.def.blocks.length - 1 };
       editorChanged();
     } else if (editor.tool === 'pig') {
+      if (editor.def.pigs.length >= window.WorkshopLevel.LIMITS.pigs) {
+        toast(`奶蛙已达上限（${window.WorkshopLevel.LIMITS.pigs} 只），请先删除一只`, 2400);
+        return;
+      }
       editorSnapshot();
       editor.def.pigs.push({ x: Math.max(300, x), y: Math.min(GROUND_Y - 36, y), r: 36, ...(editor.bonus ? { bonus: true } : {}) });
       editor.selected = { kind: 'pig', index: editor.def.pigs.length - 1 };
