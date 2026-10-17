@@ -238,7 +238,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 返回与无尽续关';
+  const BUILD = '2026-10-17 · 选蛋独占弹窗';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -1905,17 +1905,18 @@
   });
   el.btnBackMenu.addEventListener('click', backToMenu);
   el.btnRestart.addEventListener('click', () => {
-    if (state === 'title') return;
+    if (state === 'title' || state === 'pick') return;
     if (mode === 'endless') startRun('endless');
     else restart();
   });
   el.btnSound.addEventListener('click', () => {
+    if (state === 'pick') return;
     const m = AudioKit.toggle();
     el.btnSound.textContent = m ? '🔇' : '🔊';
   });
-  el.btnZoomIn.addEventListener('click', () => setZoom(CAM.targetZoom * 1.2));
-  el.btnZoomOut.addEventListener('click', () => setZoom(CAM.targetZoom / 1.2));
-  el.btnZoomFit.addEventListener('click', () => setZoom(MIN_ZOOM));
+  el.btnZoomIn.addEventListener('click', () => { if (state !== 'pick') setZoom(CAM.targetZoom * 1.2); });
+  el.btnZoomOut.addEventListener('click', () => { if (state !== 'pick') setZoom(CAM.targetZoom / 1.2); });
+  el.btnZoomFit.addEventListener('click', () => { if (state !== 'pick') setZoom(MIN_ZOOM); });
 
   window.addEventListener('keydown', (e) => {
     if (state === 'edit') {
@@ -1928,6 +1929,7 @@
       return;
     }
     if (state === 'workshop') return;
+    if (state === 'pick') return;
     if (e.key === 'r' || e.key === 'R') {
       if (state === 'title') return;
       if (mode === 'endless') startRun('endless');

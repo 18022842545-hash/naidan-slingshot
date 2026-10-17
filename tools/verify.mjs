@@ -1474,11 +1474,18 @@ const main = async () => {
     if (ep1.state !== 'pick' || !ep1.shown) problems.push('无尽模式第 1 关没有弹开局选蛋面板');
     if (ep1.birdsLeft !== ep1.expect) problems.push(`无尽第 1 关面板上该显示 ${ep1.expect} 发，实际 ${ep1.birdsLeft}`);
     // 面板上点画布空白处 / 敲空格都不该把它点没
+    const pickSeed = await page.evaluate(() => window.__nai.state().matchSeed);
+    const pickZoom = await page.evaluate(() => window.__nai.state().camZoom);
+    const zoomBtnBox = await page.locator('#btnZoomIn').boundingBox();
     await page.mouse.click(260, 700);
+    if (zoomBtnBox) await page.mouse.click(zoomBtnBox.x + zoomBtnBox.width / 2, zoomBtnBox.y + zoomBtnBox.height / 2);
     await page.keyboard.press('Space');
+    await page.keyboard.press('r');
     await sleep(200);
     const stillPicking = await page.evaluate(() => window.__nai.state());
     if (stillPicking.state !== 'pick') problems.push(`在选蛋面板上乱点就把面板跳过了（状态变成 ${stillPicking.state}）`);
+    if (stillPicking.matchSeed !== pickSeed) problems.push('在选蛋面板上按 R 重开了一局');
+    if (Math.abs(stillPicking.camZoom - pickZoom) > 0.001) problems.push('在选蛋面板上点到了背后的缩放按钮');
     await page.locator('#pickRoster .card').nth(3).click(); // 第 4 张 = 爆奶蛋
     await sleep(220);
     const er1 = await page.evaluate(() => window.__nai.state());
