@@ -1132,8 +1132,8 @@ const P = (x, y, r = 36, extra) => ({ x, y, r, ...(extra || {}) });
 const clampInt = (v, a, b) => Math.max(a, Math.min(b, Math.round(v)));
 const NUKE_CHANCE = 0.005;
 const rollNuke = (def, R) => {
-  if (R() < NUKE_CHANCE && !def.birds.includes('nuke')) {
-    def.birds.splice(Math.min(1, def.birds.length), 0, 'nuke');
+  for (let i = 0; i < def.birds.length; i++) {
+    if (R() < NUKE_CHANCE) def.birds[i] = 'nuke';
   }
   return def;
 };
@@ -2642,7 +2642,7 @@ window.WorkshopCommunity = (() => {
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 无尽核爆奶蛋';
+  const BUILD = '2026-10-17 · 核爆蛋逐位概率';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | restartConfirm | over
   let score = 0;
   let birdsLeft = 0;
@@ -3768,15 +3768,15 @@ window.WorkshopCommunity = (() => {
       const i = list.findIndex((x) => x.id === customDef.id);
       if (i >= 0) { list[i].passed = passedCode; saveDrafts(list); renderDrafts(); }
     }
-    const nukeWaiting = mode === 'endless' && (
-      (activeBird && !activeBird.game.launched && activeBird.game.type === 'nuke')
-      || birdQueue.includes('nuke')
-    );
-    if (nukeWaiting) {
-      carriedNuke = 1;
-      toast('核爆奶蛋已保留到下一关', 1800);
+    const unusedNukes = mode === 'endless'
+      ? (activeBird && !activeBird.game.launched && activeBird.game.type === 'nuke' ? 1 : 0)
+        + birdQueue.filter((type) => type === 'nuke').length
+      : 0;
+    if (unusedNukes) {
+      carriedNuke = unusedNukes;
+      toast(`${unusedNukes} 颗核爆奶蛋已保留到下一关`, 1800);
     }
-    const bonus = Math.max(0, remaining - (nukeWaiting ? 1 : 0)) * 10000;
+    const bonus = Math.max(0, remaining - unusedNukes) * 10000;
     if (bonus) {
       score += bonus;
       updateScore();
@@ -4038,8 +4038,11 @@ window.WorkshopCommunity = (() => {
     // 这一关多带的奶蛋照旧让玩家挑（自动流程沿用上一关的选择方式）
     const def = window.Endless.generate(endlessLevel, matchSeed);
     if (carriedNuke) {
+      const count = carriedNuke;
       carriedNuke = 0;
-      if (!def.birds.includes('nuke')) def.birds.splice(Math.min(1, def.birds.length), 0, 'nuke');
+      for (let i = 0; i < count; i++) {
+        def.birds.splice(Math.min(1 + i, def.birds.length), 0, 'nuke');
+      }
     }
     promptPick(def, { quick: true });
   };

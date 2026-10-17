@@ -68,8 +68,8 @@ const P = (x, y, r = 36, extra) => ({ x, y, r, ...(extra || {}) });
 const clampInt = (v, a, b) => Math.max(a, Math.min(b, Math.round(v)));
 const NUKE_CHANCE = 0.005;
 const rollNuke = (def, R) => {
-  if (R() < NUKE_CHANCE && !def.birds.includes('nuke')) {
-    def.birds.splice(Math.min(1, def.birds.length), 0, 'nuke');
+  for (let i = 0; i < def.birds.length; i++) {
+    if (R() < NUKE_CHANCE) def.birds[i] = 'nuke';
   }
   return def;
 };

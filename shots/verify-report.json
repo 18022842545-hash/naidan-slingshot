@@ -46,8 +46,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-17 · 无尽重开确认",
-    "stamp": "版本 2026-10-17 · 无尽重开确认"
+    "build": "2026-10-17 · 核爆蛋逐位概率",
+    "stamp": "版本 2026-10-17 · 核爆蛋逐位概率"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -112,8 +112,8 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 23,
-    "minDy": -62.4,
+    "distinctPoses": 18,
+    "minDy": -62.2,
     "maxDeg": 360
   },
   "initialDrift": 1.4,
@@ -137,7 +137,7 @@
   "chargeFx": {
     "power": 1,
     "charge": 0.98,
-    "shakePeak": 1.32,
+    "shakePeak": 1.31,
     "aimAssist": {
       "fill": "#d8f5ff",
       "stroke": "rgba(0,120,220,0.92)"
@@ -260,8 +260,8 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.59,
-      "vxMid": 24.23,
-      "xMid": 733,
+      "vxMid": 24.29,
+      "xMid": 709,
       "xSoon": 1222
     },
     {
@@ -280,7 +280,7 @@
       "vxBefore": 24.79,
       "vxMid": 33.51,
       "xMid": 791,
-      "xSoon": 1407
+      "xSoon": 1389
     },
     {
       "type": "split",
@@ -298,7 +298,7 @@
       "vxBefore": 24.63,
       "vxMid": 23.2,
       "xMid": 716,
-      "xSoon": 1199
+      "xSoon": 1186
     },
     {
       "type": "bomb",
@@ -350,8 +350,8 @@
       "pigsAfter": 1,
       "shockwave": 0,
       "vxBefore": 24.62,
-      "vxMid": 13.37,
-      "xMid": 629,
+      "vxMid": 13.33,
+      "xMid": 643,
       "xSoon": 965
     },
     {
@@ -368,8 +368,8 @@
       "pigsAfter": 1,
       "shockwave": 0,
       "vxBefore": 24.71,
-      "vxMid": -25.85,
-      "xMid": 432,
+      "vxMid": -25.91,
+      "xMid": 458,
       "xSoon": 93
     },
     {
@@ -386,9 +386,9 @@
       "pigsAfter": 1,
       "shockwave": 0,
       "vxBefore": 24.92,
-      "vxMid": 29.32,
-      "xMid": 752,
-      "xSoon": 1528
+      "vxMid": 28.69,
+      "xMid": 723,
+      "xSoon": 1469
     }
   ],
   "plowTest": {
@@ -415,7 +415,7 @@
     "marks": 1
   },
   "spinTest": {
-    "samples": 60,
+    "samples": 59,
     "peak": 0.036,
     "restAv": 0.003
   },
@@ -556,7 +556,7 @@
     {
       "seed": 7,
       "level": 5,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 4,
       "blocks": 16,
       "birds": 5,
@@ -684,7 +684,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1062,14 +1062,14 @@
   },
   "bossCutIn": {
     "label": "BOSS",
-    "maxZoom": 2.35,
+    "maxZoom": 2.349,
     "barShown": true
   },
   "bossDamage": {
     "maxHp": 980,
     "direct": 86,
     "towerIntact": true,
-    "fall": 288,
+    "fall": 347,
     "fallKind": "direct",
     "barWidth": "91.3%"
   },
@@ -1137,10 +1137,10 @@
       "fallK": 0
     },
     "state": "aim",
-    "hpAfterFall": 765,
+    "hpAfterFall": 771,
     "falls": [
-      765,
-      640
+      771,
+      650
     ],
     "shots": 6,
     "laugh": {
@@ -1196,7 +1196,6 @@
     "isolated": {
       "chance": 0.005,
       "seed17": [
-        "naidan",
         "nuke",
         "naidan",
         "back"
@@ -1287,8 +1286,8 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
-        "seek",
-        "naidan",
+        "dash",
+        "split",
         "bomb"
       ]
     }
@@ -1447,7 +1446,7 @@
       "code": "eyJ2IjoxLCJuIjoi6aqM5pS25bCP5YWzwrfmipXnqL_niYgiLCJ3IjoyNzIwLCJzIjpbWzE5MCw0NzBdLFsxMTkwLDQ3MF1dLCJiIjpbWzkwMCw1NzAsMzAsMTMwLDAsMF0sWzEwNDAsNTcwLDMwLDEzMCwwLDBdLFs5NzAsNDkwLDE5MCwzMCwwLDBdLFsxMzAwLDU2MCwxMjAsOTAsMSwxNV1dLCJwIjpbWzk3MCw2MDAsNDAsMF0sWzE1MjAsNjAwLDQwLDFdXSwiayI6WzAsMywzXX0",
       "name": "验收小关·投稿版",
       "author": "匿名测试员",
-      "submittedAt": "2026-10-17T13:40:52.332Z",
+      "submittedAt": "2026-10-17T14:18:50.574Z",
       "stats": {
         "likes": 0,
         "plays": 0
