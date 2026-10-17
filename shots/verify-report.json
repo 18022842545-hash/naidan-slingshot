@@ -46,8 +46,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-17 · 投稿时修改关卡名",
-    "stamp": "版本 2026-10-17 · 投稿时修改关卡名"
+    "build": "2026-10-17 · 点赞切换与投稿提示",
+    "stamp": "版本 2026-10-17 · 点赞切换与投稿提示"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -112,9 +112,9 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 14,
+    "distinctPoses": 12,
     "minDy": -62.5,
-    "maxDeg": 355
+    "maxDeg": 358
   },
   "initialDrift": 1.4,
   "fallDamage": {
@@ -260,9 +260,9 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.59,
-      "vxMid": 24.23,
-      "xMid": 733,
-      "xSoon": 1231
+      "vxMid": 24.29,
+      "xMid": 709,
+      "xSoon": 1222
     },
     {
       "type": "dash",
@@ -275,12 +275,12 @@
       "blocksBefore": 3,
       "blocksAfter": 1,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.79,
-      "vxMid": 33.58,
-      "xMid": 757,
-      "xSoon": 1389
+      "vxBefore": 24.84,
+      "vxMid": 33.53,
+      "xMid": 766,
+      "xSoon": 1329
     },
     {
       "type": "split",
@@ -350,8 +350,8 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.55,
-      "vxMid": 13.3,
-      "xMid": 667,
+      "vxMid": 13.33,
+      "xMid": 654,
       "xSoon": 988
     },
     {
@@ -367,16 +367,16 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.77,
-      "vxMid": -25.91,
-      "xMid": 407,
-      "xSoon": 101
+      "vxBefore": 24.71,
+      "vxMid": -25.85,
+      "xMid": 432,
+      "xSoon": 93
     },
     {
       "type": "seek",
       "used": true,
       "speedBefore": 25,
-      "speedMid": 28,
+      "speedMid": 29,
       "inFlightMid": 1,
       "bombsMid": 0,
       "bombsAfter": 0,
@@ -385,10 +385,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.92,
-      "vxMid": 28.06,
-      "xMid": 695,
-      "xSoon": 1469
+      "vxBefore": 24.87,
+      "vxMid": 28.66,
+      "xMid": 748,
+      "xSoon": 1523
     }
   ],
   "plowTest": {
@@ -409,14 +409,14 @@
       "x": 0.927,
       "y": -0.374
     },
-    "straight": 0.9,
-    "guidedFrames": 18,
+    "straight": 0.7,
+    "guidedFrames": 15,
     "maxV": 30,
     "marks": 1
   },
   "spinTest": {
-    "samples": 60,
-    "peak": 0.036,
+    "samples": 48,
+    "peak": 0.033,
     "restAv": 0.003
   },
   "bonusPig": {
@@ -556,7 +556,7 @@
     {
       "seed": 7,
       "level": 5,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 4,
       "blocks": 16,
       "birds": 5,
@@ -572,7 +572,7 @@
     {
       "seed": 7,
       "level": 6,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 5,
       "blocks": 12,
       "birds": 5,
@@ -684,7 +684,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1094,7 +1094,7 @@
       "shots": 3,
       "summons": 1,
       "hp": 345,
-      "x": 2138
+      "x": 2137
     },
     "heal": 245,
     "pigsBefore": 2,
@@ -1164,16 +1164,16 @@
   "endlessResume": {
     "beforeLevel": 5,
     "beforeBirds": 4,
-    "flyingX": 499,
+    "flyingX": 475,
     "pausedState": "title",
     "pausedLevel": 5,
-    "pausedBirdX": 499,
+    "pausedBirdX": 475,
     "resumeShown": true,
     "resumeText": "继续无尽 · 第 5 关",
     "resumedState": "fly",
     "resumedLevel": 5,
     "resumedBirds": 4,
-    "resumedBirdX": 849
+    "resumedBirdX": 834
   },
   "endlessFlow": {
     "levels": [
@@ -1224,8 +1224,8 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
-        "split",
-        "back",
+        "dash",
+        "dash",
         "bomb"
       ]
     }
@@ -1311,6 +1311,9 @@
       "likeAfter": "♥ 36",
       "likeDelta": 1,
       "liked": true,
+      "unlikeDelta": 0,
+      "unliked": true,
+      "unlikeText": "♥ 35",
       "playDelta": 1,
       "played": true,
       "playing": {
@@ -1366,6 +1369,10 @@
     "gateInEditor": true,
     "published": "http://127.0.0.1:8849/#level=eyJ2IjoxLCJuIjoi6aqM5pS25bCP5YWzIiwidyI6MjcyMCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdXSwiYiI6W1s5MDAsNTcwLDMwLDEzMCwwLDBdLFsxMDQwLDU3MCwzMCwxMzAsMCwwXSxbOTcwLDQ5MCwxOTAsMzAsMCwwXSxbMTMwMCw1NjAsMTIwLDkwLDEsMTVdXSwicCI6W1s5NzAsNjAwLDQwLDBdLFsxNTIwLDYwMCw0MCwxXV0sImsiOlswLDMsM119",
     "submitShown": true,
+    "submitHints": [
+      "1~24 字，公开展示",
+      "可选，最多 30 字"
+    ],
     "badAuthorStatus": "用户名包含违禁词「傻逼」",
     "badNameStatus": "关卡名包含违禁词「傻逼」",
     "postedEditorName": "验收小关·投稿版",
@@ -1376,7 +1383,7 @@
       "id": "mock-1",
       "name": "验收小关·投稿版",
       "author": "匿名测试员",
-      "submittedAt": "2026-10-17T11:43:40.762Z",
+      "submittedAt": "2026-10-17T11:56:23.466Z",
       "stats": {
         "likes": 0,
         "plays": 0

@@ -248,7 +248,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 投稿时修改关卡名';
+  const BUILD = '2026-10-17 · 点赞切换与投稿提示';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3273,21 +3273,24 @@
     const already = window.WorkshopCommunity.isLiked(entry.code);
     like.className = `wkLike${already ? ' liked' : ''}`;
     like.textContent = `♥ ${fmtCount(stat.likes)}`;
-    like.title = already ? '已经点过赞了' : '给这张图点个赞';
-    like.disabled = already;
+    like.title = already ? '再点一次取消点赞' : '给这张图点个赞';
     like.addEventListener('click', async () => {
       if (like.disabled) return;
       like.disabled = true;
-      const res = await window.WorkshopCommunity.like(entry);
+      const wasLiked = window.WorkshopCommunity.isLiked(entry.code);
+      const res = wasLiked
+        ? await window.WorkshopCommunity.unlike(entry)
+        : await window.WorkshopCommunity.like(entry);
       if (!res.ok) {
         like.disabled = false;
-        toast('点赞服务暂时不可用，稍后再试', 1900);
+        toast(wasLiked ? '取消点赞失败，稍后再试' : '点赞服务暂时不可用，稍后再试', 1900);
         return;
       }
-      const next = Number.isFinite(res.value) ? res.value : communityStat(entry).likes + 1;
+      const delta = Number(res.delta) || (wasLiked ? -1 : 1);
+      const next = Math.max(0, communityStat(entry).likes + delta);
       wkStats[entry.id] = { ...communityStat(entry), likes: next };
       renderCommunity();
-      toast('谢谢点赞！', 1200);
+      toast(wasLiked ? '已取消点赞' : '谢谢点赞！', 1200);
     });
     foot.append(play, like);
     body.append(title, author, meta, counts, foot);

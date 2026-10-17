@@ -91,7 +91,10 @@ const main = async () => {
       if (!mockCounters.has(key)) {
         let seed = 0;
         for (const ch of key) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
-        mockCounters.set(key, key.startsWith('like-') ? 20 + seed % 17 : 40 + seed % 29);
+        mockCounters.set(
+          key,
+          key.startsWith('unlike-') ? 0 : key.startsWith('like-') ? 20 + seed % 17 : 40 + seed % 29
+        );
       }
       let value = mockCounters.get(key);
       if (action === 'hit') {
@@ -1687,6 +1690,10 @@ const main = async () => {
       await wait(320);
       const likeAfter = document.querySelector('.wkCard[data-level-id="' + firstId + '"] .wkLike');
       const afterLike = W.community().entries.find((e) => e.id === firstId);
+      document.querySelector('.wkCard[data-level-id="' + firstId + '"] .wkLike').click();
+      await wait(320);
+      const afterUnlike = W.community().entries.find((e) => e.id === firstId);
+      const likeAfterUnlike = document.querySelector('.wkCard[data-level-id="' + firstId + '"] .wkLike');
       const playBtn = document.querySelector('.wkCard[data-level-id="' + firstId + '"] .wkPlay');
       if (playBtn) playBtn.click();
       await wait(420);
@@ -1769,6 +1776,7 @@ const main = async () => {
       document.getElementById('edSubmit').click();
       await wait(80);
       const submitShown = !document.getElementById('submitDialog').classList.contains('hide');
+      const submitHints = [...document.querySelectorAll('#submitDialog .subLabel span')].map((e) => e.textContent);
       document.getElementById('subAuthor').value = '傻逼';
       document.getElementById('subSend').click();
       await wait(180);
@@ -1780,7 +1788,7 @@ const main = async () => {
       const badNameStatus = document.getElementById('subStatus').textContent;
       document.getElementById('subLevelNameInput').value = '验收小关·投稿版';
       document.getElementById('subSend').click();
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 120; i++) {
         await wait(100);
         const c = W.community();
         if (c.entries.some((e) => e.name === '验收小关·投稿版' && e.author === '匿名测试员')) break;
@@ -1836,6 +1844,9 @@ const main = async () => {
           likeAfter: likeAfter ? likeAfter.textContent : '',
           likeDelta: beforeStat ? afterLike.stats.likes - beforeStat.stats.likes : 0,
           liked: afterLike ? afterLike.liked : false,
+          unlikeDelta: beforeStat ? afterUnlike.stats.likes - beforeStat.stats.likes : 0,
+          unliked: afterUnlike ? !afterUnlike.liked : false,
+          unlikeText: likeAfterUnlike ? likeAfterUnlike.textContent : '',
           playDelta: beforeStat ? afterPlay.stats.plays - beforeStat.stats.plays : 0,
           played: afterPlay ? afterPlay.played : false,
           playing: {
@@ -1859,7 +1870,7 @@ const main = async () => {
         unpackOk: !!unpacked && unpacked.blocks.length === placed.blocks && unpacked.pigs.length === placed.pigs,
         undoPigs, redoPigs,
         gateBefore, publishBefore, gateAfterBack, gateAfterWin, gateInEditor, published,
-        submitShown, badAuthorStatus, badNameStatus, postedEditorName, topNameInputGone,
+        submitShown, submitHints, badAuthorStatus, badNameStatus, postedEditorName, topNameInputGone,
         submitStatus, remoteState: submittedCommunity.remoteState, submittedEntry,
         submittedWeeklyIds: submittedCommunity.weeklyIds,
         gateAfterRename, publishDisabledAfterRename, submitDisabledAfterRename, gateAfterEdit,
@@ -1912,6 +1923,9 @@ const main = async () => {
     if (!wk.community.playsSorted) problems.push('“最多游玩”排序没有生效');
     if (wk.community.searchCards !== 1) problems.push(`搜索“冰屋”应该只剩 1 张，实际 ${wk.community.searchCards}`);
     if (wk.community.likeDelta !== 1 || !wk.community.liked) problems.push('点赞没有让数字 +1 或没有记住已点赞');
+    if (wk.community.unlikeDelta !== 0 || !wk.community.unliked) {
+      problems.push(`再点一次没有取消点赞（${wk.community.unlikeDelta} / ${wk.community.unliked}）`);
+    }
     if (wk.community.playDelta !== 1 || !wk.community.played) problems.push('从社区开玩没有记录游玩人数');
     if (wk.community.playing.state !== 'intro' || wk.community.playing.mode !== 'custom') {
       problems.push(`社区卡片没能直接进自制关卡（${wk.community.playing.state}/${wk.community.playing.mode}）`);
@@ -1957,6 +1971,9 @@ const main = async () => {
     if (!wk.gateAfterWin) problems.push('试玩通关之后没有拿到发布资格');
     if (!wk.gateInEditor || !wk.published) problems.push('通关回编辑器之后"发布链接"还是不可用');
     if (!wk.submitShown) problems.push('“投稿到工坊”没有打开匿名投稿面板');
+    if (!wk.submitHints.some((h) => h.includes('24')) || !wk.submitHints.some((h) => h.includes('30'))) {
+      problems.push(`投稿弹窗缺少关卡名/署名填写提示（${wk.submitHints.join('、')}）`);
+    }
     if (!wk.badAuthorStatus.includes('用户名') || !wk.badAuthorStatus.includes('违禁')) {
       problems.push(`违禁用户名没有被投稿面板拦住（${wk.badAuthorStatus}）`);
     }
@@ -2045,7 +2062,8 @@ const main = async () => {
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
     mobile.on('pageerror', (e) => problems.push(`[手机端] pageerror: ${e.message}`));
     await mobile.route('https://abacus.jasoncameron.dev/**', async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: '{"value":3}' });
+      const value = route.request().url().includes('unlike-') ? 0 : 3;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ value }) });
     });
     await mobile.route('https://buueozmrxfjqcaiqyzhq.supabase.co/**', async (route) => {
       const headers = {

@@ -10,7 +10,7 @@ window.WorkshopCommunity = (() => {
   const SUPABASE_REST = `${SUPABASE_URL}/rest/v1`;
   const API = 'https://abacus.jasoncameron.dev';
   const NAMESPACE = 'naidan-slingshot-20261017';
-  const CACHE_KEY = 'naidan-workshop-community-stats-v1';
+  const CACHE_KEY = 'naidan-workshop-community-stats-v2';
   const LIKED_KEY = 'naidan-workshop-liked-v1';
   const PLAYED_KEY = 'naidan-workshop-played-v1';
   const WEEKLY_KEY = 'naidan-workshop-weekly-v1';
@@ -41,12 +41,12 @@ window.WorkshopCommunity = (() => {
   };
   const counterKey = (kind, code) => `${kind}-${hash(String(code || ''))}`;
 
-  /** 公共接口限 30 次/10 秒；留 5 次余量给点赞/游玩，避免目录一长就整批 429 */
+  /** 公共接口限 30 次/10 秒；留 1 次余量，避免加载目录后立刻点赞时撞上 429 */
   const waitRateSlot = async () => {
     for (;;) {
       const now = Date.now();
       while (rateSlots.length && now - rateSlots[0] > 10000) rateSlots.shift();
-      if (rateSlots.length < 25) {
+      if (rateSlots.length < 29) {
         rateSlots.push(now);
         return;
       }
@@ -255,7 +255,12 @@ window.WorkshopCommunity = (() => {
     const cached = readObject(CACHE_KEY);
     const values = {};
     Object.entries(cached.values || {}).forEach(([id, stat]) => {
-      values[id] = { likes: Number(stat.likes) || 0, plays: Number(stat.plays) || 0 };
+      values[id] = {
+        likes: Number(stat.likes) || 0,
+        likeUp: Number(stat.likeUp) || Math.max(0, Number(stat.likes) || 0),
+        likeDown: Number(stat.likeDown) || 0,
+        plays: Number(stat.plays) || 0,
+      };
     });
     if (!options.force && cached.at && Date.now() - Number(cached.at) < CACHE_MS) {
       return { values, cached: true };
@@ -263,11 +268,17 @@ window.WorkshopCommunity = (() => {
 
     const jobs = [];
     levels.forEach((entry) => {
-      values[entry.id] = values[entry.id] || { likes: 0, plays: 0 };
+      values[entry.id] = values[entry.id] || { likes: 0, likeUp: 0, likeDown: 0, plays: 0 };
       jobs.push(async () => {
-        try { values[entry.id].likes = await getCount('like', entry.code); } catch (e) { /* 保留缓存 */ }
-      });
-      jobs.push(async () => {
+        try {
+          const [up, down] = await Promise.all([
+            getCount('like', entry.code),
+            getCount('unlike', entry.code),
+          ]);
+          values[entry.id].likeUp = up;
+          values[entry.id].likeDown = down;
+          values[entry.id].likes = Math.max(0, up - down);
+        } catch (e) { /* 保留缓存 */ }
         try { values[entry.id].plays = await getCount('play', entry.code); } catch (e) { /* 保留缓存 */ }
       });
     });
@@ -295,7 +306,21 @@ window.WorkshopCommunity = (() => {
       const all = liked();
       all[entry.code] = Date.now();
       writeObject(LIKED_KEY, all);
-      return { ok: true, value };
+      return { ok: true, value, delta: 1 };
+    } catch (e) {
+      return { ok: false };
+    }
+  };
+
+  /** 取消点赞：公共接口没有直接减一权限，用独立的“撤回赞”计数器做净点赞数 */
+  const unlike = async (entry) => {
+    if (!isLiked(entry.code)) return { ok: true, already: true };
+    try {
+      const value = await hitCount('unlike', entry.code);
+      const all = liked();
+      delete all[entry.code];
+      writeObject(LIKED_KEY, all);
+      return { ok: true, value, delta: -1 };
     } catch (e) {
       return { ok: false };
     }
@@ -325,6 +350,7 @@ window.WorkshopCommunity = (() => {
     remoteState: () => remoteState,
     loadStats,
     like,
+    unlike,
     recordPlay,
     isLiked,
     isPlayed,

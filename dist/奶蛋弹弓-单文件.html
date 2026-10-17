@@ -401,6 +401,12 @@
   }
   #subStatus { min-height: 22px; margin-top: 8px; font-size: 12px; color: #9a8878; }
   #subStatus.bad { color: #c2410c; }
+  #submitDialog .subLabel {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    margin-top: 12px; color: #6b4a30; font-size: 12.5px; font-weight: 800; text-align: left;
+  }
+  #submitDialog .subLabel span { font-size: 10.5px; font-weight: 500; color: #a08b78; }
+  #submitDialog .subTip { margin: 8px 0 0; font-size: 10.5px; color: #a08b78; text-align: left; }
 
   /* 模式选择页：独立全屏背景，面板外也拦截点击，不能穿透到画布和 HUD */
   #titleScreen {
@@ -609,8 +615,11 @@
       <div class="panel">
         <h2>投稿到社区</h2>
         <p style="font-size:13px">不需要注册账号。填一个署名，关卡就会出现在大家的社区列表里。</p>
-        <input id="subLevelNameInput" maxlength="24" placeholder="关卡名" autocomplete="off" />
-        <input id="subAuthor" maxlength="30" placeholder="署名（留空就是匿名玩家）" autocomplete="nickname" />
+        <label class="subLabel" for="subLevelNameInput">关卡名 <span>1~24 字，公开展示</span></label>
+        <input id="subLevelNameInput" maxlength="24" placeholder="给关卡起个名字" autocomplete="off" />
+        <label class="subLabel" for="subAuthor">作者署名 <span>可选，最多 30 字</span></label>
+        <input id="subAuthor" maxlength="30" placeholder="例如：奶蛋工坊（留空显示匿名玩家）" autocomplete="nickname" />
+        <p class="subTip">请勿填写手机号、微信号、QQ、邮箱或网址；关卡名和署名会经过内容检查。</p>
         <p id="subStatus"></p>
         <div class="row">
           <button id="subSend">确认投稿</button>
@@ -1976,7 +1985,7 @@ window.WorkshopCommunity = (() => {
   const SUPABASE_REST = `${SUPABASE_URL}/rest/v1`;
   const API = 'https://abacus.jasoncameron.dev';
   const NAMESPACE = 'naidan-slingshot-20261017';
-  const CACHE_KEY = 'naidan-workshop-community-stats-v1';
+  const CACHE_KEY = 'naidan-workshop-community-stats-v2';
   const LIKED_KEY = 'naidan-workshop-liked-v1';
   const PLAYED_KEY = 'naidan-workshop-played-v1';
   const WEEKLY_KEY = 'naidan-workshop-weekly-v1';
@@ -2007,12 +2016,12 @@ window.WorkshopCommunity = (() => {
   };
   const counterKey = (kind, code) => `${kind}-${hash(String(code || ''))}`;
 
-  /** 公共接口限 30 次/10 秒；留 5 次余量给点赞/游玩，避免目录一长就整批 429 */
+  /** 公共接口限 30 次/10 秒；留 1 次余量，避免加载目录后立刻点赞时撞上 429 */
   const waitRateSlot = async () => {
     for (;;) {
       const now = Date.now();
       while (rateSlots.length && now - rateSlots[0] > 10000) rateSlots.shift();
-      if (rateSlots.length < 25) {
+      if (rateSlots.length < 29) {
         rateSlots.push(now);
         return;
       }
@@ -2221,7 +2230,12 @@ window.WorkshopCommunity = (() => {
     const cached = readObject(CACHE_KEY);
     const values = {};
     Object.entries(cached.values || {}).forEach(([id, stat]) => {
-      values[id] = { likes: Number(stat.likes) || 0, plays: Number(stat.plays) || 0 };
+      values[id] = {
+        likes: Number(stat.likes) || 0,
+        likeUp: Number(stat.likeUp) || Math.max(0, Number(stat.likes) || 0),
+        likeDown: Number(stat.likeDown) || 0,
+        plays: Number(stat.plays) || 0,
+      };
     });
     if (!options.force && cached.at && Date.now() - Number(cached.at) < CACHE_MS) {
       return { values, cached: true };
@@ -2229,11 +2243,17 @@ window.WorkshopCommunity = (() => {
 
     const jobs = [];
     levels.forEach((entry) => {
-      values[entry.id] = values[entry.id] || { likes: 0, plays: 0 };
+      values[entry.id] = values[entry.id] || { likes: 0, likeUp: 0, likeDown: 0, plays: 0 };
       jobs.push(async () => {
-        try { values[entry.id].likes = await getCount('like', entry.code); } catch (e) { /* 保留缓存 */ }
-      });
-      jobs.push(async () => {
+        try {
+          const [up, down] = await Promise.all([
+            getCount('like', entry.code),
+            getCount('unlike', entry.code),
+          ]);
+          values[entry.id].likeUp = up;
+          values[entry.id].likeDown = down;
+          values[entry.id].likes = Math.max(0, up - down);
+        } catch (e) { /* 保留缓存 */ }
         try { values[entry.id].plays = await getCount('play', entry.code); } catch (e) { /* 保留缓存 */ }
       });
     });
@@ -2261,7 +2281,21 @@ window.WorkshopCommunity = (() => {
       const all = liked();
       all[entry.code] = Date.now();
       writeObject(LIKED_KEY, all);
-      return { ok: true, value };
+      return { ok: true, value, delta: 1 };
+    } catch (e) {
+      return { ok: false };
+    }
+  };
+
+  /** 取消点赞：公共接口没有直接减一权限，用独立的“撤回赞”计数器做净点赞数 */
+  const unlike = async (entry) => {
+    if (!isLiked(entry.code)) return { ok: true, already: true };
+    try {
+      const value = await hitCount('unlike', entry.code);
+      const all = liked();
+      delete all[entry.code];
+      writeObject(LIKED_KEY, all);
+      return { ok: true, value, delta: -1 };
     } catch (e) {
       return { ok: false };
     }
@@ -2291,6 +2325,7 @@ window.WorkshopCommunity = (() => {
     remoteState: () => remoteState,
     loadStats,
     like,
+    unlike,
     recordPlay,
     isLiked,
     isPlayed,
@@ -2549,7 +2584,7 @@ window.WorkshopCommunity = (() => {
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 投稿时修改关卡名';
+  const BUILD = '2026-10-17 · 点赞切换与投稿提示';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -5574,21 +5609,24 @@ window.WorkshopCommunity = (() => {
     const already = window.WorkshopCommunity.isLiked(entry.code);
     like.className = `wkLike${already ? ' liked' : ''}`;
     like.textContent = `♥ ${fmtCount(stat.likes)}`;
-    like.title = already ? '已经点过赞了' : '给这张图点个赞';
-    like.disabled = already;
+    like.title = already ? '再点一次取消点赞' : '给这张图点个赞';
     like.addEventListener('click', async () => {
       if (like.disabled) return;
       like.disabled = true;
-      const res = await window.WorkshopCommunity.like(entry);
+      const wasLiked = window.WorkshopCommunity.isLiked(entry.code);
+      const res = wasLiked
+        ? await window.WorkshopCommunity.unlike(entry)
+        : await window.WorkshopCommunity.like(entry);
       if (!res.ok) {
         like.disabled = false;
-        toast('点赞服务暂时不可用，稍后再试', 1900);
+        toast(wasLiked ? '取消点赞失败，稍后再试' : '点赞服务暂时不可用，稍后再试', 1900);
         return;
       }
-      const next = Number.isFinite(res.value) ? res.value : communityStat(entry).likes + 1;
+      const delta = Number(res.delta) || (wasLiked ? -1 : 1);
+      const next = Math.max(0, communityStat(entry).likes + delta);
       wkStats[entry.id] = { ...communityStat(entry), likes: next };
       renderCommunity();
-      toast('谢谢点赞！', 1200);
+      toast(wasLiked ? '已取消点赞' : '谢谢点赞！', 1200);
     });
     foot.append(play, like);
     body.append(title, author, meta, counts, foot);

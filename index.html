@@ -401,6 +401,12 @@
   }
   #subStatus { min-height: 22px; margin-top: 8px; font-size: 12px; color: #9a8878; }
   #subStatus.bad { color: #c2410c; }
+  #submitDialog .subLabel {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    margin-top: 12px; color: #6b4a30; font-size: 12.5px; font-weight: 800; text-align: left;
+  }
+  #submitDialog .subLabel span { font-size: 10.5px; font-weight: 500; color: #a08b78; }
+  #submitDialog .subTip { margin: 8px 0 0; font-size: 10.5px; color: #a08b78; text-align: left; }
 
   /* 模式选择页：独立全屏背景，面板外也拦截点击，不能穿透到画布和 HUD */
   #titleScreen {
@@ -609,8 +615,11 @@
       <div class="panel">
         <h2>投稿到社区</h2>
         <p style="font-size:13px">不需要注册账号。填一个署名，关卡就会出现在大家的社区列表里。</p>
-        <input id="subLevelNameInput" maxlength="24" placeholder="关卡名" autocomplete="off" />
-        <input id="subAuthor" maxlength="30" placeholder="署名（留空就是匿名玩家）" autocomplete="nickname" />
+        <label class="subLabel" for="subLevelNameInput">关卡名 <span>1~24 字，公开展示</span></label>
+        <input id="subLevelNameInput" maxlength="24" placeholder="给关卡起个名字" autocomplete="off" />
+        <label class="subLabel" for="subAuthor">作者署名 <span>可选，最多 30 字</span></label>
+        <input id="subAuthor" maxlength="30" placeholder="例如：奶蛋工坊（留空显示匿名玩家）" autocomplete="nickname" />
+        <p class="subTip">请勿填写手机号、微信号、QQ、邮箱或网址；关卡名和署名会经过内容检查。</p>
         <p id="subStatus"></p>
         <div class="row">
           <button id="subSend">确认投稿</button>
