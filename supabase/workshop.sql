@@ -41,3 +41,53 @@ create policy "workshop anonymous insert"
 
 revoke all on table public.workshop_levels from anon, authenticated;
 grant select, insert on table public.workshop_levels to anon, authenticated;
+
+-- 关卡名 / 玩家署名的服务端兜底过滤。
+-- 网页端先提示，这里负责拦住绕过网页直接调用 REST API 的请求。
+create or replace function public.workshop_text_blocked(input text)
+returns boolean
+language plpgsql
+immutable
+as $$
+declare
+  raw text := lower(coalesce(input, ''));
+  compact text;
+begin
+  compact := regexp_replace(raw, '[\s\-_.·•*~|/\\]+', '', 'g');
+  compact := translate(compact, '013457@$', 'oieastas');
+
+  if compact ~ '(傻逼|煞笔|沙比|操你妈|草你妈|你妈死了|死全家|婊子|贱人|杂种|狗东西|去死吧|支那|黑鬼|尼哥|强奸|轮奸|迷奸|恋童|儿童色情|幼女|裸聊|约炮|嫖娼|卖淫|色情|成人视频|黄片|制毒|贩毒|冰毒|海洛因|炸弹制作|造枪|卖枪|枪支交易|恐怖袭击|杀人教程|买凶|博彩|网赌|赌博网站|代开发票|刷单|兼职日结|贷款秒批|办证|代孕|卖肾|器官买卖|洗钱|加微信|加qq|扫码返利)' then
+    return true;
+  end if;
+  if raw ~ '(https?://|www\.)' or raw ~ '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}' then
+    return true;
+  end if;
+  if raw ~ '(^|[^0-9])1[3-9][0-9]{9}([^0-9]|$)' then
+    return true;
+  end if;
+  if raw ~ '(微信|weixin|vx|v信|qq|扣扣)[[:space:]]*[:：]?[[:space:]]*[a-z0-9_-]{5,}' then
+    return true;
+  end if;
+  return false;
+end;
+$$;
+
+create or replace function public.workshop_levels_moderate()
+returns trigger
+language plpgsql
+as $$
+begin
+  if public.workshop_text_blocked(new.name) then
+    raise exception '关卡名包含违禁词或广告联系方式' using errcode = '23514';
+  end if;
+  if public.workshop_text_blocked(new.author) then
+    raise exception '用户名包含违禁词或广告联系方式' using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists workshop_levels_moderate_trigger on public.workshop_levels;
+create trigger workshop_levels_moderate_trigger
+  before insert or update on public.workshop_levels
+  for each row execute function public.workshop_levels_moderate();

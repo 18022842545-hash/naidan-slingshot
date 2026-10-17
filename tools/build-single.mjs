@@ -50,6 +50,7 @@ const main = async () => {
     `<script>window.INLINE_ASSETS=${JSON.stringify(assets)};window.INLINE_AUDIO=${JSON.stringify(audio)};</script>`;
   html = html.replace('<script src="js/levels.js"></script>', assetScript + '\n  ' + (await inline('js/levels.js')));
   html = html.replace('<script src="js/workshop.js"></script>', await inline('js/workshop.js'));
+  html = html.replace('<script src="js/moderation.js"></script>', await inline('js/moderation.js'));
   html = html.replace('<script src="workshop/levels.js"></script>', await inline('workshop/levels.js'));
   html = html.replace(
     '<script src="js/community.js"></script>',

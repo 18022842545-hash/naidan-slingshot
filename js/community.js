@@ -180,11 +180,12 @@ window.WorkshopCommunity = (() => {
       });
       if (res.status === 409) return { ok: false, duplicate: true, error: '这张关卡已经在社区里了' };
       if (!res.ok) {
+        const message = await supabaseError(res);
         remoteState = res.status === 404 ? 'missing' : 'error';
         return {
           ok: false,
           setup: res.status === 404 || res.status === 401 || res.status === 403,
-          error: await supabaseError(res),
+          error: /违禁|广告联系方式/.test(message) ? '关卡名或用户名包含违禁词/广告联系方式' : message,
         };
       }
       const rows = await res.json();

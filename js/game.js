@@ -236,7 +236,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 匿名社区工坊';
+  const BUILD = '2026-10-17 · 匿名工坊（内容过滤）';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3028,16 +3028,26 @@
   // "试玩通关"的那一份关卡（分享码即指纹）：内容一改就对不上，得重新通关才允许发布
   let passedCode = null;
   const gateOpen = () => !!(editor && passedCode && window.WorkshopLevel.pack(editor.def) === passedCode);
+  const moderation = (text) => window.WorkshopModeration.check(text);
+  const editorErrors = () => {
+    if (!editor) return [];
+    const errs = window.WorkshopLevel.validate(editor.def).slice();
+    const nameCheck = moderation(editor.def.name);
+    if (!nameCheck.ok) errs.push(`关卡名${nameCheck.reason}`);
+    return errs;
+  };
   /** 只刷新状态栏和发布按钮：改关卡名时光标不能因为重设 input.value 跳到末尾 */
   const refreshPublishState = () => {
     if (!editor) return;
-    const errs = window.WorkshopLevel.validate(editor.def);
+    const errs = editorErrors();
     const warns = window.WorkshopLevel.warnings(editor.def);
     const passed = gateOpen();
     el.edStatus.textContent = errs.length
       ? `⚠️ ${errs[0]}${errs.length > 1 ? `（还有 ${errs.length - 1} 处）` : ''}`
       : `✅ 可以玩了${warns.length ? ` · ${warns[0]}` : ''}${passed ? '' : ' · 发布前需试玩通关'}`;
     el.edStatus.classList.toggle('bad', errs.length > 0);
+    el.edPlay.disabled = errs.length > 0;
+    el.edPlay.style.opacity = errs.length ? 0.45 : 1;
     el.edShare.disabled = errs.length > 0 || !passed;
     el.edShare.style.opacity = errs.length > 0 || !passed ? 0.45 : 1;
     el.edShare.title = passed ? '把链接发给别人' : '先试玩通关，才能发布';
@@ -3328,6 +3338,11 @@
   const shareLink = (def) => `${location.href.split('#')[0]}#level=${window.WorkshopLevel.pack(def)}`;
   /** 匿名投稿：只需要一个公开的 Supabase publishable key，不打开外部页面 */
   const openWorkshopSubmit = (def) => {
+    const nameCheck = moderation(def.name);
+    if (!nameCheck.ok) {
+      toast(`关卡名${nameCheck.reason}`, 2400);
+      return;
+    }
     submitDef = window.WorkshopLevel.normalize(def);
     el.subLevelName.textContent = submitDef.name;
     try { el.subAuthor.value = localStorage.getItem('naidan-workshop-author') || ''; } catch (e) { el.subAuthor.value = ''; }
@@ -3430,7 +3445,7 @@
     el.edBirdsBtn.title = window.WorkshopLevel.BIRDS.filter((k) => counts[k])
       .map((k) => `${(window.BIRDS[k] || {}).name || k}${counts[k] > 1 ? '×' + counts[k] : ''}`)
       .join(' · ') || '选奶蛋';
-    const errs = window.WorkshopLevel.validate(editor.def);
+    const errs = editorErrors();
     el.edPlay.disabled = errs.length > 0;
     el.edPlay.style.opacity = errs.length ? 0.45 : 1;
     refreshPublishState();
@@ -3655,7 +3670,7 @@
   window.addEventListener('hashchange', () => openSharedLink(true));
   const playtest = () => {
     if (!editor) return;
-    const errs = window.WorkshopLevel.validate(editor.def);
+    const errs = editorErrors();
     if (errs.length) { toast(errs[0], 2200); return; }
     persistDraft();
     startCustom(editor.def, { preview: true, fromEditor: true });
@@ -3724,6 +3739,14 @@
     el.subStatus.textContent = '';
     el.subStatus.classList.remove('bad');
     const author = el.subAuthor.value.trim().slice(0, 30);
+    const authorCheck = moderation(author || '匿名玩家');
+    if (!authorCheck.ok) {
+      el.subStatus.classList.add('bad');
+      el.subStatus.textContent = `用户名${authorCheck.reason}`;
+      el.subSend.disabled = false;
+      el.subSend.textContent = '确认投稿';
+      return;
+    }
     const res = await window.WorkshopCommunity.submitLevel(submitDef, author);
     if (res.ok) {
       try { localStorage.setItem('naidan-workshop-author', author || '匿名玩家'); } catch (e) { /* 隐私模式 */ }
@@ -3870,7 +3893,7 @@
   el.edPlay.addEventListener('click', playtest);
   el.edShare.addEventListener('click', () => {
     if (!editor) return;
-    if (window.WorkshopLevel.validate(editor.def).length) { toast('先把关卡改到能玩', 1800); return; }
+    if (editorErrors().length) { toast(editorErrors()[0], 2200); return; }
     if (!gateOpen()) { toast('先点「试玩」通关一次，才能发布链接', 2200); return; }
     copyText(shareLink(editor.def), '发布链接已复制');
   });
@@ -3932,7 +3955,7 @@
         stages: editor.def.launchPoints.length,
         birds: editor.def.birds.length,
         pigStages: editor.def.pigs.map((p) => p.stage),
-        errors: window.WorkshopLevel.validate(editor.def),
+        errors: editorErrors(),
         selected: editor.selected,
         undo: editor.undo.length,
         redo: editor.redo.length,
@@ -3941,7 +3964,15 @@
       setMaterial: (m) => { if (editor) { editor.material = m; syncEditorUI(); } return editor && editor.material; },
       setSize: (s) => { if (editor) { editor.size = s; syncEditorUI(); } return editor && editor.size; },
       setBonus: (b) => { if (editor) { editor.bonus = !!b; syncEditorUI(); } return editor && editor.bonus; },
-      setName: (n) => { if (editor) { editor.def.name = String(n).slice(0, 24); el.edName.value = editor.def.name; persistDraft(); } return editor && editor.def.name; },
+      setName: (n) => {
+        if (editor) {
+          editor.def.name = String(n).slice(0, 24);
+          el.edName.value = editor.def.name;
+          persistDraft();
+          refreshPublishState();
+        }
+        return editor && editor.def.name;
+      },
       setStages: (n) => { setStages(n); return editor && editor.def.launchPoints.length; },
       /** 直接设置阵容，例如 { naidan: 2, bomb: 1 } */
       setRoster: (counts) => { const ok = setRoster(counts || {}); return ok ? editor.def.birds.slice() : false; },

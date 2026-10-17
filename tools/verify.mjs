@@ -1536,6 +1536,16 @@ const main = async () => {
       await wait(220);
       W.create();
       const starter = W.info();
+      const moderationProbe = {
+        clean: window.WorkshopModeration.checkName('门洞午睡').ok,
+        bad: window.WorkshopModeration.checkName('傻逼关卡').ok,
+        spaced: window.WorkshopModeration.checkName('傻 逼 关 卡').ok,
+        ad: window.WorkshopModeration.checkAuthor('加微信 abcdef').ok,
+      };
+      W.setName('傻逼关卡');
+      const badNameErrors = W.info().errors;
+      const badNamePlayDisabled = document.getElementById('edPlay').disabled;
+      W.setName('我的关卡');
       W.setTool('block'); W.setMaterial('ice'); W.setSize('l');
       W.tap(1300, 560);
       W.setTool('pig'); W.setBonus(true);
@@ -1587,6 +1597,10 @@ const main = async () => {
       document.getElementById('edSubmit').click();
       await wait(80);
       const submitShown = !document.getElementById('submitDialog').classList.contains('hide');
+      document.getElementById('subAuthor').value = '傻逼';
+      document.getElementById('subSend').click();
+      await wait(180);
+      const badAuthorStatus = document.getElementById('subStatus').textContent;
       document.getElementById('subAuthor').value = '匿名测试员';
       document.getElementById('subSend').click();
       for (let i = 0; i < 40; i++) {
@@ -1610,6 +1624,9 @@ const main = async () => {
       const gateAfterEdit = W.gateOpen();
       return {
         hub,
+        moderationProbe,
+        badNameErrors,
+        badNamePlayDisabled,
         community: {
           state: communityBefore.state,
           count: communityBefore.entries.length,
@@ -1639,7 +1656,7 @@ const main = async () => {
         unpackOk: !!unpacked && unpacked.blocks.length === placed.blocks && unpacked.pigs.length === placed.pigs,
         undoPigs, redoPigs,
         gateBefore, publishBefore, gateAfterBack, gateAfterWin, gateInEditor, published,
-        submitShown, submitStatus, remoteState: submittedCommunity.remoteState, submittedEntry,
+        submitShown, badAuthorStatus, submitStatus, remoteState: submittedCommunity.remoteState, submittedEntry,
         gateAfterRename, publishDisabledAfterRename, submitDisabledAfterRename, gateAfterEdit,
         hudBackShown, hudBackState,
         playing: {
@@ -1652,6 +1669,13 @@ const main = async () => {
     });
     report.workshop = wk;
     if (wk.hub !== 'workshop') problems.push('创意工坊打不开');
+    if (!(wk.moderationProbe.clean && !wk.moderationProbe.bad && !wk.moderationProbe.spaced && !wk.moderationProbe.ad)) {
+      problems.push(`违禁词基础判断不对：${JSON.stringify(wk.moderationProbe)}`);
+    }
+    if (!wk.badNameErrors.some((e) => e.includes('关卡名') && e.includes('违禁'))) {
+      problems.push(`违禁关卡名没有进入编辑器错误列表（${wk.badNameErrors.join('、')}）`);
+    }
+    if (!wk.badNamePlayDisabled) problems.push('关卡名含违禁词时“试玩”按钮没有禁用');
     if (wk.community.state !== 'ready' || wk.community.count < 6) {
       problems.push(`社区关卡没加载出来（${wk.community.state}，${wk.community.count} 张）`);
     }
@@ -1695,6 +1719,9 @@ const main = async () => {
     if (!wk.gateAfterWin) problems.push('试玩通关之后没有拿到发布资格');
     if (!wk.gateInEditor || !wk.published) problems.push('通关回编辑器之后"发布链接"还是不可用');
     if (!wk.submitShown) problems.push('“投稿到工坊”没有打开匿名投稿面板');
+    if (!wk.badAuthorStatus.includes('用户名') || !wk.badAuthorStatus.includes('违禁')) {
+      problems.push(`违禁用户名没有被投稿面板拦住（${wk.badAuthorStatus}）`);
+    }
     if (wk.remoteState !== 'ready') problems.push(`Supabase 社区目录状态不对（${wk.remoteState}）`);
     if (!wk.submittedEntry || wk.submittedEntry.author !== '匿名测试员') problems.push('匿名投稿成功后社区目录里没有这张关卡');
     if (!wk.submitStatus.includes('投稿成功')) problems.push(`匿名投稿状态没有成功提示（${wk.submitStatus}）`);
