@@ -1461,6 +1461,48 @@ const main = async () => {
     if (endlessResume.pausedBirdX !== endlessResume.flyingX) problems.push('退出期间飞行中的奶蛋仍在移动（没有真正暂停）');
     if (!(endlessResume.resumedBirdX > endlessResume.pausedBirdX)) problems.push('继续之后奶蛋没有恢复飞行');
 
+    // ---------------------------------------------------------- 无尽模式：右上角刷新先确认
+    const restartConfirm = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      window.__nai.loadEndless(5, 2026);
+      window.__nai.skipIntro();
+      await window.__still();
+      document.getElementById('btnRestart').click();
+      await wait(120);
+      const opened = {
+        state: window.__nai.state().state,
+        level: window.__nai.state().endlessLevel,
+        dialog: !document.getElementById('restartDialog').classList.contains('hide'),
+      };
+      document.getElementById('btnRestartCancel').click();
+      await wait(120);
+      const cancelled = {
+        state: window.__nai.state().state,
+        level: window.__nai.state().endlessLevel,
+        dialog: !document.getElementById('restartDialog').classList.contains('hide'),
+      };
+      document.getElementById('btnRestart').click();
+      await wait(80);
+      document.getElementById('btnRestartConfirm').click();
+      await wait(320);
+      const confirmed = {
+        state: window.__nai.state().state,
+        level: window.__nai.state().endlessLevel,
+        dialog: !document.getElementById('restartDialog').classList.contains('hide'),
+      };
+      return { opened, cancelled, confirmed };
+    });
+    report.restartConfirm = restartConfirm;
+    if (restartConfirm.opened.state !== 'restartConfirm' || !restartConfirm.opened.dialog || restartConfirm.opened.level !== 5) {
+      problems.push('无尽模式点刷新没有先弹出重开确认');
+    }
+    if (restartConfirm.cancelled.state !== 'aim' || restartConfirm.cancelled.level !== 5 || restartConfirm.cancelled.dialog) {
+      problems.push('取消重开后没有回到原关卡局面');
+    }
+    if (restartConfirm.confirmed.level !== 1 || restartConfirm.confirmed.dialog) {
+      problems.push('确认重开后没有从第 1 关开始');
+    }
+
     // ---------------------------------------------------------- 无尽模式：推进与失败
     const endlessFlow = await page.evaluate(async () => {
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));

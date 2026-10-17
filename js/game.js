@@ -207,6 +207,9 @@
     subStatus: document.getElementById('subStatus'),
     subSend: document.getElementById('subSend'),
     subCancel: document.getElementById('subCancel'),
+    restartDialog: document.getElementById('restartDialog'),
+    btnRestartConfirm: document.getElementById('btnRestartConfirm'),
+    btnRestartCancel: document.getElementById('btnRestartCancel'),
     btnExitLevel: document.getElementById('btnExitLevel'),
     edToolBlock: document.getElementById('edToolBlock'),
     edToolPig: document.getElementById('edToolPig'),
@@ -248,8 +251,8 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 点赞即时切换';
-  let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
+  const BUILD = '2026-10-17 · 无尽重开确认';
+  let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | restartConfirm | over
   let score = 0;
   let birdsLeft = 0;
   let birdQueue = [];      // 还没上弓的奶蛋类型
@@ -273,6 +276,8 @@
   let endlessResume = null;   // 中途退出无尽时的暂停点（同一页面内恢复）
   let resumePaused = false;
   let pausedCallbacks = [];
+  let restartPrevState = null;
+  let restartUiPaused = false;
   let intro = null;        // 开场动画时间轴
   let lightning = 0;       // boss 关的闪电亮度
   let lightningTimer = 4200;
@@ -308,7 +313,7 @@
     const token = levelToken;
     setTimeout(() => {
       if (token !== levelToken) return;
-      if (resumePaused) { pausedCallbacks.push({ token, fn }); return; }
+      if (resumePaused || restartUiPaused) { pausedCallbacks.push({ token, fn }); return; }
       fn();
     }, ms);
   };
@@ -1494,6 +1499,37 @@
     if (el.btnResumeEndless) el.btnResumeEndless.classList.add('hide');
   };
 
+  const openRestartConfirm = () => {
+    if (restartPrevState || state === 'title') return false;
+    restartPrevState = state;
+    restartUiPaused = true;
+    state = 'restartConfirm';
+    el.restartDialog.classList.remove('hide');
+    return true;
+  };
+
+  const closeRestartConfirm = (confirmed = false) => {
+    if (!restartPrevState) return false;
+    const target = restartPrevState;
+    restartPrevState = null;
+    restartUiPaused = false;
+    el.restartDialog.classList.add('hide');
+    if (confirmed) {
+      pausedCallbacks = [];
+      state = target;
+      startRun('endless');
+      return true;
+    }
+    state = target;
+    const queued = pausedCallbacks;
+    pausedCallbacks = [];
+    queued.forEach((item) => {
+      if (item.token === levelToken) item.fn();
+    });
+    updateExitButton();
+    return true;
+  };
+
   /**
    * 无尽模式中途退出：不重建世界，也不丢当前局面。
    * 物理在 state='title' 时本来就会暂停；把暂停期间到点的回合回调排队，继续时再执行。
@@ -1918,9 +1954,11 @@
   el.btnBackMenu.addEventListener('click', backToMenu);
   el.btnRestart.addEventListener('click', () => {
     if (state === 'title' || state === 'pick') return;
-    if (mode === 'endless') startRun('endless');
+    if (mode === 'endless') openRestartConfirm();
     else restart();
   });
+  el.btnRestartCancel.addEventListener('click', () => closeRestartConfirm(false));
+  el.btnRestartConfirm.addEventListener('click', () => closeRestartConfirm(true));
   el.btnSound.addEventListener('click', () => {
     if (state === 'pick') return;
     const m = AudioKit.toggle();
@@ -1947,9 +1985,13 @@
     }
     if (state === 'workshop') return;
     if (state === 'pick') return;
+    if (state === 'restartConfirm') {
+      if (e.key === 'Escape') closeRestartConfirm(false);
+      return;
+    }
     if (e.key === 'r' || e.key === 'R') {
       if (state === 'title') return;
-      if (mode === 'endless') startRun('endless');
+      if (mode === 'endless') openRestartConfirm();
       else restart();
     }
     if (e.key === 'Enter' && state === 'title') {
@@ -1972,7 +2014,7 @@
   // ---------------------------------------------------------------- 每帧逻辑
   const step = () => {
     timeMs += STEP;
-    if (state === 'edit' || state === 'workshop') return;   // 工坊/编辑器里不跑物理，画面是静态摆位
+    if (state === 'edit' || state === 'workshop' || state === 'restartConfirm') return;
     Engine.update(engine, STEP);
     blinkTimer += STEP;
     if (blinkTimer > 2600) {
