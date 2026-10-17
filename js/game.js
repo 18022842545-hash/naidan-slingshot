@@ -146,8 +146,10 @@
     btnRestart: document.getElementById('btnRestart'),
     btnSound: document.getElementById('btnSound'),
     btnEndless: document.getElementById('btnEndless'),
+    btnResumeEndless: document.getElementById('btnResumeEndless'),
     btnBackMenu: document.getElementById('btnBackMenu'),
     btnBackEditor: document.getElementById('btnBackEditor'),
+    btnEndWorkshop: document.getElementById('btnEndWorkshop'),
     // 创意工坊
     workshop: document.getElementById('workshopScreen'),
     wkDrafts: document.getElementById('wkDrafts'),
@@ -197,7 +199,7 @@
     subStatus: document.getElementById('subStatus'),
     subSend: document.getElementById('subSend'),
     subCancel: document.getElementById('subCancel'),
-    btnToEditor: document.getElementById('btnToEditor'),
+    btnExitLevel: document.getElementById('btnExitLevel'),
     edToolBlock: document.getElementById('edToolBlock'),
     edToolPig: document.getElementById('edToolPig'),
     edToolMove: document.getElementById('edToolMove'),
@@ -236,7 +238,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 匿名工坊（内容过滤）';
+  const BUILD = '2026-10-17 · 返回与无尽续关';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -258,6 +260,9 @@
   let levelStartScore = 0; // 进这一关时的分数（重打 boss 关要退回）
   let bossRetryUsed = false; // boss 关的重打机会用掉了没
   let retryPending = false;  // 结算面板上点"再来一次"是重打 boss 关
+  let endlessResume = null;   // 中途退出无尽时的暂停点（同一页面内恢复）
+  let resumePaused = false;
+  let pausedCallbacks = [];
   let intro = null;        // 开场动画时间轴
   let lightning = 0;       // boss 关的闪电亮度
   let lightningTimer = 4200;
@@ -291,7 +296,11 @@
   /** 只在同一关内生效的延后回调（防止重开后上一关的定时器把流程搅乱） */
   const afterDelay = (ms, fn) => {
     const token = levelToken;
-    setTimeout(() => { if (token === levelToken) fn(); }, ms);
+    setTimeout(() => {
+      if (token !== levelToken) return;
+      if (resumePaused) { pausedCallbacks.push({ token, fn }); return; }
+      fn();
+    }, ms);
   };
   // ---------------------------------------------------------------- 画布尺寸
   const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -1381,6 +1390,7 @@
     el.end.classList.remove('hide');
     // 从编辑器点"试玩"进来的，结算面板给一个"回编辑器"
     el.btnBackEditor.classList.toggle('hide', !cameFromEditor);
+    el.btnEndWorkshop.classList.toggle('hide', !(mode === 'custom' && !cameFromEditor));
     if (custom) {
       el.endTitle.textContent = custom.title;
       el.endStars.textContent = '';
@@ -1453,12 +1463,77 @@
     updateAmmo();
   };
 
+  const updateExitButton = () => {
+    const inLevel = ['pick', 'intro', 'aim', 'fly', 'settling', 'clearing'].includes(state);
+    el.btnExitLevel.classList.toggle('hide', !inLevel);
+    if (!inLevel) return;
+    if (mode === 'custom') {
+      el.btnExitLevel.textContent = cameFromEditor ? '← 编辑器' : '← 创意工坊';
+      el.btnExitLevel.title = cameFromEditor ? '返回编辑器' : '返回创意工坊';
+    } else {
+      el.btnExitLevel.textContent = '← 主菜单';
+      el.btnExitLevel.title = '返回主菜单';
+    }
+  };
+
+  const clearEndlessResume = () => {
+    endlessResume = null;
+    resumePaused = false;
+    pausedCallbacks = [];
+    if (el.btnResumeEndless) el.btnResumeEndless.classList.add('hide');
+  };
+
+  /**
+   * 无尽模式中途退出：不重建世界，也不丢当前局面。
+   * 物理在 state='title' 时本来就会暂停；把暂停期间到点的回合回调排队，继续时再执行。
+   */
+  const pauseEndlessToMenu = () => {
+    if (mode !== 'endless') return false;
+    endlessResume = {
+      state,
+      level: endlessLevel,
+      birdsLeft,
+    };
+    resumePaused = true;
+    AudioKit.flyStop();
+    el.end.classList.add('hide');
+    el.title.classList.remove('hide');
+    el.hud.classList.add('hide');
+    el.btnExitLevel.classList.add('hide');
+    el.btnResumeEndless.textContent = `继续无尽 · 第 ${endlessLevel} 关`;
+    el.btnResumeEndless.classList.remove('hide');
+    state = 'title';
+    return true;
+  };
+
+  const resumeEndlessRun = () => {
+    if (!endlessResume) return false;
+    const target = endlessResume.state;
+    endlessResume = null;
+    resumePaused = false;
+    el.btnResumeEndless.classList.add('hide');
+    el.title.classList.add('hide');
+    el.end.classList.add('hide');
+    el.hud.classList.remove('hide');
+    state = target;
+    updateLevelChip();
+    updateScore();
+    updateExitButton();
+    const queued = pausedCallbacks;
+    pausedCallbacks = [];
+    queued.forEach((item) => {
+      if (item.token === levelToken) item.fn();
+    });
+    toast(`继续第 ${endlessLevel} 关`, 1500);
+    return true;
+  };
+
   /** auto=true 时跳过"开局选蛋"面板（调试/自动流程用） */
   const startRun = (which, auto = false) => {
+    clearEndlessResume();
     AudioKit.unlock();
     mode = which;
     el.hud.classList.remove('hide');
-    el.btnToEditor.classList.add('hide');
     el.title.classList.add('hide');
     el.end.classList.add('hide');
     el.endStars.textContent = '';
@@ -1478,6 +1553,7 @@
     } else {
       promptPick(window.LEVEL1, { quick: false, auto, ask: true });
     }
+    updateExitButton();
   };
 
   const nextEndlessLevel = () => {
@@ -1512,9 +1588,10 @@
   };
 
   const backToMenu = () => {
+    clearEndlessResume();
     el.end.classList.add('hide');
     el.title.classList.remove('hide');
-    el.btnToEditor.classList.add('hide');
+    el.btnExitLevel.classList.add('hide');
     state = 'title';
     AudioKit.flyStop();
     buildLevel(window.LEVEL1);
@@ -1811,6 +1888,7 @@
 
   el.btnWorkshop.addEventListener('click', () => openWorkshop());
   el.btnEndless.addEventListener('click', () => startRun('endless'));
+  el.btnResumeEndless.addEventListener('click', () => resumeEndlessRun());
   el.btnAgain.addEventListener('click', () => {
     if (retryPending) {
       // 重打 boss 关：用同一份关卡数据重建，布局完全一样，分数退回进关时
@@ -1855,7 +1933,10 @@
       if (mode === 'endless') startRun('endless');
       else restart();
     }
-    if (e.key === 'Enter' && state === 'title') startRun('level1');
+    if (e.key === 'Enter' && state === 'title') {
+      if (endlessResume) resumeEndlessRun();
+      else startRun('endless');
+    }
     if ((e.key === ' ' || e.key === 'Spacebar') && state !== 'title') {
       e.preventDefault();
       if (state === 'intro') skipIntro();
@@ -3015,6 +3096,7 @@
   let editor = null;          // 编辑器状态
   let cameFromEditor = false; // 从编辑器点"试玩"进来的 → 结算面板给一个"回编辑器"
   let customDef = null;       // 当前在玩的自制关卡
+  let customSource = 'community'; // editor | community | share
   let shareBox = null;
   let wkEntries = [];         // 社区关卡（目录 + 解出来的 def）
   let wkStats = {};           // id → { likes, plays }
@@ -3157,7 +3239,7 @@
           renderCommunity();
         }
       });
-      startCustom(entry.def, {});
+      startCustom(entry.def, { source: 'community' });
       toast(`社区关卡：${entry.name}`, 1800);
     });
     const like = document.createElement('button');
@@ -3378,6 +3460,7 @@
   };
 
   const openWorkshop = () => {
+    clearEndlessResume();
     AudioKit.unlock();
     AudioKit.ready();
     el.title.classList.add('hide');
@@ -3392,7 +3475,7 @@
     el.pick.classList.add('hide');
     el.hint.classList.add('hide');
     el.hud.classList.add('hide');
-    el.btnToEditor.classList.add('hide');
+    el.btnExitLevel.classList.add('hide');
     renderDrafts();
     setWorkshopTab('community');
   };
@@ -3453,6 +3536,7 @@
     el.edRedo.classList.toggle('ghost', !editor.redo.length);
   };
   const openEditor = (def, opts = {}) => {
+    clearEndlessResume();
     passedCode = opts.passed || null;
     editor = {
       def: window.WorkshopLevel.normalize(def || starterLevel()),
@@ -3465,6 +3549,7 @@
     el.editor.classList.remove('hide');
     if (shareBox) shareBox.classList.add('hide');
     el.hint.classList.add('hide');
+    el.btnExitLevel.classList.add('hide');
     state = 'edit';
     rebuildEditorScene();
     // 编辑时的视野：别为了塞下整张图把镜头缩到看不清——保持 0.8~1 倍，
@@ -3626,9 +3711,11 @@
 
   /** 开始玩一份自制关卡：用作者配置的最终阵容，不弹开局选蛋；preview 时连开场一起跳过 */
   const startCustom = (def, opts = {}) => {
+    clearEndlessResume();
     customDef = window.WorkshopLevel.normalize(def);
     mode = 'custom';
-    cameFromEditor = !!opts.fromEditor;
+    customSource = opts.source || (opts.fromEditor ? 'editor' : 'community');
+    cameFromEditor = customSource === 'editor';
     el.hud.classList.remove('hide');
     el.workshop.classList.add('hide');
     el.editor.classList.add('hide');
@@ -3642,7 +3729,7 @@
     updateScore();
     promptPick(customDef, { quick: true, silent: !!opts.preview, extra: false });
     updateLevelChip();
-    el.btnToEditor.classList.toggle('hide', !cameFromEditor);
+    updateExitButton();
   };
   /**
    * #level=… 分享码入口。首次打开和同页改 hash 都走这里——
@@ -3663,7 +3750,7 @@
       return false;
     }
     lastSharedCode = code;
-    startCustom(shared, {});
+    startCustom(shared, { source: 'share' });
     toast(`载入分享关卡：${shared.name}`, 2800);
     return true;
   };
@@ -3908,11 +3995,22 @@
     el.end.classList.add('hide');
     openEditor(customDef || window.LEVEL1, { passed: passedCode });
   });
-  // 试玩途中随时回编辑器（HUD 右上角的 ✎；只在"从编辑器进来"的自制关卡里出现）
-  el.btnToEditor.addEventListener('click', () => {
+  el.btnEndWorkshop.addEventListener('click', () => {
+    el.end.classList.add('hide');
+    openWorkshop();
+  });
+  // 关卡内通用返回：编辑器试玩 → 编辑器；社区/分享关卡 → 工坊；无尽 → 主菜单
+  el.btnExitLevel.addEventListener('click', () => {
     AudioKit.flyStop();
     el.end.classList.add('hide');
-    openEditor(customDef || window.LEVEL1, { passed: passedCode });
+    if (mode === 'custom') {
+      if (cameFromEditor) openEditor(customDef || window.LEVEL1, { passed: passedCode });
+      else openWorkshop();
+    } else if (mode === 'endless') {
+      pauseEndlessToMenu();
+    } else {
+      backToMenu();
+    }
   });
   window.__nai = {
     ready: true,
@@ -3999,6 +4097,11 @@
       mode,
       endlessLevel,
       matchSeed,
+      endlessResume: endlessResume ? {
+        state: endlessResume.state,
+        level: endlessResume.level,
+        birdsLeft: endlessResume.birdsLeft,
+      } : null,
       levelName: level.name,
       score,
       totalScore,
@@ -4199,6 +4302,7 @@
     endless: (n, seed) => window.Endless.generate(n, seed),
     /** 技能试验场：一块木头小墙 + 一只奶蛙，专门用来验证各种技能效果 */
     sandbox: (type) => {
+      clearEndlessResume();
       mode = 'level1';
       el.title.classList.add('hide');
       el.end.classList.add('hide');
@@ -4222,6 +4326,7 @@
     },
     /** 直接跳进无尽模式的第 n 关（指定种子，方便复现和自动化测试） */
     loadEndless: (n, seed) => {
+      clearEndlessResume();
       mode = 'endless';
       endlessLevel = n;
       matchSeed = seed;

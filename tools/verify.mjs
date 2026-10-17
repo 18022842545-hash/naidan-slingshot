@@ -1370,6 +1370,53 @@ const main = async () => {
     if (bossRetry.finalState !== 'over' || /还站着/.test(bossRetry.finalTitle)) problems.push('第二次失败之后还在给重打机会（应该结束整局）');
     await shot(page, '16-boss-retry.png');
 
+    // ---------------------------------------------------------- 无尽模式：中途退出后原局面继续
+    const endlessResume = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      window.__nai.loadEndless(5, 2026);
+      window.__nai.skipIntro();
+      await window.__still();
+      const before = window.__nai.state();
+      window.__nai.shoot(10, 1);
+      await wait(180);
+      const flying = window.__nai.state();
+      document.getElementById('btnExitLevel').click();
+      await wait(420);
+      const paused = window.__nai.state();
+      const pausedBird = paused.bird;
+      const resumeBtn = document.getElementById('btnResumeEndless');
+      const resumeShown = !resumeBtn.classList.contains('hide');
+      const resumeText = resumeBtn.textContent;
+      resumeBtn.click();
+      await wait(320);
+      const resumed = window.__nai.state();
+      return {
+        beforeLevel: before.endlessLevel,
+        beforeBirds: flying.birdsLeft,
+        flyingX: flying.bird && flying.bird.x,
+        pausedState: paused.state,
+        pausedLevel: paused.endlessLevel,
+        pausedBirdX: pausedBird && pausedBird.x,
+        resumeShown,
+        resumeText,
+        resumedState: resumed.state,
+        resumedLevel: resumed.endlessLevel,
+        resumedBirds: resumed.birdsLeft,
+        resumedBirdX: resumed.bird && resumed.bird.x,
+      };
+    });
+    report.endlessResume = endlessResume;
+    if (endlessResume.pausedState !== 'title') problems.push(`无尽中途退出没有回到主菜单（${endlessResume.pausedState}）`);
+    if (!endlessResume.resumeShown || !endlessResume.resumeText.includes('第 5 关')) {
+      problems.push(`主菜单没有显示继续第 5 关（${endlessResume.resumeText}）`);
+    }
+    if (endlessResume.pausedLevel !== 5 || endlessResume.resumedLevel !== 5) {
+      problems.push(`退出/继续后的关卡号不对（${endlessResume.pausedLevel} → ${endlessResume.resumedLevel}）`);
+    }
+    if (endlessResume.beforeBirds !== endlessResume.resumedBirds) problems.push('继续无尽之后奶蛋数变了');
+    if (endlessResume.pausedBirdX !== endlessResume.flyingX) problems.push('退出期间飞行中的奶蛋仍在移动（没有真正暂停）');
+    if (!(endlessResume.resumedBirdX > endlessResume.pausedBirdX)) problems.push('继续之后奶蛋没有恢复飞行');
+
     // ---------------------------------------------------------- 无尽模式：推进与失败
     const endlessFlow = await page.evaluate(async () => {
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1532,8 +1579,12 @@ const main = async () => {
       await wait(420);
       const communityPlaying = window.__nai.state();
       const afterPlay = W.community().entries.find((e) => e.id === firstId);
-      W.open();
+      const communityExitBtn = document.getElementById('btnExitLevel');
+      const communityExitShown = !communityExitBtn.classList.contains('hide');
+      const communityExitText = communityExitBtn.textContent;
+      communityExitBtn.click();
       await wait(220);
+      const communityExitState = window.__nai.state().state;
       W.create();
       const starter = W.info();
       const moderationProbe = {
@@ -1571,9 +1622,10 @@ const main = async () => {
       W.playtest();
       await wait(400);
       const playing = window.__nai.state();
-      const hudBackShown = !document.getElementById('btnToEditor').classList.contains('hide');
+      const hudBackShown = !document.getElementById('btnExitLevel').classList.contains('hide');
+      const hudBackText = document.getElementById('btnExitLevel').textContent;
       // ① 试玩途中就能回编辑器
-      document.getElementById('btnToEditor').click();
+      document.getElementById('btnExitLevel').click();
       await wait(400);
       const hudBackState = window.__nai.state().state;
       // ② 回编辑器后（没通关）还是不能发布；再试玩一次并通关
@@ -1646,6 +1698,9 @@ const main = async () => {
             birds: communityPlaying.birdsLeft,
             pickShown: communityPlaying.pickShown,
           },
+          exitShown: communityExitShown,
+          exitText: communityExitText,
+          exitState: communityExitState,
         },
         starter: { blocks: starter.blocks, pigs: starter.pigs, errors: starter.errors },
         placed: { blocks: placed.blocks, pigs: placed.pigs, errors: placed.errors },
@@ -1658,7 +1713,7 @@ const main = async () => {
         gateBefore, publishBefore, gateAfterBack, gateAfterWin, gateInEditor, published,
         submitShown, badAuthorStatus, submitStatus, remoteState: submittedCommunity.remoteState, submittedEntry,
         gateAfterRename, publishDisabledAfterRename, submitDisabledAfterRename, gateAfterEdit,
-        hudBackShown, hudBackState,
+        hudBackShown, hudBackText, hudBackState,
         playing: {
           state: playing.state, mode: playing.mode, blocks: playing.blocksAlive, pigs: playing.pigsAlive,
           birds: playing.birdsLeft, rosterBirds: rosterCount, pickShown: playing.pickShown, name: playing.levelName,
@@ -1688,6 +1743,10 @@ const main = async () => {
       problems.push(`社区卡片没能直接进自制关卡（${wk.community.playing.state}/${wk.community.playing.mode}）`);
     }
     if (wk.community.playing.pickShown) problems.push('社区关卡又弹了开局选蛋');
+    if (!wk.community.exitShown || !wk.community.exitText.includes('创意工坊')) {
+      problems.push(`社区关卡没有“返回创意工坊”按钮（${wk.community.exitText}）`);
+    }
+    if (wk.community.exitState !== 'workshop') problems.push(`社区关卡返回按钮没有回到工坊（${wk.community.exitState}）`);
     if (wk.starter.errors.length) problems.push(`新建关卡的默认关卡就有问题：${wk.starter.errors[0]}`);
     if (wk.placed.blocks !== wk.starter.blocks + 1) problems.push('编辑器里点空地没有放下方块');
     if (wk.placed.pigs !== wk.starter.pigs + 1) problems.push('编辑器里点空地没有放下奶蛙');
@@ -1714,6 +1773,7 @@ const main = async () => {
     // 发布门禁：没通关不能发布；通关后可以；改一个方块就重新上锁
     if (wk.gateBefore || wk.publishBefore) problems.push('还没试玩通关就允许发布了');
     if (!wk.hudBackShown) problems.push('试玩时 HUD 上没有"回编辑器"按钮');
+    if (!wk.hudBackText.includes('编辑器')) problems.push(`编辑器试玩的返回按钮文字不对（${wk.hudBackText}）`);
     if (wk.hudBackState !== 'edit') problems.push(`试玩途中点"回编辑器"没回去（${wk.hudBackState}）`);
     if (wk.gateAfterBack) problems.push('只回编辑器没通关，却拿到了发布资格');
     if (!wk.gateAfterWin) problems.push('试玩通关之后没有拿到发布资格');

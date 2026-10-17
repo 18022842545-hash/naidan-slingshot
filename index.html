@@ -90,6 +90,10 @@
   }
   .iconBtn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(74,53,39,.25); }
   .iconBtn.small { height: 36px; padding: 0 10px; font-size: 15px; border-radius: 11px; }
+  #btnExitLevel {
+    width: auto; min-width: 82px; padding: 0 14px;
+    font-size: 13px; font-weight: 800; letter-spacing: 0;
+  }
   #zoomBox {
     display: flex; align-items: center; gap: 6px;
     background: rgba(255,246,228,.9); border-radius: 16px; padding: 4px 8px;
@@ -341,7 +345,7 @@
         <div id="levelChip" class="hide">第 1 关</div>
       </div>
       <div id="hudRight">
-        <button class="iconBtn hide" id="btnToEditor" title="返回编辑器">✎</button>
+        <button class="iconBtn hide" id="btnExitLevel" title="返回">← 返回</button>
         <div id="zoomBox">
           <button class="iconBtn small" id="btnZoomOut" title="缩小（看全图）">－</button>
           <span id="zoomLabel">100%</span>
@@ -359,6 +363,7 @@
         <p style="font-size:13px">飞行中<b>点一下屏幕</b>可以放技能 · 每撞飞一只奶蛙 +5000 分 · 剩一发奶蛋 +10000 分</p>
         <div id="roster"></div>
         <div class="row">
+          <button id="btnResumeEndless" class="hide">继续无尽</button>
           <button id="btnWorkshop">创意工坊</button>
           <button id="btnEndless" class="ghost">无尽模式</button>
         </div>
@@ -374,6 +379,7 @@
         <div class="row">
           <button id="btnAgain">再来一次</button>
           <button id="btnBackEditor" class="ghost hide">回编辑器</button>
+          <button id="btnEndWorkshop" class="ghost hide">返回创意工坊</button>
           <button id="btnBackMenu" class="ghost">回主菜单</button>
         </div>
       </div>
