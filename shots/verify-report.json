@@ -45,8 +45,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-17 · 每周热门榜",
-    "stamp": "版本 2026-10-17 · 每周热门榜"
+    "build": "2026-10-17 · 模式选择新背景",
+    "stamp": "版本 2026-10-17 · 模式选择新背景"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -69,6 +69,14 @@
     },
     "near": 1.7,
     "normal": 1
+  },
+  "titleBackground": {
+    "pointer": "auto",
+    "background": "radial-gradient(circle at 78% 14%, rgba(255, 248, 198, 0.95) 0px, rgba(255, 248, 198, 0.95) 42px, rgba(255, 248, 198, 0) 43px), radial-gradient(at 18% 20%, rgba(255, 255, 255, 0.85) 0px, rgba(255, 255, 255, 0.85) 72px, rgba(255, 255, 255, 0) 73px), radial-gradient(at 42% 27%, rgba(255, 255, 255, 0.7) 0px, rgba(255, 255, 255, 0.7) 54px, rgba(255, 255, 255, 0) 55px), linear-gradient(rgb(191, 231, 255) 0%, rgb(223, 243, 255) 29%, rgb(255, 232, 189) 64%, rgb(255, 210, 154) 100%)",
+    "hit": "skillChip",
+    "hintHidden": true,
+    "state": "title",
+    "afterClick": "title"
   },
   "titleButtons": [
     "继续无尽",
@@ -103,9 +111,9 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 33,
-    "minDy": -62.4,
-    "maxDeg": 359
+    "distinctPoses": 14,
+    "minDy": -61.9,
+    "maxDeg": 356
   },
   "initialDrift": 1.4,
   "fallDamage": {
@@ -127,7 +135,7 @@
   },
   "chargeFx": {
     "power": 1,
-    "charge": 0.97,
+    "charge": 0.98,
     "shakePeak": 1.32
   },
   "sweep": [
@@ -246,10 +254,10 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.66,
-      "vxMid": 24.29,
-      "xMid": 709,
-      "xSoon": 1213
+      "vxBefore": 24.59,
+      "vxMid": 24.23,
+      "xMid": 733,
+      "xSoon": 1222
     },
     {
       "type": "dash",
@@ -265,9 +273,9 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.84,
-      "vxMid": 33.6,
-      "xMid": 733,
-      "xSoon": 1329
+      "vxMid": 33.47,
+      "xMid": 800,
+      "xSoon": 1341
     },
     {
       "type": "split",
@@ -280,12 +288,12 @@
       "blocksBefore": 3,
       "blocksAfter": 0,
       "pigsBefore": 1,
-      "pigsAfter": 0,
+      "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.69,
-      "vxMid": 23.1,
-      "xMid": 690,
-      "xSoon": 1177
+      "vxBefore": 24.63,
+      "vxMid": 23.2,
+      "xMid": 716,
+      "xSoon": 1199
     },
     {
       "type": "bomb",
@@ -363,7 +371,7 @@
       "type": "seek",
       "used": true,
       "speedBefore": 25,
-      "speedMid": 28,
+      "speedMid": 29,
       "inFlightMid": 1,
       "bombsMid": 0,
       "bombsAfter": 0,
@@ -372,10 +380,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.87,
-      "vxMid": 28.03,
-      "xMid": 720,
-      "xSoon": 1463
+      "vxBefore": 24.92,
+      "vxMid": 28.69,
+      "xMid": 723,
+      "xSoon": 1469
     }
   ],
   "plowTest": {
@@ -389,14 +397,14 @@
   "seekAim": {
     "used": true,
     "dir": {
-      "nx": 0.927,
-      "ny": -0.375
+      "nx": 0.928,
+      "ny": -0.374
     },
     "wantN": {
       "x": 0.927,
-      "y": -0.376
+      "y": -0.374
     },
-    "straight": 0.8,
+    "straight": 0.9,
     "guidedFrames": 18,
     "maxV": 30,
     "marks": 1
@@ -543,7 +551,7 @@
     {
       "seed": 7,
       "level": 5,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 4,
       "blocks": 16,
       "birds": 5,
@@ -559,7 +567,7 @@
     {
       "seed": 7,
       "level": 6,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 5,
       "blocks": 12,
       "birds": 5,
@@ -671,7 +679,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1049,7 +1057,7 @@
   },
   "bossCutIn": {
     "label": "BOSS",
-    "maxZoom": 2.35,
+    "maxZoom": 2.349,
     "barShown": true
   },
   "bossDamage": {
@@ -1081,7 +1089,7 @@
       "shots": 3,
       "summons": 1,
       "hp": 345,
-      "x": 2138
+      "x": 2137
     },
     "heal": 245,
     "pigsBefore": 2,
@@ -1124,12 +1132,12 @@
       "fallK": 0
     },
     "state": "aim",
-    "hpAfterFall": 765,
+    "hpAfterFall": 771,
     "falls": [
-      765,
-      642
+      771,
+      650
     ],
-    "shots": 3,
+    "shots": 6,
     "laugh": {
       "ready": 4,
       "attempts": 1,
@@ -1151,16 +1159,16 @@
   "endlessResume": {
     "beforeLevel": 5,
     "beforeBirds": 4,
-    "flyingX": 499,
+    "flyingX": 475,
     "pausedState": "title",
     "pausedLevel": 5,
-    "pausedBirdX": 499,
+    "pausedBirdX": 475,
     "resumeShown": true,
     "resumeText": "继续无尽 · 第 5 关",
     "resumedState": "fly",
     "resumedLevel": 5,
     "resumedBirds": 4,
-    "resumedBirdX": 849
+    "resumedBirdX": 819
   },
   "endlessFlow": {
     "levels": [
@@ -1211,8 +1219,8 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
+        "back",
         "naidan",
-        "dash",
         "bomb"
       ]
     }
@@ -1352,7 +1360,7 @@
       "id": "mock-1",
       "name": "验收小关",
       "author": "匿名测试员",
-      "submittedAt": "2026-10-17T09:06:44.505Z",
+      "submittedAt": "2026-10-17T09:20:06.027Z",
       "stats": {
         "likes": 0,
         "plays": 0

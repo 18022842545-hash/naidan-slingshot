@@ -243,7 +243,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 方块旋转与移动端';
+  const BUILD = '2026-10-17 · 模式选择新背景';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -1598,6 +1598,7 @@
     el.end.classList.add('hide');
     el.title.classList.remove('hide');
     el.btnExitLevel.classList.add('hide');
+    el.hint.classList.add('hide');
     state = 'title';
     AudioKit.flyStop();
     buildLevel(window.LEVEL1);
@@ -4511,6 +4512,7 @@
     loadAudio();   // boss 笑声预先读进来（35KB，不差这点）
     if (el.buildStamp) el.buildStamp.textContent = `版本 ${BUILD}`;
     state = 'title';
+    el.hint.classList.add('hide');
     render();
     requestAnimationFrame(frame);
     // 带分享码打开（#level=…）：直接进这份自制关卡（先在选蛋面板挑一颗）

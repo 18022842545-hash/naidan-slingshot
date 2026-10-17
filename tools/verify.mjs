@@ -205,6 +205,28 @@ const main = async () => {
     if (Math.abs(zoomProbe.near - 1.7) > 0.01) problems.push(`放到最大时 zoom 应该是 1.7，实际 ${zoomProbe.near}`);
     if (Math.abs(zoomProbe.normal - 1) > 0.001) problems.push('按回 100% 时镜头没复位');
 
+    // ---------------------------------------------------------- 标题页：独立背景且不能点穿
+    const titleBackground = await page.evaluate(() => {
+      const title = document.getElementById('titleScreen');
+      const style = getComputedStyle(title);
+      const hit = document.elementFromPoint(40, innerHeight - 60);
+      return {
+        pointer: style.pointerEvents,
+        background: style.backgroundImage,
+        hit: hit ? (hit.id || hit.className || hit.tagName) : '',
+        hintHidden: document.getElementById('hint').classList.contains('hide'),
+        state: window.__nai.state().state,
+      };
+    });
+    await page.mouse.click(40, 820);
+    await sleep(120);
+    const titleAfterBackdropClick = await page.evaluate(() => window.__nai.state().state);
+    report.titleBackground = { ...titleBackground, afterClick: titleAfterBackdropClick };
+    if (titleBackground.pointer !== 'auto') problems.push('模式选择页没有独占背景，指针事件会穿透');
+    if (!titleBackground.background || titleBackground.background === 'none') problems.push('模式选择页没有新背景');
+    if (!titleBackground.hintHidden) problems.push('模式选择页还显示着关卡操作提示');
+    if (titleAfterBackdropClick !== 'title') problems.push('点击模式选择页背景后状态被改变');
+
     // ---------------------------------------------------------- 标题页：第一关换成创意工坊
     const titleButtons = await page.evaluate(() => [...document.querySelectorAll('#titleScreen .row button')].map((b) => b.textContent.trim()));
     report.titleButtons = titleButtons;
