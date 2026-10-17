@@ -21,6 +21,7 @@ const ASSETS = [
   'naidan_seek',
   'naiwa_angry',
   'naiwa_happy',
+  'naiwa_roll',
   'boss_idle',
   'boss_laugh',
 ];

@@ -8,18 +8,22 @@ create table if not exists public.run_scores (
   score integer not null,
   meters integer not null,
   coins integer not null default 0,
+  -- free = 自由跑；daily-20261018 = 那一天的每日赛道（同一天所有人同一条路）
+  track text not null default 'free',
   created_at timestamptz not null default now(),
   status text not null default 'published',
   constraint run_scores_name_len check (char_length(name) between 1 and 12),
   constraint run_scores_meters check (meters between 0 and 200000),
   constraint run_scores_coins check (coins between 0 and 100000),
-  -- 得分 = 米数 + 奶滴×10 + 踩扁×100 + 撞碎×50；踩扁/撞碎按"每米最多一次"给个宽松上限
-  constraint run_scores_score check (score between 0 and meters * 151 + coins * 10),
+  constraint run_scores_track check (track ~ '^(free|daily-[0-9]{8})$'),
+  -- 得分 = 米数 + 奶滴×10 + 踩扁×100 + 撞碎×50（双倍积分时奶滴/踩扁翻倍）；这里只给个宽松上限挡掉离谱的数
+  constraint run_scores_score check (score between 0 and meters * 60 + coins * 20 + 2000),
   constraint run_scores_status check (status in ('published', 'hidden'))
 );
 
 create index if not exists run_scores_score_idx on public.run_scores (score desc);
 create index if not exists run_scores_created_at_idx on public.run_scores (created_at desc);
+create index if not exists run_scores_track_idx on public.run_scores (track, score desc);
 
 alter table public.run_scores enable row level security;
 
