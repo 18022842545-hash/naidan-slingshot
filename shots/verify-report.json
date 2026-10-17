@@ -47,8 +47,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-18 · 核爆蛋流光外观",
-    "stamp": "版本 2026-10-18 · 核爆蛋流光外观"
+    "build": "2026-10-18 · 核爆蛋第五等候位",
+    "stamp": "版本 2026-10-18 · 核爆蛋第五等候位"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -113,9 +113,9 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 15,
-    "minDy": -62.4,
-    "maxDeg": 360
+    "distinctPoses": 12,
+    "minDy": -62.3,
+    "maxDeg": 359
   },
   "initialDrift": 1.4,
   "fallDamage": {
@@ -297,9 +297,9 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.69,
-      "vxMid": 23.05,
-      "xMid": 714,
-      "xSoon": 1191
+      "vxMid": 23.1,
+      "xMid": 690,
+      "xSoon": 1177
     },
     {
       "type": "bomb",
@@ -332,9 +332,9 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.54,
-      "vxMid": 24.14,
-      "xMid": 707,
+      "vxBefore": 24.48,
+      "vxMid": 24.07,
+      "xMid": 731,
       "xSoon": 1222
     },
     {
@@ -353,7 +353,7 @@
       "vxBefore": 24.55,
       "vxMid": 13.3,
       "xMid": 667,
-      "xSoon": 1001
+      "xSoon": 988
     },
     {
       "type": "back",
@@ -371,7 +371,7 @@
       "vxBefore": 24.77,
       "vxMid": -25.91,
       "xMid": 407,
-      "xSoon": 108
+      "xSoon": 101
     },
     {
       "type": "seek",
@@ -389,7 +389,7 @@
       "vxBefore": 24.92,
       "vxMid": 28.69,
       "xMid": 723,
-      "xSoon": 1498
+      "xSoon": 1469
     }
   ],
   "plowTest": {
@@ -403,20 +403,20 @@
   "seekAim": {
     "used": true,
     "dir": {
-      "nx": 0.928,
-      "ny": -0.374
+      "nx": 0.927,
+      "ny": -0.375
     },
     "wantN": {
       "x": 0.927,
-      "y": -0.374
+      "y": -0.376
     },
-    "straight": 0.9,
-    "guidedFrames": 18,
+    "straight": 0.8,
+    "guidedFrames": 14,
     "maxV": 30,
     "marks": 1
   },
   "spinTest": {
-    "samples": 59,
+    "samples": 47,
     "peak": 0.036,
     "restAv": 0.003
   },
@@ -637,7 +637,7 @@
     {
       "seed": 7,
       "level": 12,
-      "drift": 5.1,
+      "drift": 4.1,
       "pigs": 8,
       "blocks": 27,
       "birds": 7,
@@ -685,7 +685,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5.1,
+      "drift": 5,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1095,7 +1095,7 @@
       "shots": 3,
       "summons": 1,
       "hp": 345,
-      "x": 2138
+      "x": 2137
     },
     "heal": 245,
     "pigsBefore": 2,
@@ -1165,16 +1165,16 @@
   "endlessResume": {
     "beforeLevel": 5,
     "beforeBirds": 4,
-    "flyingX": 475,
+    "flyingX": 499,
     "pausedState": "title",
     "pausedLevel": 5,
-    "pausedBirdX": 475,
+    "pausedBirdX": 499,
     "resumeShown": true,
     "resumeText": "继续无尽 · 第 5 关",
     "resumedState": "fly",
     "resumedLevel": 5,
     "resumedBirds": 4,
-    "resumedBirdX": 834
+    "resumedBirdX": 849
   },
   "restartConfirm": {
     "opened": {
@@ -1209,29 +1209,48 @@
     "loaded": {
       "level": 1,
       "queue": [
-        "nuke",
         "naidan",
         "naidan",
-        "naidan"
+        "naidan",
+        "nuke"
       ],
       "current": "naidan"
     },
     "carried": {
       "level": 2,
       "queue": [
-        "nuke",
         "dash",
         "split",
-        "split"
+        "split",
+        "nuke"
       ],
       "current": "naidan"
+    },
+    "priority": {
+      "queue": [
+        "bomb",
+        "bomb",
+        "naidan",
+        "back",
+        "nuke",
+        "nuke",
+        "nuke"
+      ],
+      "slots": [
+        "bomb",
+        "bomb",
+        "naidan",
+        "back",
+        "nuke",
+        "nuke"
+      ]
     },
     "equipped": true,
     "armed": {
       "current": "nuke",
       "state": "aim",
-      "flowA": 29,
-      "flowB": 48
+      "flowA": 69,
+      "flowB": 87
     },
     "blasted": {
       "state": "clearing",
@@ -1290,7 +1309,7 @@
       "levelBirds": [
         "naidan",
         "naidan",
-        "naidan",
+        "milk",
         "bomb"
       ]
     }
@@ -1449,7 +1468,7 @@
       "code": "eyJ2IjoxLCJuIjoi6aqM5pS25bCP5YWzwrfmipXnqL_niYgiLCJ3IjoyNzIwLCJzIjpbWzE5MCw0NzBdLFsxMTkwLDQ3MF1dLCJiIjpbWzkwMCw1NzAsMzAsMTMwLDAsMF0sWzEwNDAsNTcwLDMwLDEzMCwwLDBdLFs5NzAsNDkwLDE5MCwzMCwwLDBdLFsxMzAwLDU2MCwxMjAsOTAsMSwxNV1dLCJwIjpbWzk3MCw2MDAsNDAsMF0sWzE1MjAsNjAwLDQwLDFdXSwiayI6WzAsMywzXX0",
       "name": "验收小关·投稿版",
       "author": "匿名测试员",
-      "submittedAt": "2026-10-17T16:37:01.026Z",
+      "submittedAt": "2026-10-17T16:55:06.466Z",
       "stats": {
         "likes": 0,
         "plays": 0

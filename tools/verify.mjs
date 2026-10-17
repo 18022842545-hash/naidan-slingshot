@@ -1522,6 +1522,10 @@ const main = async () => {
       await wait(3500);
       const carried = window.__nai.state();
 
+      window.__nai.loadEndlessNuke(7, 999, 99, 2);
+      window.__nai.skipIntro();
+      const priority = window.__nai.state();
+
       window.__nai.loadEndlessNuke(1, 888);
       window.__nai.skipIntro();
       const equipped = window.__nai.equipQueueType('nuke');
@@ -1544,6 +1548,10 @@ const main = async () => {
           queue: carried.birdQueue,
           current: carried.currentBird,
         },
+        priority: {
+          queue: priority.birdQueue,
+          slots: priority.queueSlots.map((s) => s.type),
+        },
         equipped,
         armed: { current: armed.currentBird, state: armed.state, flowA, flowB },
         blasted: {
@@ -1563,6 +1571,12 @@ const main = async () => {
     if (!nuke.loaded.queue.includes('nuke') && nuke.loaded.current !== 'nuke') problems.push('核爆蛋没有进入无尽关卡队列');
     if (nuke.carried.level !== 2 || (!nuke.carried.queue.includes('nuke') && nuke.carried.current !== 'nuke')) {
       problems.push('未发射的核爆蛋没有保留到下一关');
+    }
+    if (nuke.priority.queue[4] !== 'nuke' || nuke.priority.queue[5] !== 'nuke') {
+      problems.push('核爆蛋没有从第 5 个等候位开始、多颗也没有依次后排');
+    }
+    if (nuke.priority.slots[4] !== 'nuke' || nuke.priority.slots[5] !== 'nuke') {
+      problems.push('第 5 位的核爆蛋没有出现在可见候补队列');
     }
     if (!nuke.equipped || nuke.armed.current !== 'nuke') problems.push('核爆蛋无法从队列调到弹弓');
     if (nuke.armed.flowA === nuke.armed.flowB) problems.push('核爆蛋立绘颜色没有持续流动');

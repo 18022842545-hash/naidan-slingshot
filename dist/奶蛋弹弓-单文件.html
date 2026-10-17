@@ -2643,7 +2643,7 @@ window.WorkshopCommunity = (() => {
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-18 · 核爆蛋流光外观';
+  const BUILD = '2026-10-18 · 核爆蛋第五等候位';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | restartConfirm | over
   let score = 0;
   let birdsLeft = 0;
@@ -4248,6 +4248,17 @@ window.WorkshopCommunity = (() => {
     birdsLeft = birdQueue.length;
     updateAmmo();
     loadBird();
+    // 核爆蛋固定从第 5 个等候位开始排；有多颗时依次往后，普通蛋顺序尽量不变
+    if (birdQueue.includes('nuke')) {
+      const nukes = birdQueue.filter((k) => k === 'nuke');
+      const others = birdQueue.filter((k) => k !== 'nuke');
+      const head = Math.min(4, others.length);
+      birdQueue = [
+        ...others.slice(0, head),
+        ...nukes,
+        ...others.slice(head),
+      ];
+    }
     if (silent) { state = 'aim'; return; }
     if (!hintHidden) {
       el.hint.classList.remove('hide');
@@ -7119,7 +7130,7 @@ window.WorkshopCommunity = (() => {
       promptPick(window.Endless.generate(n, seed), { auto: true, silent: true });
       return { pigs: pigs.length, blocks: blocks.length, birds: levelBirds.length };
     },
-    loadEndlessNuke: (n, seed) => {
+    loadEndlessNuke: (n, seed, at = 1, count = 1) => {
       clearEndlessResume();
       carriedNuke = 0;
       mode = 'endless';
@@ -7134,7 +7145,10 @@ window.WorkshopCommunity = (() => {
       el.end.classList.add('hide');
       autoPickSession = true;
       const def = window.Endless.generate(n, seed);
-      if (!def.birds.includes('nuke')) def.birds.splice(Math.min(1, def.birds.length), 0, 'nuke');
+      def.birds = def.birds.filter((k) => k !== 'nuke');
+      const start = clamp(Math.round(at), 0, def.birds.length);
+      const nukes = clamp(Math.round(count), 1, 6);
+      for (let i = 0; i < nukes; i++) def.birds.splice(start + i, 0, 'nuke');
       promptPick(def, { auto: true, silent: true });
       return { pigs: pigs.length, blocks: blocks.length, birds: levelBirds.length };
     },
