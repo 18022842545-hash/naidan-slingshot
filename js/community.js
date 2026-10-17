@@ -1,10 +1,13 @@
 /**
- * 社区关卡：静态目录 + 免登录共享计数器。
+ * 社区关卡：静态精选 + Supabase 匿名投稿 + 免登录共享计数器。
  *
- * 目录文件由 GitHub Issue 投稿 + Actions 自动更新；点赞/游玩数量走 Abacus，
- * 不需要账号或自建服务器。计数器接口暂时不可用时退回本地缓存，不阻塞玩游戏。
+ * 投稿直接写入 Supabase 的 insert-only 表，玩家不需要注册账号；
+ * 点赞/游玩数量仍走 Abacus。任一公共接口不可用时都退回本地缓存/静态目录。
  */
 window.WorkshopCommunity = (() => {
+  const SUPABASE_URL = 'https://buueozmrxfjqcaiqyzhq.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_dN25ruwymHdivLup377eLg_9WTi1cOt';
+  const SUPABASE_REST = `${SUPABASE_URL}/rest/v1`;
   const API = 'https://abacus.jasoncameron.dev';
   const NAMESPACE = 'naidan-slingshot-20261017';
   const CACHE_KEY = 'naidan-workshop-community-stats-v1';
@@ -12,6 +15,7 @@ window.WorkshopCommunity = (() => {
   const PLAYED_KEY = 'naidan-workshop-played-v1';
   const CACHE_MS = 60 * 1000;
   const rateSlots = [];
+  let remoteState = 'unknown'; // unknown | ready | missing | error
 
   const readObject = (key) => {
     try {
@@ -76,7 +80,21 @@ window.WorkshopCommunity = (() => {
     return Math.max(0, Number(out && out.value) || 0);
   };
 
-  const loadCatalog = async () => {
+  const normalizeEntry = (entry) => {
+    const code = String(entry.code || '').trim();
+    const def = code ? window.WorkshopLevel.unpack(code) : null;
+    if (!def) return null;
+    return {
+      id: String(entry.id || hash(code)),
+      code,
+      name: String(entry.name || def.name || '未命名关卡').slice(0, 30),
+      author: String(entry.author || '匿名玩家').slice(0, 30),
+      submittedAt: entry.submittedAt || entry.created_at || 0,
+      def,
+    };
+  };
+
+  const loadStaticCatalog = async () => {
     let raw = null;
     const embedded = window.INLINE_WORKSHOP_LEVELS;
     if (Array.isArray(embedded) || (embedded && Array.isArray(embedded.levels))) {
@@ -87,19 +105,97 @@ window.WorkshopCommunity = (() => {
       raw = await res.json();
     }
     const list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.levels) ? raw.levels : []);
-    return list.map((entry) => {
-      const code = String(entry.code || '').trim();
-      const def = code ? window.WorkshopLevel.unpack(code) : null;
-      if (!def) return null;
-      return {
-        id: String(entry.id || hash(code)),
-        code,
-        name: String(entry.name || def.name || '未命名关卡').slice(0, 30),
-        author: String(entry.author || '匿名玩家').slice(0, 30),
-        submittedAt: entry.submittedAt || 0,
-        def,
-      };
-    }).filter(Boolean);
+    return list.map(normalizeEntry).filter(Boolean);
+  };
+
+  const supabaseError = async (res) => {
+    let body = null;
+    try { body = await res.json(); } catch (e) { /* 非 JSON 错误 */ }
+    return body && (body.message || body.error_description) ? String(body.message || body.error_description) : `HTTP ${res.status}`;
+  };
+
+  const loadRemoteCatalog = async () => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6500);
+    try {
+      const url = `${SUPABASE_REST}/workshop_levels?select=id,code,name,author,created_at&status=eq.published&order=created_at.desc&limit=100`;
+      const res = await fetch(url, {
+        signal: ctrl.signal,
+        cache: 'no-store',
+        headers: { apikey: SUPABASE_KEY, Accept: 'application/json' },
+      });
+      if (!res.ok) {
+        remoteState = res.status === 404 ? 'missing' : 'error';
+        throw new Error(await supabaseError(res));
+      }
+      const rows = await res.json();
+      remoteState = 'ready';
+      return Array.isArray(rows) ? rows.map(normalizeEntry).filter(Boolean) : [];
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const loadCatalog = async () => {
+    const [local, remote] = await Promise.allSettled([loadStaticCatalog(), loadRemoteCatalog()]);
+    const staticLevels = local.status === 'fulfilled' ? local.value : [];
+    const remoteLevels = remote.status === 'fulfilled' ? remote.value : [];
+    if (local.status === 'rejected' && remote.status === 'rejected') {
+      throw local.reason || remote.reason || new Error('社区目录加载失败');
+    }
+    const seen = new Set();
+    const levels = [...remoteLevels, ...staticLevels].filter((entry) => {
+      if (seen.has(entry.code)) return false;
+      seen.add(entry.code);
+      return true;
+    });
+    levels.remoteState = remoteState;
+    return { levels, remoteState };
+  };
+
+  /** 匿名投稿：公开的 publishable key + RLS 只允许 insert/select */
+  const submitLevel = async (def, author) => {
+    const errors = window.WorkshopLevel.validate(def);
+    if (errors.length) return { ok: false, error: errors[0] };
+    const code = window.WorkshopLevel.pack(def);
+    if (code.length > 5000) return { ok: false, error: '这张关卡数据太长，无法投稿' };
+    const cleanAuthor = String(author || '').trim().slice(0, 30) || '匿名玩家';
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 9000);
+    try {
+      const res = await fetch(`${SUPABASE_REST}/workshop_levels`, {
+        method: 'POST',
+        signal: ctrl.signal,
+        headers: {
+          apikey: SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation',
+        },
+        body: JSON.stringify({
+          code,
+          name: def.name,
+          author: cleanAuthor,
+          status: 'published',
+        }),
+      });
+      if (res.status === 409) return { ok: false, duplicate: true, error: '这张关卡已经在社区里了' };
+      if (!res.ok) {
+        remoteState = res.status === 404 ? 'missing' : 'error';
+        return {
+          ok: false,
+          setup: res.status === 404 || res.status === 401 || res.status === 403,
+          error: await supabaseError(res),
+        };
+      }
+      const rows = await res.json();
+      const entry = Array.isArray(rows) ? normalizeEntry(rows[0]) : null;
+      remoteState = 'ready';
+      return { ok: true, entry };
+    } catch (e) {
+      return { ok: false, error: '连不上投稿服务，稍后再试' };
+    } finally {
+      clearTimeout(timer);
+    }
   };
 
   const loadStats = async (levels, options = {}) => {
@@ -169,6 +265,8 @@ window.WorkshopCommunity = (() => {
   return {
     cacheKey: CACHE_KEY,
     loadCatalog,
+    submitLevel,
+    remoteState: () => remoteState,
     loadStats,
     like,
     recordPlay,

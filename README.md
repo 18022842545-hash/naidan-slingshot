@@ -2,7 +2,7 @@
 
 愤怒的小鸟式弹弓游戏：**奶蛋**当小鸟（八个形象，各有技能），**奶蛙**当猪。
 纯前端（HTML + Canvas + Matter.js），双击 HTML 就能玩，没有构建步骤，也不需要自建后端。
-社区目录由 GitHub 仓库维护，点赞/游玩人数用免登录共享计数器。
+精选关卡随单文件内联，玩家投稿直接匿名写入 Supabase；点赞/游玩人数用免登录共享计数器。
 
 **在线玩**：<https://busgm666-cloud.github.io/naidan-slingshot/>
 **单文件下载**：[dist/奶蛋弹弓-单文件.html](dist/奶蛋弹弓-单文件.html) —— 图片、脚本、物理引擎全内联在一个文件里，双击即玩，也可以直接发给别人。
@@ -101,9 +101,13 @@
 - 计数走免登录的 Abacus 公共计数器；接口暂时不可用时退回本地缓存，不影响开玩
 - 单文件版把社区目录一起内联，`file://` 双击打开也能看到完整列表
 
-投稿不需要自建服务器：通关后点「投稿到工坊」，会打开预填分享码的 GitHub Issue；
-仓库里的 Action 校验分享码和关卡数据，通过后自动写回 `workshop/levels.json` 并提交，
-下次打开/刷新工坊就能看到。点赞和游玩人数不需要 GitHub 账号。
+投稿不需要 GitHub 或任何玩家账号：通关后点「投稿到工坊」，填一个署名（可留空）就能直接写进
+Supabase 的 `workshop_levels` 表，刷新工坊立刻可见。表权限是 **select + insert only**：
+匿名玩家能看、能投，不能修改或删除别人的关卡。
+
+Supabase 只需要初始化一次：打开 Dashboard → SQL Editor，整段执行
+[`supabase/workshop.sql`](supabase/workshop.sql)。前端使用公开的 Publishable key；
+`service_role` / secret key 不会进入网页。
 
 编辑器（全在画布上直接摆，所见即所得）：
 
@@ -124,8 +128,8 @@
   复制发给谁、谁打开就直接进这一关。`https` 下走剪贴板；`file://` 没有剪贴板权限，会帮你把链接选中，按 Ctrl+C 即可
 - **导入 / 导出**：导出是带 `formatVersion` 的 JSON 文件；导入既认 JSON 文件，也认直接粘分享码
 
-目前的边界：社区目录不是实时数据库，投稿要等 GitHub Action 提交完成；
-点赞/游玩是公共计数器，适合展示人气，不承担严肃的防刷/账号风控。
+目前的边界：Supabase 负责投稿目录，Abacus 负责点赞/游玩人数；
+两者都是公共接口，适合展示人气，但没有账号级防刷和举报后台。
 
 ![创意工坊](shots/09d-workshop-editor.png)
 ![社区关卡](shots/09e-community.png)
@@ -345,18 +349,19 @@
 │  ├─ birds.js                八个奶蛋的档案（外形/物理/技能）
 │  ├─ levels.js               第一关 + 无尽模式生成器（预制件 + 落位校验）
 │  ├─ workshop.js             创意工坊的数据层（关卡归一化/校验/分享码/JSON）
-│  ├─ community.js            社区目录读取 + 共享点赞/游玩计数
+│  ├─ community.js            社区目录读取 + 匿名投稿 + 共享点赞/游玩计数
 │  └─ audio.js                程序化音效（WebAudio 合成，不用任何音频文件）
 ├─ assets/                    处理好的游戏素材（基础奶蛋 + 5 个衍生形象 + 奶蛙）
 ├─ art-source/                联网扒到的原始图（extra/ 是没用上的备选）
 ├─ vendor/matter.min.js       物理引擎（Matter.js 0.20）
+├─ supabase/workshop.sql      投稿表、RLS 与匿名读写权限
+├─ workshop/                  静态精选目录（JSON + 单文件用 JS 数据）
 ├─ tools/
 │  ├─ prepare-assets.mjs      素材处理（抠图/清底/压缩）
 │  ├─ make-variants.mjs       生成 5 个新奶蛋形象（配色 + 帽子 + 胸章）
 │  ├─ make-boss.mjs           boss 立绘：手机截图自动裁图去黑边 + 白底抠图 + 生成大笑变体
 │  ├─ build-single.mjs        打包单文件 HTML
 │  ├─ build-workshop-seed.mjs 生成首批社区关卡目录
-│  ├─ publish-workshop-issue.mjs  Issue 投稿校验 + 自动收录
 │  ├─ verify.mjs              Playwright 自动化验收（截图 + 断言）
 │  ├─ smoke.mjs               快速冒烟 + 宣传图（intro / skills / endless / showcase）
 │  ├─ check-prefabs.mjs       建筑预制件几何自检（重叠 / 悬空 / 奶蛙插进方块）
@@ -449,7 +454,7 @@ node tools/smoke.mjs showcase   # 只抓几张过程图
     **发布门禁**：没通关不能发布，通关后能发布，改动任意关卡内容后立即重新上锁
 35. **社区工坊**：目录至少 6 张图全部能解出来；卡片数、作者和多维信息正确；
     搜索“冰屋”只剩 1 张；最多游玩/最多点赞排序生效；点赞 +1 并记住本机已赞；
-    从卡片开玩会记录游玩人数、直接进自制关卡且不弹选蛋；投稿按钮会打开预填分享码的 GitHub Issue；
+    从卡片开玩会记录游玩人数、直接进自制关卡且不弹选蛋；投稿面板能匿名插入 Supabase 并立刻刷新目录；
     源码版和单文件版的 `file://` 直开都能加载完整社区目录
 
 验收脚本发射前会等物理真正静止（`maxSpeed` 归零）再开火：物理本身是确定的，
@@ -537,8 +542,8 @@ node tools/smoke.mjs showcase   # 只抓几张过程图
 - 胖奶蛋没有技能，走的是"纯重装"路线；想加技能可以照 `dash` 的样子加一个分支。
 - 移动端只做了自适应和 pointer 事件，没在真机上细调过拉弓手感。
 - 音效全是合成的，没有背景音乐。
-- **社区目录是准静态的**：投稿通过 GitHub Issue + Action 收录，不是即时数据库；
-  点赞/游玩人数用公共计数器，能看人气，但没有账号级防刷。
+- **社区使用公共写入接口**：Supabase 负责投稿，Abacus 负责点赞/游玩人数；
+  能看人气，但没有账号级防刷和举报后台。
 - 编辑器建议用电脑：手机能点、能放，但"拖一个小方块到精确位置"这种操作还是鼠标舒服。
 - 自定义关卡还没有"能不能打通"的自动校验（只校验摆位合法、奶蛙在射程内），
   奶蛋给太少的话可能本来就是打不过的。

@@ -104,6 +104,36 @@ const main = async () => {
         body: JSON.stringify({ value }),
       });
     });
+    // 匿名投稿用 Supabase；验收时模拟 PostgREST，避免往真实社区表插入测试关卡
+    const remoteLevels = [];
+    await page.route('https://buueozmrxfjqcaiqyzhq.supabase.co/**', async (route) => {
+      const req = route.request();
+      const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'apikey, content-type, prefer',
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Content-Type': 'application/json',
+      };
+      if (req.method() === 'OPTIONS') {
+        await route.fulfill({ status: 204, headers, body: '' });
+        return;
+      }
+      if (req.method() === 'POST') {
+        const data = JSON.parse(req.postData() || '{}');
+        const row = {
+          id: `mock-${remoteLevels.length + 1}`,
+          code: data.code,
+          name: data.name,
+          author: data.author,
+          status: 'published',
+          created_at: new Date().toISOString(),
+        };
+        remoteLevels.unshift(row);
+        await route.fulfill({ status: 201, headers, body: JSON.stringify([row]) });
+        return;
+      }
+      await route.fulfill({ status: 200, headers, body: JSON.stringify(remoteLevels) });
+    });
     page.on('console', (m) => {
       if (m.type() === 'error' || m.type() === 'warning') problems.push(`console.${m.type()}: ${m.text()}`);
     });
@@ -1554,11 +1584,20 @@ const main = async () => {
       const backInfo = W.info();
       const gateInEditor = W.gateOpen();
       const published = W.publish();
-      let submitUrl = '';
-      const realOpen = window.open;
-      window.open = (url) => { submitUrl = String(url || ''); return null; };
       document.getElementById('edSubmit').click();
-      window.open = realOpen;
+      await wait(80);
+      const submitShown = !document.getElementById('submitDialog').classList.contains('hide');
+      document.getElementById('subAuthor').value = '匿名测试员';
+      document.getElementById('subSend').click();
+      for (let i = 0; i < 40; i++) {
+        await wait(100);
+        const c = W.community();
+        if (c.entries.some((e) => e.name === '验收小关' && e.author === '匿名测试员')) break;
+      }
+      const submittedCommunity = W.community();
+      const submittedEntry = submittedCommunity.entries.find((e) => e.name === '验收小关' && e.author === '匿名测试员');
+      const submitStatus = document.getElementById('subStatus').textContent;
+      document.getElementById('subCancel').click();
       // ③ 改关卡名 → 发布资格失效，按钮也要立刻变灰
       const nameInput = document.getElementById('edName');
       nameInput.value = '验收小关（改名）';
@@ -1600,7 +1639,8 @@ const main = async () => {
         unpackOk: !!unpacked && unpacked.blocks.length === placed.blocks && unpacked.pigs.length === placed.pigs,
         undoPigs, redoPigs,
         gateBefore, publishBefore, gateAfterBack, gateAfterWin, gateInEditor, published,
-        submitUrl, gateAfterRename, publishDisabledAfterRename, submitDisabledAfterRename, gateAfterEdit,
+        submitShown, submitStatus, remoteState: submittedCommunity.remoteState, submittedEntry,
+        gateAfterRename, publishDisabledAfterRename, submitDisabledAfterRename, gateAfterEdit,
         hudBackShown, hudBackState,
         playing: {
           state: playing.state, mode: playing.mode, blocks: playing.blocksAlive, pigs: playing.pigsAlive,
@@ -1654,9 +1694,10 @@ const main = async () => {
     if (wk.gateAfterBack) problems.push('只回编辑器没通关，却拿到了发布资格');
     if (!wk.gateAfterWin) problems.push('试玩通关之后没有拿到发布资格');
     if (!wk.gateInEditor || !wk.published) problems.push('通关回编辑器之后"发布链接"还是不可用');
-    if (!wk.submitUrl.includes('github.com/busgm666-cloud/naidan-slingshot/issues/new') || !wk.submitUrl.includes('%5B%E5%B7%A5%E5%9D%8A%E6%8A%95%E7%A8%BF%5D')) {
-      problems.push('“投稿到工坊”没有打开预填好的 GitHub Issue');
-    }
+    if (!wk.submitShown) problems.push('“投稿到工坊”没有打开匿名投稿面板');
+    if (wk.remoteState !== 'ready') problems.push(`Supabase 社区目录状态不对（${wk.remoteState}）`);
+    if (!wk.submittedEntry || wk.submittedEntry.author !== '匿名测试员') problems.push('匿名投稿成功后社区目录里没有这张关卡');
+    if (!wk.submitStatus.includes('投稿成功')) problems.push(`匿名投稿状态没有成功提示（${wk.submitStatus}）`);
     if (wk.gateAfterRename || !wk.publishDisabledAfterRename) problems.push('改关卡名之后发布资格没立刻失效');
     if (!wk.submitDisabledAfterRename) problems.push('改关卡名之后投稿按钮没有立刻变灰');
     if (wk.gateAfterEdit) problems.push('改了关卡内容之后发布资格没失效（应该重新试玩通关）');
@@ -1683,6 +1724,16 @@ const main = async () => {
       const p2 = await browser.newPage({ viewport: { width: 1280, height: 760 } });
       await p2.route('https://abacus.jasoncameron.dev/**', async (route) => {
         await route.fulfill({ status: 200, contentType: 'application/json', body: '{"value":1}' });
+      });
+      await p2.route('https://buueozmrxfjqcaiqyzhq.supabase.co/**', async (route) => {
+        const headers = {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'apikey, content-type, prefer',
+          'Access-Control-Allow-Methods': 'GET,OPTIONS',
+          'Content-Type': 'application/json',
+        };
+        if (route.request().method() === 'OPTIONS') await route.fulfill({ status: 204, headers, body: '' });
+        else await route.fulfill({ status: 200, headers, body: '[]' });
       });
       p2.on('pageerror', (e) => problems.push(`[${label}] pageerror: ${e.message}`));
       p2.on('console', (m) => { if (m.type() === 'error') problems.push(`[${label}] console.error: ${m.text()}`); });

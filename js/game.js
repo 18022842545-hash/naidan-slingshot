@@ -191,6 +191,12 @@
     bpOk: document.getElementById('bpOk'),
     bpReset: document.getElementById('bpReset'),
     bpCancel: document.getElementById('bpCancel'),
+    submitDialog: document.getElementById('submitDialog'),
+    subLevelName: document.getElementById('subLevelName'),
+    subAuthor: document.getElementById('subAuthor'),
+    subStatus: document.getElementById('subStatus'),
+    subSend: document.getElementById('subSend'),
+    subCancel: document.getElementById('subCancel'),
     btnToEditor: document.getElementById('btnToEditor'),
     edToolBlock: document.getElementById('edToolBlock'),
     edToolPig: document.getElementById('edToolPig'),
@@ -230,7 +236,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 社区创意工坊';
+  const BUILD = '2026-10-17 · 匿名社区工坊';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3005,7 +3011,6 @@
   };
   // ---------------------------------------------------------------- 创意工坊
   const WK_KEY = 'naidan-workshop-v1';
-  const WK_REPO = 'busgm666-cloud/naidan-slingshot';
   const BLOCK_SIZES = { s: [60, 60], m: [90, 60], l: [120, 90], long: [180, 34] };
   let editor = null;          // 编辑器状态
   let cameFromEditor = false; // 从编辑器点"试玩"进来的 → 结算面板给一个"回编辑器"
@@ -3017,7 +3022,9 @@
   let wkQuery = '';
   let wkTab = 'community';
   let wkCatalogState = 'idle'; // idle | loading | ready | error
+  let wkRemoteState = 'unknown'; // unknown | ready | missing | error
   let wkStatsLoading = false;
+  let submitDef = null;
   // "试玩通关"的那一份关卡（分享码即指纹）：内容一改就对不上，得重新通关才允许发布
   let passedCode = null;
   const gateOpen = () => !!(editor && passedCode && window.WorkshopLevel.pack(editor.def) === passedCode);
@@ -3210,7 +3217,9 @@
     wkCatalogState = 'loading';
     renderCommunity();
     try {
-      wkEntries = await window.WorkshopCommunity.loadCatalog();
+      const catalog = await window.WorkshopCommunity.loadCatalog();
+      wkEntries = catalog.levels || [];
+      wkRemoteState = catalog.remoteState || window.WorkshopCommunity.remoteState();
       wkCatalogState = 'ready';
       wkStatsLoading = true;
       renderCommunity();
@@ -3317,24 +3326,19 @@
   };
 
   const shareLink = (def) => `${location.href.split('#')[0]}#level=${window.WorkshopLevel.pack(def)}`;
-  /** 投稿不经过服务器：打开预填好的 GitHub Issue，Actions 校验后自动收进社区目录 */
+  /** 匿名投稿：只需要一个公开的 Supabase publishable key，不打开外部页面 */
   const openWorkshopSubmit = (def) => {
-    const code = window.WorkshopLevel.pack(def);
-    const body = [
-      '### 分享码',
-      '',
-      '```',
-      code,
-      '```',
-      '',
-      '### 备注',
-      '',
-      `关卡名：${def.name}`,
-      '已经试玩通关，申请收录到创意工坊。',
-    ].join('\n');
-    const url = `https://github.com/${WK_REPO}/issues/new?title=${encodeURIComponent(`[工坊投稿] ${def.name}`)}&body=${encodeURIComponent(body)}`;
-    window.open(url, '_blank', 'noopener');
-    toast('已打开投稿页，登录 GitHub 后提交即可', 2600);
+    submitDef = window.WorkshopLevel.normalize(def);
+    el.subLevelName.textContent = submitDef.name;
+    try { el.subAuthor.value = localStorage.getItem('naidan-workshop-author') || ''; } catch (e) { el.subAuthor.value = ''; }
+    el.subStatus.textContent = wkRemoteState === 'missing'
+      ? '投稿服务还没初始化，请先在 Supabase 执行建表脚本'
+      : '关卡会立即出现在社区列表，投稿后不能自行修改或删除。';
+    el.subStatus.classList.toggle('bad', wkRemoteState === 'missing');
+    el.subSend.disabled = false;
+    el.subSend.textContent = '确认投稿';
+    el.submitDialog.classList.remove('hide');
+    setTimeout(() => el.subAuthor.focus(), 30);
   };
   const fallbackCopy = (text) => {
     if (!shareBox) {
@@ -3708,6 +3712,39 @@
   });
   el.btnWkRefresh.addEventListener('click', () => loadCommunity(true));
   el.btnWkClose.addEventListener('click', closeWorkshop);
+  el.subCancel.addEventListener('click', () => {
+    submitDef = null;
+    el.submitDialog.classList.add('hide');
+    el.subStatus.textContent = '';
+  });
+  el.subSend.addEventListener('click', async () => {
+    if (!submitDef || el.subSend.disabled) return;
+    el.subSend.disabled = true;
+    el.subSend.textContent = '正在投稿…';
+    el.subStatus.textContent = '';
+    el.subStatus.classList.remove('bad');
+    const author = el.subAuthor.value.trim().slice(0, 30);
+    const res = await window.WorkshopCommunity.submitLevel(submitDef, author);
+    if (res.ok) {
+      try { localStorage.setItem('naidan-workshop-author', author || '匿名玩家'); } catch (e) { /* 隐私模式 */ }
+      el.subStatus.textContent = '投稿成功，正在刷新社区列表…';
+      await loadCommunity(true);
+      toast('投稿成功，已经出现在社区里了', 2200);
+      setTimeout(() => {
+        el.submitDialog.classList.add('hide');
+        submitDef = null;
+      }, 350);
+      return;
+    }
+    el.subStatus.classList.add('bad');
+    el.subStatus.textContent = res.duplicate
+      ? '这张关卡已经在社区里了'
+      : res.setup
+        ? '投稿表还没启用：请在 Supabase SQL Editor 执行 supabase/workshop.sql'
+        : (res.error || '投稿失败，稍后再试');
+    el.subSend.disabled = false;
+    el.subSend.textContent = '确认投稿';
+  });
   el.btnWkImport.addEventListener('click', () => el.wkFile.click());
   el.wkFile.addEventListener('change', () => {
     const f = el.wkFile.files && el.wkFile.files[0];
@@ -3863,6 +3900,7 @@
       edit: (def) => { openEditor(def); return !!editor; },
       community: () => ({
         state: wkCatalogState,
+        remoteState: wkRemoteState,
         tab: wkTab,
         sort: wkSort,
         query: wkQuery,

@@ -321,6 +321,14 @@
     box-shadow: 0 2px 0 var(--jam-dark);
   }
   #bpRows .bpRow button.ghost { box-shadow: 0 2px 0 rgba(74,53,39,.18); }
+  #submitDialog .panel { max-width: min(88vw, 460px); }
+  #subAuthor {
+    width: 100%; margin-top: 12px; padding: 10px 14px; border-radius: 12px;
+    border: 2px solid rgba(206,152,42,.3); background: #fffdf5;
+    font: inherit; font-size: 14px; color: #6b4a30;
+  }
+  #subStatus { min-height: 22px; margin-top: 8px; font-size: 12px; color: #9a8878; }
+  #subStatus.bad { color: #c2410c; }
 </style>
 </head>
 <body>
@@ -476,6 +484,19 @@
           <button id="bpOk">确定</button>
           <button id="bpReset" class="ghost">恢复默认</button>
           <button id="bpCancel" class="ghost">取消</button>
+        </div>
+      </div>
+    </div>
+    <div class="layer hide" id="submitDialog">
+      <div class="panel">
+        <h2>投稿到社区</h2>
+        <p style="font-size:13px">不需要注册账号。填一个署名，关卡就会出现在大家的社区列表里。</p>
+        <p class="big" id="subLevelName" style="font-size:18px">我的关卡</p>
+        <input id="subAuthor" maxlength="30" placeholder="署名（留空就是匿名玩家）" autocomplete="nickname" />
+        <p id="subStatus"></p>
+        <div class="row">
+          <button id="subSend">确认投稿</button>
+          <button id="subCancel" class="ghost">取消</button>
         </div>
       </div>
     </div>
