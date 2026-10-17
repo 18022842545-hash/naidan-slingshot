@@ -397,9 +397,16 @@ const main = async () => {
       shakePeak = Math.max(shakePeak, await page.evaluate(() => window.__nai.state().camShake));
       await sleep(40);
     }
-    report.chargeFx = { power: charged.pullPower, charge: charged.charge, shakePeak: Math.round(shakePeak * 100) / 100 };
+    report.chargeFx = {
+      power: charged.pullPower, charge: charged.charge,
+      shakePeak: Math.round(shakePeak * 100) / 100,
+      aimAssist: charged.aimAssist,
+    };
     if (charged.pullPower < 0.95) problems.push(`拖拽没能拉满弓（power=${charged.pullPower}）`);
     if (charged.charge < 0.6) problems.push(`拉满弓之后力量特效没起来（charge=${charged.charge}）`);
+    if (!charged.aimAssist || charged.aimAssist.fill !== '#d8f5ff' || !charged.aimAssist.stroke.includes('0,120,220')) {
+      problems.push(`瞄准辅助线没有换成蓝色（${JSON.stringify(charged.aimAssist)}）`);
+    }
     if (shakePeak > 2.0) problems.push(`满弓的相机抖动太大（峰值 ${shakePeak.toFixed(2)}px，上限 2.0）`);
     await shot(page, '04-drag.png');
     await page.mouse.up();

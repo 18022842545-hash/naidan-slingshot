@@ -2334,6 +2334,12 @@ window.WorkshopCommunity = (() => {
   const H = 720;
   const STEP = 1000 / 60;
   const GRAVITY_PER_TICK = 0.2778; // Matter 默认重力下每 tick 的速度增量，用于预测弹道
+  const AIM_ASSIST = {
+    fill: '#8ed8ff',
+    stroke: 'rgba(35,139,220,0.72)',
+    fullFill: '#d8f5ff',
+    fullStroke: 'rgba(0,120,220,0.92)',
+  };
   const FILL_W = 8600;               // 背景绘制铺满用（要盖过最长的地图）
   const MIN_ZOOM = 0.45;             // 缩到最小能一眼看完整张地图
   const MAX_ZOOM = 1.7;
@@ -2508,7 +2514,7 @@ window.WorkshopCommunity = (() => {
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 方块不可堆叠';
+  const BUILD = '2026-10-17 · 蓝色瞄准辅助线';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -5141,12 +5147,12 @@ window.WorkshopCommunity = (() => {
         if (i % 6 === 0) {
           const age = i / (dots * 6);
           ctx.globalAlpha = (1 - age) * 0.9;
-          // 拉满弓时弹道点也烧起来
-          ctx.fillStyle = drag.charge > 0.35 ? '#fff0a8' : '#fffef9';
+          // 瞄准辅助线统一用蓝色；拉满弓时提高亮度和描边强度
+          ctx.fillStyle = drag.charge > 0.35 ? AIM_ASSIST.fullFill : AIM_ASSIST.fill;
           ctx.beginPath();
           ctx.arc(px, py, 7 - age * 3.5, 0, Math.PI * 2);
           ctx.fill();
-          ctx.strokeStyle = drag.charge > 0.35 ? 'rgba(255,150,40,0.55)' : 'rgba(200,140,70,0.35)';
+          ctx.strokeStyle = drag.charge > 0.35 ? AIM_ASSIST.fullStroke : AIM_ASSIST.stroke;
           ctx.lineWidth = 1.6;
           ctx.stroke();
         }
@@ -6547,6 +6553,10 @@ window.WorkshopCommunity = (() => {
       bombs: bombs.length,
       explosions: explosions.length,
       charge: drag ? Math.round((drag.charge || 0) * 100) / 100 : 0,
+      aimAssist: drag ? {
+        fill: drag.charge > 0.35 ? AIM_ASSIST.fullFill : AIM_ASSIST.fill,
+        stroke: drag.charge > 0.35 ? AIM_ASSIST.fullStroke : AIM_ASSIST.stroke,
+      } : null,
       camShake: Math.round(CAM.shake * 100) / 100,
       /** boss 笑声素材的状态（测试用：确认它真的加载了、真的被播了） */
       bossLaugh: {
