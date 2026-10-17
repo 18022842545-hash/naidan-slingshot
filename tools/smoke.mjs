@@ -47,12 +47,10 @@ const startWithPick = async (selector) => {
   await sleep(140);
 };
 
-/** 从标题页进第一关：现在要先进创意工坊，再点"试玩第一关" */
+/** 从标题页进第一关（第一关入口已下掉，用调试入口；工坊那条真实路径由 verify 覆盖） */
 const startLevel1 = async () => {
-  await page.click('#btnWorkshop');
-  await sleep(220);
-  await page.click('#btnWkPlay1');
-  await page.locator('#pickRoster .card').nth(0).click();
+  await page.evaluate(() => window.__nai.start('level1'));
+  await page.evaluate(() => window.__nai.skipIntro());
   await sleep(140);
 };
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>奶蛋弹弓 · 第一关</title>
+<title>奶蛋弹弓</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='18' r='11' fill='%23ffe08a'/%3E%3Cpath d='M9 12a8 8 0 0114 0z' fill='%23fff6e4'/%3E%3Ccircle cx='12' cy='18' r='1.6' fill='%23543a22'/%3E%3Ccircle cx='20' cy='18' r='1.6' fill='%23543a22'/%3E%3C/svg%3E" />
 <style>
   :root {
@@ -258,6 +258,21 @@
     font-size: 12px; color: #7a5b42; background: rgba(255,246,228,.9);
     border-radius: 999px; padding: 6px 16px;
   }
+  /* 奶蛋阵容：8 行，两列 */
+  #bpRows { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+  #bpRows .bpRow {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.75); border-radius: 14px; padding: 6px 10px;
+    box-shadow: inset 0 0 0 2px rgba(206,152,42,.14);
+  }
+  #bpRows .bpRow img { height: 30px; width: auto; display: block; }
+  #bpRows .bpRow .nm { flex: 1; font-size: 12.5px; font-weight: 800; color: #6b4a30; text-align: left; }
+  #bpRows .bpRow .n { min-width: 16px; text-align: center; font-weight: 800; color: #6b4a30; }
+  #bpRows .bpRow button {
+    width: 26px; height: 26px; padding: 0; border-radius: 8px; font-size: 14px; line-height: 1;
+    box-shadow: 0 2px 0 var(--jam-dark);
+  }
+  #bpRows .bpRow button.ghost { box-shadow: 0 2px 0 rgba(74,53,39,.18); }
 </style>
 </head>
 <body>
@@ -270,6 +285,7 @@
         <div id="levelChip" class="hide">第 1 关</div>
       </div>
       <div id="hudRight">
+        <button class="iconBtn hide" id="btnToEditor" title="返回编辑器">✎</button>
         <div id="zoomBox">
           <button class="iconBtn small" id="btnZoomOut" title="缩小（看全图）">－</button>
           <span id="zoomLabel">100%</span>
@@ -314,8 +330,6 @@
         <p class="sub">自己搭关卡、随时试玩，搭好把链接发给别人</p>
         <div class="row">
           <button id="btnWkNew">新建关卡</button>
-          <button id="btnWkEdit1" class="ghost">改一改第一关</button>
-          <button id="btnWkPlay1" class="ghost">试玩第一关</button>
         </div>
         <div id="wkDrafts"></div>
         <textarea id="wkPaste" placeholder="也可以把关卡 JSON / 分享码粘到这里，再点下面载入"></textarea>
@@ -363,9 +377,7 @@
           <span class="step" id="edStageVal">1</span>
           <button id="edStagePlus" class="ghost">＋</button>
           <span class="lab" style="margin-left:6px">奶蛋</span>
-          <button id="edBirdMinus" class="ghost">−</button>
-          <span class="step" id="edBirdVal">3</span>
-          <button id="edBirdPlus" class="ghost">＋</button>
+          <button id="edBirdsBtn" class="ghost">3 发</button>
         </div>
         <div class="grp">
           <button id="edUndo" class="ghost">撤销</button>
@@ -373,13 +385,28 @@
           <button id="edPlay">试玩</button>
         </div>
         <div class="grp">
-          <button id="edShare" class="ghost">复制分享链接</button>
+          <button id="edShare" class="ghost">发布链接</button>
           <button id="edExport" class="ghost">导出</button>
           <button id="edWkBack" class="ghost">返回工坊</button>
         </div>
       </div>
       <div id="edStatus">可以玩了</div>
       <div id="edHint">点空地放置 · 拖已有物体移动 · 拖空白处平移 · 滚轮缩放 · Delete 删除选中</div>
+    </div>
+
+    <!-- 奶蛋阵容选择 -->
+    <div class="layer hide" id="birdPicker">
+      <div class="panel">
+        <h2>这一关的奶蛋</h2>
+        <p class="sub">每种最多 4 发，总数 2~8 发（开局选蛋还会再 +1）</p>
+        <div id="bpRows"></div>
+        <p class="big" id="bpTotal" style="font-size:16px;margin:12px 0 0">共 3 发</p>
+        <div class="row">
+          <button id="bpOk">确定</button>
+          <button id="bpReset" class="ghost">恢复默认</button>
+          <button id="bpCancel" class="ghost">取消</button>
+        </div>
+      </div>
     </div>
     <div class="layer hide" id="pickScreen">
       <div class="panel">

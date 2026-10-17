@@ -93,6 +93,7 @@ window.WorkshopLevel = (() => {
     const stageCount = def.launchPoints.length;
     if (!def.pigs.length) errs.push('至少放一只奶蛙，不然一开局就赢了');
     if (!def.blocks.length) errs.push('至少放一个方块，不然没有可拆的东西');
+    if (def.birds.length < 2) errs.push('奶蛋至少给 2 发，1 发基本打不过');
     if (def.pigs.length > LIMITS.pigs) errs.push(`奶蛙最多 ${LIMITS.pigs} 只`);
     if (def.blocks.length > LIMITS.blocks) errs.push(`方块最多 ${LIMITS.blocks} 块`);
     def.pigs.forEach((p, i) => {

@@ -148,16 +148,27 @@ const main = async () => {
 
     // ---------------------------------------------------------- 开局选蛋：每关多带一颗，开局让玩家挑
     const pickCards = await page.locator('#pickRoster .card').count();
-    await page.click('#btnWorkshop');      // 第一关现在从创意工坊里进
-    await sleep(250);
-    await page.click('#btnWkPlay1');
+    // 第一关入口已下掉；用"分享链接进关"这条真实路径来验选蛋面板（它会先让你挑一颗）
+    const shareCode = await page.evaluate(() => window.WorkshopLevel.pack(window.WorkshopLevel.normalize({
+      name: '选蛋测试',
+      blocks: [
+        { x: 900, y: 571, w: 34, h: 130, material: 'wood' },
+        { x: 1040, y: 571, w: 34, h: 130, material: 'wood' },
+        { x: 970, y: 489, w: 190, h: 34, material: 'wood' },
+      ],
+      pigs: [{ x: 970, y: 600 }],
+      birds: ['naidan', 'dash', 'bomb'],
+    })));
+    await page.goto(`${base}#level=${shareCode}`, { waitUntil: 'load' });
+    await page.waitForFunction(() => window.__nai && window.__nai.imagesReady(), null, { timeout: 20000 });
+    await page.waitForFunction(() => window.__nai.state().state === 'pick', null, { timeout: 15000 });
     await sleep(280);
     const picking = await page.evaluate(() => window.__nai.state());
     report.pickPanel = { cards: pickCards, state: picking.state, shown: picking.pickShown, birdsLeft: picking.birdsLeft };
     await shot(page, '00b-pick.png');
     if (pickCards < 8) problems.push(`开局选蛋面板只有 ${pickCards} 张卡（8 个奶蛋都该能挑）`);
     if (picking.state !== 'pick' || !picking.pickShown) problems.push('从工坊点"试玩第一关"之后没有先弹开局选蛋面板');
-    if (picking.birdsLeft !== 4) problems.push(`面板上该显示 4 发（第一关原本 3 发 +1），实际 ${picking.birdsLeft}`);
+    if (picking.birdsLeft !== 4) problems.push(`面板上该显示 4 发（这份关卡原本 3 发 +1），实际 ${picking.birdsLeft}`);
     // 点第 4 张卡（爆奶蛋）当首发
     await page.locator('#pickRoster .card').nth(3).click();
     await sleep(320);
@@ -1346,6 +1357,9 @@ const main = async () => {
     await shot(page, '10-endless-over.png');
 
     // ---------------------------------------------------------- 开局选蛋：一局只问第 1 关
+    // 前面验分享链接时 URL 里还挂着 #level=…；先回到普通首页再刷新，
+    // 否则刷新会重新打开那份自制关卡，看不到标题页的无尽模式入口。
+    await page.evaluate(() => history.replaceState(null, '', location.pathname));
     await page.reload({ waitUntil: 'load' });
     await page.waitForFunction(() => window.__nai && window.__nai.imagesReady(), null, { timeout: 20000 });
     await installStill(page); // reload 会把注入的小工具冲掉，重新装一遍
@@ -1448,15 +1462,30 @@ const main = async () => {
       const undoPigs = W.info().pigs;
       W.redo();
       const redoPigs = W.info().pigs;
+      // 奶蛋阵容：2 发爆奶蛋 + 1 发奶蛋
+      const rosterOk = W.setRoster({ bomb: 2, naidan: 1 });
+      const roster = W.roster();
+      const rosterCount = W.info().birds;
       W.setStages(2);
       const two = W.info();
       W.setName('验收小关');
       const code = W.code();
       const json = W.json();
       const unpacked = window.WorkshopLevel.unpack(code);
+      const gateBefore = W.gateOpen();     // 还没通关 → 不能发布
+      const publishBefore = W.publish();
       W.playtest();
       await wait(400);
       const playing = window.__nai.state();
+      const hudBackShown = !document.getElementById('btnToEditor').classList.contains('hide');
+      // ① 试玩途中就能回编辑器
+      document.getElementById('btnToEditor').click();
+      await wait(400);
+      const hudBackState = window.__nai.state().state;
+      // ② 回编辑器后（没通关）还是不能发布；再试玩一次并通关
+      const gateAfterBack = W.gateOpen();
+      W.playtest();
+      await wait(400);
       // 两段都清掉（先清第一段 → 推进 → 再清第二段），看自制关的结算面板
       window.__nai.clearStage();
       await wait(1600);
@@ -1464,19 +1493,35 @@ const main = async () => {
       await wait(1900);
       const ended = window.__nai.state().state;
       const backShown = !document.getElementById('btnBackEditor').classList.contains('hide');
+      const gateAfterWin = W.gateOpen();   // 通关了（还在结算面板上，但指纹已记下）
       document.getElementById('btnBackEditor').click();
       await wait(400);
       const backState = window.__nai.state().state;
       const backInfo = W.info();
+      const gateInEditor = W.gateOpen();
+      const published = W.publish();
+      // ③ 改关卡名 → 发布资格失效，按钮也要立刻变灰
+      const nameInput = document.getElementById('edName');
+      nameInput.value = '验收小关（改名）';
+      nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      const gateAfterRename = W.gateOpen();
+      const publishDisabledAfterRename = document.getElementById('edShare').disabled;
+      // ④ 再改内容 → 发布资格继续失效
+      W.setTool('block'); W.tap(1180, 520);
+      const gateAfterEdit = W.gateOpen();
       return {
         hub,
         starter: { blocks: starter.blocks, pigs: starter.pigs, errors: starter.errors },
         placed: { blocks: placed.blocks, pigs: placed.pigs, errors: placed.errors },
         stages: two.stages,
         pigStages: two.pigStages,
+        rosterOk, roster, rosterCount,
         codeLen: code.length, jsonLen: json.length, codeStarts: code.slice(0, 3),
         unpackOk: !!unpacked && unpacked.blocks.length === placed.blocks && unpacked.pigs.length === placed.pigs,
         undoPigs, redoPigs,
+        gateBefore, publishBefore, gateAfterBack, gateAfterWin, gateInEditor, published,
+        gateAfterRename, publishDisabledAfterRename, gateAfterEdit,
+        hudBackShown, hudBackState,
         playing: { state: playing.state, mode: playing.mode, blocks: playing.blocksAlive, pigs: playing.pigsAlive, birds: playing.birdsLeft, name: playing.levelName },
         ended, backShown, backState,
         backKept: backInfo ? { blocks: backInfo.blocks, pigs: backInfo.pigs, name: backInfo.name } : null,
@@ -1500,6 +1545,18 @@ const main = async () => {
     if (!wk.backShown) problems.push('自制关卡结算面板没有"回编辑器"');
     if (wk.backState !== 'edit') problems.push(`点"回编辑器"没回到编辑器（${wk.backState}）`);
     if (!wk.backKept || wk.backKept.blocks !== wk.placed.blocks || wk.backKept.pigs !== wk.placed.pigs) problems.push('回编辑器之后关卡内容丢了');
+    // 奶蛋阵容：可以按种类配（2 爆 + 1 基础）
+    if (!wk.rosterOk || wk.rosterCount !== 3) problems.push(`奶蛋阵容没设置成功（${JSON.stringify(wk.roster)}）`);
+    else if (!(wk.roster && wk.roster.bomb === 2 && wk.roster.naidan === 1)) problems.push(`奶蛋阵容不对：${JSON.stringify(wk.roster)}`);
+    // 发布门禁：没通关不能发布；通关后可以；改一个方块就重新上锁
+    if (wk.gateBefore || wk.publishBefore) problems.push('还没试玩通关就允许发布了');
+    if (!wk.hudBackShown) problems.push('试玩时 HUD 上没有"回编辑器"按钮');
+    if (wk.hudBackState !== 'edit') problems.push(`试玩途中点"回编辑器"没回去（${wk.hudBackState}）`);
+    if (wk.gateAfterBack) problems.push('只回编辑器没通关，却拿到了发布资格');
+    if (!wk.gateAfterWin) problems.push('试玩通关之后没有拿到发布资格');
+    if (!wk.gateInEditor || !wk.published) problems.push('通关回编辑器之后"发布链接"还是不可用');
+    if (wk.gateAfterRename || !wk.publishDisabledAfterRename) problems.push('改关卡名之后发布资格没立刻失效');
+    if (wk.gateAfterEdit) problems.push('改了关卡内容之后发布资格没失效（应该重新试玩通关）');
     await shot(page, '09d-workshop-editor.png');
 
     // ---------------------------------------------------------- file:// 直开
@@ -1523,8 +1580,9 @@ const main = async () => {
         roster: document.querySelectorAll('#roster .card').length,
       }));
       await p2.click('#btnWorkshop');
-      await p2.click('#btnWkPlay1');
-      await p2.locator('#pickRoster .card').nth(0).click(); // 单文件版也要能走完"开局选蛋"
+      // 工坊面板要能打开；再用调试入口进第一关（第一关已从标题页下掉）
+      await p2.evaluate(() => window.__nai.start('level1'));
+      await p2.evaluate(() => window.__nai.skipIntro());
       await sleep(700);
       const st = await p2.evaluate(() => window.__nai.state());
       await p2.screenshot({ path: path.join(shots, file) });

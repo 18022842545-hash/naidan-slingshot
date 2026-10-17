@@ -154,8 +154,6 @@
     wkPaste: document.getElementById('wkPaste'),
     wkFile: document.getElementById('wkFile'),
     btnWkNew: document.getElementById('btnWkNew'),
-    btnWkEdit1: document.getElementById('btnWkEdit1'),
-    btnWkPlay1: document.getElementById('btnWkPlay1'),
     btnWkPaste: document.getElementById('btnWkPaste'),
     btnWkImport: document.getElementById('btnWkImport'),
     btnWkClose: document.getElementById('btnWkClose'),
@@ -168,7 +166,7 @@
     edPigProps: document.getElementById('edPigProps'),
     edPigBonus: document.getElementById('edPigBonus'),
     edStageVal: document.getElementById('edStageVal'),
-    edBirdVal: document.getElementById('edBirdVal'),
+    edBirdsBtn: document.getElementById('edBirdsBtn'),
     edUndo: document.getElementById('edUndo'),
     edRedo: document.getElementById('edRedo'),
     edShare: document.getElementById('edShare'),
@@ -176,8 +174,14 @@
     edWkBack: document.getElementById('edWkBack'),
     edStageMinus: document.getElementById('edStageMinus'),
     edStagePlus: document.getElementById('edStagePlus'),
-    edBirdMinus: document.getElementById('edBirdMinus'),
-    edBirdPlus: document.getElementById('edBirdPlus'),
+    // 奶蛋阵容
+    birdPicker: document.getElementById('birdPicker'),
+    bpRows: document.getElementById('bpRows'),
+    bpTotal: document.getElementById('bpTotal'),
+    bpOk: document.getElementById('bpOk'),
+    bpReset: document.getElementById('bpReset'),
+    bpCancel: document.getElementById('bpCancel'),
+    btnToEditor: document.getElementById('btnToEditor'),
     edToolBlock: document.getElementById('edToolBlock'),
     edToolPig: document.getElementById('edToolPig'),
     edToolMove: document.getElementById('edToolMove'),
@@ -216,7 +220,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 创意工坊（分享码 + 编辑器）';
+  const BUILD = '2026-10-17 · 创意工坊（阵容 + 发布门禁）';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -1297,6 +1301,13 @@
   /** 清场：第一关给结算面板，无尽模式直接滚到下一关 */
   const win = (remaining) => {
     AudioKit.flyStop();
+    // 自制关卡：通关一次 = 拿到"可发布"资格（指纹就是它的分享码，改一个方块就失效）
+    if (mode === 'custom' && customDef) {
+      passedCode = window.WorkshopLevel.pack(customDef);
+      const list = drafts();
+      const i = list.findIndex((x) => x.id === customDef.id);
+      if (i >= 0) { list[i].passed = passedCode; saveDrafts(list); renderDrafts(); }
+    }
     const bonus = remaining * 10000;
     if (bonus) {
       score += bonus;
@@ -1431,6 +1442,7 @@
     AudioKit.unlock();
     mode = which;
     el.hud.classList.remove('hide');
+    el.btnToEditor.classList.add('hide');
     el.title.classList.add('hide');
     el.end.classList.add('hide');
     el.endStars.textContent = '';
@@ -1486,6 +1498,7 @@
   const backToMenu = () => {
     el.end.classList.add('hide');
     el.title.classList.remove('hide');
+    el.btnToEditor.classList.add('hide');
     state = 'title';
     AudioKit.flyStop();
     buildLevel(window.LEVEL1);
@@ -2984,6 +2997,23 @@
   let cameFromEditor = false; // 从编辑器点"试玩"进来的 → 结算面板给一个"回编辑器"
   let customDef = null;       // 当前在玩的自制关卡
   let shareBox = null;
+  // "试玩通关"的那一份关卡（分享码即指纹）：内容一改就对不上，得重新通关才允许发布
+  let passedCode = null;
+  const gateOpen = () => !!(editor && passedCode && window.WorkshopLevel.pack(editor.def) === passedCode);
+  /** 只刷新状态栏和发布按钮：改关卡名时光标不能因为重设 input.value 跳到末尾 */
+  const refreshPublishState = () => {
+    if (!editor) return;
+    const errs = window.WorkshopLevel.validate(editor.def);
+    const warns = window.WorkshopLevel.warnings(editor.def);
+    const passed = gateOpen();
+    el.edStatus.textContent = errs.length
+      ? `⚠️ ${errs[0]}${errs.length > 1 ? `（还有 ${errs.length - 1} 处）` : ''}`
+      : `✅ 可以玩了${warns.length ? ` · ${warns[0]}` : ''}${passed ? '' : ' · 发布前需试玩通关'}`;
+    el.edStatus.classList.toggle('bad', errs.length > 0);
+    el.edShare.disabled = errs.length > 0 || !passed;
+    el.edShare.style.opacity = errs.length > 0 || !passed ? 0.45 : 1;
+    el.edShare.title = passed ? '把链接发给别人' : '先试玩通关，才能发布';
+  };
 
   const drafts = () => {
     try {
@@ -3032,11 +3062,16 @@
       meta.textContent = `${(entry.def.blocks || []).length} 方块 · ${(entry.def.pigs || []).length} 奶蛙 · ${fmtTime(entry.updated)}`;
       const open = document.createElement('button');
       open.textContent = '打开';
-      open.addEventListener('click', () => openEditor(entry.def));
+      open.addEventListener('click', () => openEditor(entry.def, { passed: entry.passed }));
       const share = document.createElement('button');
       share.className = 'ghost';
-      share.textContent = '分享';
-      share.addEventListener('click', () => copyText(shareLink(entry.def), '分享链接已复制'));
+      const passed = entry.passed && entry.passed === window.WorkshopLevel.pack(entry.def);
+      share.textContent = passed ? '发布' : '未通关';
+      share.title = passed ? '复制发布链接' : '先打开这一关试玩通关，才能发布';
+      share.addEventListener('click', () => {
+        if (!passed) { toast('这一关还没试玩通关，先「打开」玩通一次', 2400); return; }
+        copyText(shareLink(entry.def), '发布链接已复制');
+      });
       const del = document.createElement('button');
       del.className = 'ghost';
       del.textContent = '删';
@@ -3083,6 +3118,7 @@
     state = 'workshop';
     el.hint.classList.add('hide');
     el.hud.classList.add('hide');
+    el.btnToEditor.classList.add('hide');
     renderDrafts();
   };
   const closeWorkshop = () => {
@@ -3129,19 +3165,20 @@
     el.edPigProps.style.display = editor.tool === 'pig' ? 'flex' : 'none';
     el.edPigBonus.checked = !!editor.bonus;
     el.edStageVal.textContent = String(editor.def.launchPoints.length);
-    el.edBirdVal.textContent = String(editor.def.birds.length);
+    const counts = rosterOf(editor.def);
+    el.edBirdsBtn.textContent = `${editor.def.birds.length} 发 ▾`;
+    el.edBirdsBtn.title = window.WorkshopLevel.BIRDS.filter((k) => counts[k])
+      .map((k) => `${(window.BIRDS[k] || {}).name || k}${counts[k] > 1 ? '×' + counts[k] : ''}`)
+      .join(' · ') || '选奶蛋';
     const errs = window.WorkshopLevel.validate(editor.def);
-    const warns = window.WorkshopLevel.warnings(editor.def);
-    el.edStatus.textContent = errs.length
-      ? `⚠️ ${errs[0]}${errs.length > 1 ? `（还有 ${errs.length - 1} 处）` : ''}`
-      : `✅ 可以玩了${warns.length ? ` · ${warns[0]}` : ''}`;
-    el.edStatus.classList.toggle('bad', errs.length > 0);
     el.edPlay.disabled = errs.length > 0;
     el.edPlay.style.opacity = errs.length ? 0.45 : 1;
+    refreshPublishState();
     el.edUndo.classList.toggle('ghost', !editor.undo.length);
     el.edRedo.classList.toggle('ghost', !editor.redo.length);
   };
-  const openEditor = (def) => {
+  const openEditor = (def, opts = {}) => {
+    passedCode = opts.passed || null;
     editor = {
       def: window.WorkshopLevel.normalize(def || starterLevel()),
       tool: 'block', material: 'wood', size: 'm', bonus: false,
@@ -3330,7 +3367,32 @@
     updateScore();
     promptPick(customDef, { quick: true, auto: !!opts.preview, silent: !!opts.preview });
     updateLevelChip();
+    el.btnToEditor.classList.toggle('hide', !cameFromEditor);
   };
+  /**
+   * #level=… 分享码入口。首次打开和同页改 hash 都走这里——
+   * 只监听加载事件的话，已经开着的页面再粘贴分享链接只会改 hash、不会重载脚本，关卡就打不开。
+   */
+  let lastSharedCode = null;
+  const openSharedLink = (fromHashChange = false) => {
+    const m = /(?:^|[#&])level=([^&]+)/.exec(location.hash || '');
+    if (!m) {
+      lastSharedCode = null;
+      return false;
+    }
+    const code = m[1];
+    if (fromHashChange && code === lastSharedCode) return false;
+    const shared = window.WorkshopLevel.unpack(code);
+    if (!shared) {
+      toast('这条分享链接里的关卡损坏了', 2400);
+      return false;
+    }
+    lastSharedCode = code;
+    startCustom(shared, {});
+    toast(`载入分享关卡：${shared.name}`, 2800);
+    return true;
+  };
+  window.addEventListener('hashchange', () => openSharedLink(true));
   const playtest = () => {
     if (!editor) return;
     const errs = window.WorkshopLevel.validate(editor.def);
@@ -3375,8 +3437,6 @@
 
   // 工坊入口
   el.btnWkNew.addEventListener('click', () => openEditor(starterLevel()));
-  el.btnWkEdit1.addEventListener('click', () => openEditor({ ...window.LEVEL1, id: `custom-${Date.now().toString(36)}`, name: '第一关（改）' }));
-  el.btnWkPlay1.addEventListener('click', () => { closeWorkshop(); startCustom(window.LEVEL1, {}); });
   el.btnWkClose.addEventListener('click', closeWorkshop);
   el.btnWkImport.addEventListener('click', () => el.wkFile.click());
   el.wkFile.addEventListener('change', () => {
@@ -3392,7 +3452,7 @@
   });
   // 编辑器工具条
   el.edName.addEventListener('input', () => {
-    if (editor) { editor.def.name = el.edName.value.slice(0, 24); persistDraft(); }
+    if (editor) { editor.def.name = el.edName.value.slice(0, 24); persistDraft(); refreshPublishState(); }
   });
   const setTool = (t) => { if (!editor) return; editor.tool = t; editor.selected = null; syncEditorUI(); };
   el.edToolBlock.addEventListener('click', () => setTool('block'));
@@ -3420,24 +3480,104 @@
   };
   el.edStageMinus.addEventListener('click', () => setStages(editor ? editor.def.launchPoints.length - 1 : 1));
   el.edStagePlus.addEventListener('click', () => setStages(editor ? editor.def.launchPoints.length + 1 : 1));
-  const setBirds = (n) => {
-    if (!editor) return;
-    const next = clamp(Math.round(n), 2, 8);
-    if (next === editor.def.birds.length) return;
-    editor.def.birds = window.WorkshopLevel.BIRDS.slice(0, next);
-    editorChanged();
+  // ---- 奶蛋阵容：每种最多 4 发，总数 2~8 ----
+  const DEFAULT_ROSTER = { naidan: 1, dash: 1, bomb: 1 };
+  const rosterOf = (def) => {
+    const out = {};
+    def.birds.forEach((k) => { out[k] = (out[k] || 0) + 1; });
+    return out;
   };
-  el.edBirdMinus.addEventListener('click', () => setBirds(editor ? editor.def.birds.length - 1 : 2));
-  el.edBirdPlus.addEventListener('click', () => setBirds(editor ? editor.def.birds.length + 1 : 2));
+  const rosterList = (counts) => window.WorkshopLevel.BIRDS.filter((k) => counts[k] > 0)
+    .flatMap((k) => Array.from({ length: counts[k] }, () => k));
+  let bpDraft = null;   // 阵容弹窗里正在编辑的计数
+  const bpCount = () => Object.values(bpDraft || {}).reduce((a, b) => a + b, 0);
+  const renderBirdPicker = () => {
+    el.bpRows.innerHTML = '';
+    window.WorkshopLevel.BIRDS.forEach((key) => {
+      const t = window.BIRDS[key] || window.BIRDS.naidan;
+      const row = document.createElement('div');
+      row.className = 'bpRow';
+      const img = document.createElement('img');
+      img.src = assetUrl(t.sprite);
+      img.alt = t.name;
+      const nm = document.createElement('div');
+      nm.className = 'nm';
+      nm.textContent = t.name;
+      const minus = document.createElement('button');
+      minus.className = 'ghost';
+      minus.textContent = '−';
+      const n = document.createElement('span');
+      n.className = 'n';
+      n.textContent = String(bpDraft[key] || 0);
+      const plus = document.createElement('button');
+      plus.textContent = '＋';
+      const bump = (d) => {
+        const next = (bpDraft[key] || 0) + d;
+        if (next < 0 || next > 4) return;
+        if (d > 0 && bpCount() >= 8) { toast('最多 8 发', 1200); return; }
+        bpDraft[key] = next;
+        if (!bpDraft[key]) delete bpDraft[key];
+        renderBirdPicker();
+      };
+      minus.addEventListener('click', () => bump(-1));
+      plus.addEventListener('click', () => bump(1));
+      row.append(img, nm, minus, n, plus);
+      el.bpRows.appendChild(row);
+    });
+    const total = bpCount();
+    el.bpTotal.textContent = total < 2 ? `共 ${total} 发（至少 2 发）` : `共 ${total} 发`;
+    el.bpOk.disabled = total < 2;
+    el.bpOk.style.opacity = total < 2 ? 0.45 : 1;
+  };
+  const openBirdPicker = () => {
+    if (!editor) return;
+    bpDraft = { ...rosterOf(editor.def) };
+    renderBirdPicker();
+    el.birdPicker.classList.remove('hide');
+  };
+  /** 直接设置阵容（验收/调试用） */
+  const setRoster = (counts = {}) => {
+    if (!editor) return false;
+    const clean = {};
+    window.WorkshopLevel.BIRDS.forEach((k) => {
+      const n = clamp(Math.round(Number(counts[k]) || 0), 0, 4);
+      if (n) clean[k] = n;
+    });
+    if (Object.values(clean).reduce((a, b) => a + b, 0) < 2) return false;
+    editor.def.birds = rosterList(clean);
+    editorChanged();
+    return true;
+  };
+  el.edBirdsBtn.addEventListener('click', openBirdPicker);
+  el.bpOk.addEventListener('click', () => {
+    if (!editor || bpCount() < 2) return;
+    editorSnapshot();
+    editor.def.birds = rosterList(bpDraft);
+    el.birdPicker.classList.add('hide');
+    editorChanged();
+  });
+  el.bpCancel.addEventListener('click', () => { bpDraft = null; el.birdPicker.classList.add('hide'); });
+  el.bpReset.addEventListener('click', () => { bpDraft = { ...DEFAULT_ROSTER }; renderBirdPicker(); });
   el.edUndo.addEventListener('click', undoEditor);
   el.edRedo.addEventListener('click', redoEditor);
   el.edPlay.addEventListener('click', playtest);
-  el.edShare.addEventListener('click', () => { if (editor) copyText(shareLink(editor.def), '分享链接已复制'); });
+  el.edShare.addEventListener('click', () => {
+    if (!editor) return;
+    if (window.WorkshopLevel.validate(editor.def).length) { toast('先把关卡改到能玩', 1800); return; }
+    if (!gateOpen()) { toast('先点「试玩」通关一次，才能发布链接', 2200); return; }
+    copyText(shareLink(editor.def), '发布链接已复制');
+  });
   el.edExport.addEventListener('click', () => { if (editor) { persistDraft(); exportJSON(editor.def); } });
   el.edWkBack.addEventListener('click', () => { persistDraft(); leaveEditor(); });
   el.btnBackEditor.addEventListener('click', () => {
     el.end.classList.add('hide');
-    openEditor(customDef || window.LEVEL1);
+    openEditor(customDef || window.LEVEL1, { passed: passedCode });
+  });
+  // 试玩途中随时回编辑器（HUD 右上角的 ✎；只在"从编辑器进来"的自制关卡里出现）
+  el.btnToEditor.addEventListener('click', () => {
+    AudioKit.flyStop();
+    el.end.classList.add('hide');
+    openEditor(customDef || window.LEVEL1, { passed: passedCode });
   });
   window.__nai = {
     ready: true,
@@ -3465,7 +3605,12 @@
       setBonus: (b) => { if (editor) { editor.bonus = !!b; syncEditorUI(); } return editor && editor.bonus; },
       setName: (n) => { if (editor) { editor.def.name = String(n).slice(0, 24); el.edName.value = editor.def.name; persistDraft(); } return editor && editor.def.name; },
       setStages: (n) => { setStages(n); return editor && editor.def.launchPoints.length; },
-      setBirds: (n) => { setBirds(n); return editor && editor.def.birds.length; },
+      /** 直接设置阵容，例如 { naidan: 2, bomb: 1 } */
+      setRoster: (counts) => { const ok = setRoster(counts || {}); return ok ? editor.def.birds.slice() : false; },
+      roster: () => (editor ? rosterOf(editor.def) : null),
+      /** 试玩通关之后才有；返回发布链接（没通关返回空串） */
+      publish: () => (gateOpen() ? shareLink(editor.def) : ''),
+      gateOpen: () => gateOpen(),
       /** 在世界坐标"点一下"（放置/删除/选中），和真实点击走同一条逻辑 */
       tap: (x, y) => { edDownAt({ x, y }); edUp(); return editor && editor.def; },
       undo: () => { undoEditor(); return editor ? editor.undo.length : 0; },
@@ -3783,11 +3928,6 @@
     render();
     requestAnimationFrame(frame);
     // 带分享码打开（#level=…）：直接进这份自制关卡（先在选蛋面板挑一颗）
-    const m = /(?:^|[#&])level=([^&]+)/.exec(location.hash || '');
-    const shared = m ? window.WorkshopLevel.unpack(m[1]) : null;
-    if (shared) {
-      startCustom(shared, {});
-      toast(`载入分享关卡：${shared.name}`, 2800);
-    }
+    openSharedLink();
   });
 })();

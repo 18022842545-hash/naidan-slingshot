@@ -43,8 +43,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-17 · 创意工坊（分享码 + 编辑器）",
-    "stamp": "版本 2026-10-17 · 创意工坊（分享码 + 编辑器）"
+    "build": "2026-10-17 · 创意工坊（阵容 + 发布门禁）",
+    "stamp": "版本 2026-10-17 · 创意工坊（阵容 + 发布门禁）"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -97,7 +97,7 @@
   },
   "introEnemy": {
     "zoom": 1.469,
-    "camX": 648,
+    "camX": 507,
     "label": "敌方"
   },
   "introEnd": {
@@ -108,10 +108,10 @@
   "queueIdle": {
     "samples": 70,
     "distinctPoses": 12,
-    "minDy": -62.8,
-    "maxDeg": 344
+    "minDy": -62.9,
+    "maxDeg": 349
   },
-  "initialDrift": 1,
+  "initialDrift": 0,
   "fallDamage": {
     "low": {
       "max": 141,
@@ -250,10 +250,10 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.66,
-      "vxMid": 24.29,
-      "xMid": 709,
-      "xSoon": 1213
+      "vxBefore": 24.59,
+      "vxMid": 24.23,
+      "xMid": 733,
+      "xSoon": 1222
     },
     {
       "type": "dash",
@@ -266,12 +266,12 @@
       "blocksBefore": 3,
       "blocksAfter": 1,
       "pigsBefore": 1,
-      "pigsAfter": 0,
+      "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.84,
-      "vxMid": 33.53,
-      "xMid": 766,
-      "xSoon": 1341
+      "vxBefore": 24.79,
+      "vxMid": 33.58,
+      "xMid": 757,
+      "xSoon": 1389
     },
     {
       "type": "split",
@@ -284,12 +284,12 @@
       "blocksBefore": 3,
       "blocksAfter": 0,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.63,
-      "vxMid": 23.2,
-      "xMid": 716,
-      "xSoon": 1186
+      "vxBefore": 24.69,
+      "vxMid": 23.1,
+      "xMid": 690,
+      "xSoon": 1177
     },
     {
       "type": "bomb",
@@ -304,7 +304,7 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 1,
-      "vxBefore": 23.6,
+      "vxBefore": 23.68,
       "vxMid": 0,
       "xMid": 0,
       "xSoon": 0
@@ -338,12 +338,12 @@
       "blocksBefore": 3,
       "blocksAfter": 2,
       "pigsBefore": 1,
-      "pigsAfter": 0,
+      "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.55,
+      "vxBefore": 24.62,
       "vxMid": 13.33,
-      "xMid": 654,
-      "xSoon": 988
+      "xMid": 643,
+      "xSoon": 965
     },
     {
       "type": "back",
@@ -361,7 +361,7 @@
       "vxBefore": 24.71,
       "vxMid": -25.85,
       "xMid": 432,
-      "xSoon": 100
+      "xSoon": 93
     },
     {
       "type": "seek",
@@ -376,10 +376,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.87,
-      "vxMid": 28.03,
-      "xMid": 720,
-      "xSoon": 1493
+      "vxBefore": 24.92,
+      "vxMid": 28.06,
+      "xMid": 695,
+      "xSoon": 1469
     }
   ],
   "plowTest": {
@@ -393,14 +393,14 @@
   "seekAim": {
     "used": true,
     "dir": {
-      "nx": 0.928,
-      "ny": -0.374
+      "nx": 0.927,
+      "ny": -0.375
     },
     "wantN": {
       "x": 0.927,
-      "y": -0.374
+      "y": -0.376
     },
-    "straight": 0.9,
+    "straight": 0.8,
     "guidedFrames": 18,
     "maxV": 30,
     "marks": 1
@@ -1053,7 +1053,7 @@
   },
   "bossCutIn": {
     "label": "BOSS",
-    "maxZoom": 2.349,
+    "maxZoom": 2.35,
     "barShown": true
   },
   "bossDamage": {
@@ -1085,7 +1085,7 @@
       "shots": 3,
       "summons": 1,
       "hp": 345,
-      "x": 2138
+      "x": 2137
     },
     "heal": 245,
     "pigsBefore": 2,
@@ -1128,10 +1128,10 @@
       "fallK": 0
     },
     "state": "aim",
-    "hpAfterFall": 765,
+    "hpAfterFall": 771,
     "falls": [
-      765,
-      640
+      771,
+      650
     ],
     "shots": 6,
     "laugh": {
@@ -1201,8 +1201,8 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
-        "milk",
-        "split",
+        "naidan",
+        "dash",
         "bomb"
       ]
     }
@@ -1244,12 +1244,33 @@
       0,
       1
     ],
+    "rosterOk": [
+      "naidan",
+      "bomb",
+      "bomb"
+    ],
+    "roster": {
+      "naidan": 1,
+      "bomb": 2
+    },
+    "rosterCount": 3,
     "codeLen": 260,
     "jsonLen": 423,
     "codeStarts": "eyJ",
     "unpackOk": true,
     "undoPigs": 1,
     "redoPigs": 2,
+    "gateBefore": false,
+    "publishBefore": "",
+    "gateAfterBack": false,
+    "gateAfterWin": true,
+    "gateInEditor": true,
+    "published": "http://127.0.0.1:8849/#level=eyJ2IjoxLCJuIjoi6aqM5pS25bCP5YWzIiwidyI6MjcyMCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdXSwiYiI6W1s5MDAsNTcwLDMwLDEzMCwwXSxbMTA0MCw1NzAsMzAsMTMwLDBdLFs5NzAsNDkwLDE5MCwzMCwwXSxbMTMwMCw1NjAsMTIwLDkwLDFdXSwicCI6W1s5NzAsNjAwLDQwLDBdLFsxNTIwLDYwMCw0MCwxXV0sImsiOlswLDMsM119",
+    "gateAfterRename": false,
+    "publishDisabledAfterRename": true,
+    "gateAfterEdit": false,
+    "hudBackShown": true,
+    "hudBackState": "edit",
     "playing": {
       "state": "aim",
       "mode": "custom",
@@ -1271,13 +1292,13 @@
     "canvas": true,
     "roster": 8,
     "images": true,
-    "state": "intro"
+    "state": "aim"
   },
   "单文件版": {
     "canvas": true,
     "roster": 8,
     "images": true,
-    "state": "intro"
+    "state": "aim"
   },
   "ok": true
 }
