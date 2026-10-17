@@ -1503,6 +1503,69 @@ const main = async () => {
       problems.push('确认重开后没有从第 1 关开始');
     }
 
+    // ---------------------------------------------------------- 核爆奶蛋：稀有生成、跨关保留、发射清屏
+    const nuke = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const isolated = {
+        chance: window.Endless.NUKE_CHANCE,
+        seed17: window.Endless.generate(1, 17).birds,
+        inLevel1: window.LEVEL1.birds.includes('nuke'),
+        inEditor: window.WorkshopLevel.BIRDS.includes('nuke'),
+        inPick: window.__nai.pickOptions().includes('nuke'),
+        inTitle: [...document.querySelectorAll('#roster .card .nm')].some((e) => e.textContent.includes('核爆')),
+      };
+
+      window.__nai.loadEndlessNuke(1, 777);
+      window.__nai.skipIntro();
+      const loaded = window.__nai.state();
+      window.__nai.forceWin();
+      await wait(3500);
+      const carried = window.__nai.state();
+
+      window.__nai.loadEndlessNuke(1, 888);
+      window.__nai.skipIntro();
+      const equipped = window.__nai.equipQueueType('nuke');
+      const armed = window.__nai.state();
+      window.__nai.shoot(8, 1);
+      await wait(1100);
+      const blasted = window.__nai.state();
+      return {
+        isolated,
+        loaded: {
+          level: loaded.endlessLevel,
+          queue: loaded.birdQueue,
+          current: loaded.currentBird,
+        },
+        carried: {
+          level: carried.endlessLevel,
+          queue: carried.birdQueue,
+          current: carried.currentBird,
+        },
+        equipped,
+        armed: { current: armed.currentBird, state: armed.state },
+        blasted: {
+          state: blasted.state,
+          pigs: blasted.pigsAlive,
+          blocks: blasted.blocksAlive,
+          carriedNuke: blasted.carriedNuke,
+        },
+      };
+    });
+    report.nuke = nuke;
+    if (nuke.isolated.chance !== 0.005) problems.push(`核爆蛋刷新概率不是 0.5%（${nuke.isolated.chance}）`);
+    if (!nuke.isolated.seed17.includes('nuke')) problems.push('固定种子没有命中核爆蛋刷新路径');
+    if (nuke.isolated.inLevel1 || nuke.isolated.inEditor || nuke.isolated.inPick || nuke.isolated.inTitle) {
+      problems.push('核爆蛋出现在了无尽模式之外或开局选蛋/编辑器里');
+    }
+    if (!nuke.loaded.queue.includes('nuke') && nuke.loaded.current !== 'nuke') problems.push('核爆蛋没有进入无尽关卡队列');
+    if (nuke.carried.level !== 2 || (!nuke.carried.queue.includes('nuke') && nuke.carried.current !== 'nuke')) {
+      problems.push('未发射的核爆蛋没有保留到下一关');
+    }
+    if (!nuke.equipped || nuke.armed.current !== 'nuke') problems.push('核爆蛋无法从队列调到弹弓');
+    if (nuke.blasted.pigs !== 0 || nuke.blasted.blocks !== 0) {
+      problems.push(`核爆没有清屏（奶蛙 ${nuke.blasted.pigs}，方块 ${nuke.blasted.blocks}）`);
+    }
+
     // ---------------------------------------------------------- 无尽模式：推进与失败
     const endlessFlow = await page.evaluate(async () => {
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -251,7 +251,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 无尽重开确认';
+  const BUILD = '2026-10-17 · 无尽核爆奶蛋';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | restartConfirm | over
   let score = 0;
   let birdsLeft = 0;
@@ -273,6 +273,8 @@
   let levelStartScore = 0; // 进这一关时的分数（重打 boss 关要退回）
   let bossRetryUsed = false; // boss 关的重打机会用掉了没
   let retryPending = false;  // 结算面板上点"再来一次"是重打 boss 关
+  let carriedNuke = 0;       // 无尽模式未使用的核爆蛋，保留到下一关
+  let nukeFlash = 0;
   let endlessResume = null;   // 中途退出无尽时的暂停点（同一页面内恢复）
   let resumePaused = false;
   let pausedCallbacks = [];
@@ -1021,6 +1023,11 @@
     AudioKit.launch();
     AudioKit.flyStart();
     updateSkillChip();
+    if (b.game.type === 'nuke') {
+      afterDelay(260, () => {
+        if (!b.game.dead && b.game.launched) nuclearBlast(b);
+      });
+    }
   };
 
   // ---------------------------------------------------------------- 技能
@@ -1041,13 +1048,13 @@
 
   /** 爆炸：范围伤害 + 冲击推开 + 冲击波表现 */
   const explode = (x, y, opts = {}) => {
-    const { radius, push, dmg, color, n } = { ...BOOM, ...opts };
-    shake(14 + radius * 0.055);
+    const { radius, push, dmg, color, n, shakeAmt, nuke = false } = { ...BOOM, ...opts };
+    shake(shakeAmt === undefined ? 14 + radius * 0.055 : shakeAmt);
     AudioKit.boom();
     burst(x, y, n, color, 'chunk');
     burst(x, y, Math.round(n * 0.6), '#fff3d6', 'cream');
     addSpark(x, y, Math.round(n * 0.4), '#ffd98a', 'star');
-    explosions.push({ x, y, life: 1, radius });
+    explosions.push({ x, y, life: 1, radius, nuke });
     for (const b of [...blocks, ...pigs]) {
       if (b.game.dead) continue;
       const d = Vector.magnitude(Vector.sub(b.position, { x, y }));
@@ -1062,15 +1069,36 @@
     }
   };
 
+  /** 核爆奶蛋：发射后短暂飞行即引爆，按整张地图半径强制清场 */
+  const nuclearBlast = (bird) => {
+    if (!bird || bird.game.dead) return;
+    bird.game.exploded = true;
+    bird.game.dead = true;
+    const x = bird.position.x;
+    const y = bird.position.y;
+    nukeFlash = 1;
+    explode(x, y, {
+      radius: Math.max(worldW() * 1.4, H * 3),
+      dmg: 999999,
+      push: 0.14,
+      color: '#dff8ff',
+      n: 120,
+      shakeAmt: 28,
+      nuke: true,
+    });
+    addSpark(x, y, 42, '#bdefff', 'star');
+    removeBird(bird);
+  };
+
   /** 冲击波：中心白光 + 向外扩散的环 */
   const drawExplosions = () => {
     explosions.forEach((e) => {
       const k = 1 - e.life; // 0 → 1
       ctx.save();
       const core = ctx.createRadialGradient(e.x, e.y, 2, e.x, e.y, e.radius * 0.62);
-      core.addColorStop(0, `rgba(255,255,240,${0.85 * e.life})`);
-      core.addColorStop(0.5, `rgba(255,200,110,${0.5 * e.life})`);
-      core.addColorStop(1, 'rgba(255,150,60,0)');
+      core.addColorStop(0, `rgba(${e.nuke ? '230,252,255' : '255,255,240'},${0.9 * e.life})`);
+      core.addColorStop(0.5, `rgba(${e.nuke ? '120,220,255' : '255,200,110'},${0.5 * e.life})`);
+      core.addColorStop(1, e.nuke ? 'rgba(60,160,255,0)' : 'rgba(255,150,60,0)');
       ctx.fillStyle = core;
       ctx.beginPath();
       ctx.arc(e.x, e.y, e.radius * 0.62, 0, Math.PI * 2);
@@ -1079,7 +1107,7 @@
         const ph = clamp(k * 1.35 - i * 0.18, 0, 1);
         if (ph <= 0) continue;
         ctx.globalAlpha = (1 - ph) * (i ? 0.5 : 0.95);
-        ctx.strokeStyle = i ? '#ffd9a0' : '#fff6de';
+      ctx.strokeStyle = e.nuke ? (i ? '#8bdcff' : '#effdff') : (i ? '#ffd9a0' : '#fff6de');
         ctx.lineWidth = (i ? 3 : 7) * (1 - ph) + 1;
         ctx.beginPath();
         ctx.arc(e.x, e.y, e.radius * (0.22 + ph * 0.95), 0, Math.PI * 2);
@@ -1349,7 +1377,15 @@
       const i = list.findIndex((x) => x.id === customDef.id);
       if (i >= 0) { list[i].passed = passedCode; saveDrafts(list); renderDrafts(); }
     }
-    const bonus = remaining * 10000;
+    const nukeWaiting = mode === 'endless' && (
+      (activeBird && !activeBird.game.launched && activeBird.game.type === 'nuke')
+      || birdQueue.includes('nuke')
+    );
+    if (nukeWaiting) {
+      carriedNuke = 1;
+      toast('核爆奶蛋已保留到下一关', 1800);
+    }
+    const bonus = Math.max(0, remaining - (nukeWaiting ? 1 : 0)) * 10000;
     if (bonus) {
       score += bonus;
       updateScore();
@@ -1579,6 +1615,7 @@
   const startRun = (which, auto = false) => {
     clearEndlessResume();
     AudioKit.unlock();
+    carriedNuke = 0;
     mode = which;
     el.hud.classList.remove('hide');
     el.title.classList.add('hide');
@@ -1608,7 +1645,12 @@
     bossRetryUsed = false; // 新的一关，重打机会刷新
     retryPending = false;
     // 这一关多带的奶蛋照旧让玩家挑（自动流程沿用上一关的选择方式）
-    promptPick(window.Endless.generate(endlessLevel, matchSeed), { quick: true });
+    const def = window.Endless.generate(endlessLevel, matchSeed);
+    if (carriedNuke) {
+      carriedNuke = 0;
+      if (!def.birds.includes('nuke')) def.birds.splice(Math.min(1, def.birds.length), 0, 'nuke');
+    }
+    promptPick(def, { quick: true });
   };
 
   const restart = (auto = false) => {
@@ -1623,6 +1665,7 @@
     } else if (mode === 'endless') {
       score = 0;
       totalScore = 0;
+      carriedNuke = 0;
       endlessLevel = 1;
       matchSeed = Math.floor(Math.random() * 1e9);
       updateScore();
@@ -2014,6 +2057,7 @@
   // ---------------------------------------------------------------- 每帧逻辑
   const step = () => {
     timeMs += STEP;
+    if (nukeFlash > 0) nukeFlash = Math.max(0, nukeFlash - 0.018);
     if (state === 'edit' || state === 'workshop' || state === 'restartConfirm') return;
     Engine.update(engine, STEP);
     blinkTimer += STEP;
@@ -2596,6 +2640,24 @@
     if (state === 'fly' && !info.child) {
       ctx.globalAlpha = clamp((timeMs - (info.launchAt || 0)) / 120, 0, 1);
     }
+    if (info.type === 'nuke') {
+      const pulse = 0.72 + 0.28 * Math.sin(timeMs / 150);
+      const glow = ctx.createRadialGradient(0, 0, radius * 0.55, 0, 0, radius * 2.25);
+      glow.addColorStop(0, `rgba(180,255,220,${0.28 * pulse})`);
+      glow.addColorStop(0.55, `rgba(80,220,255,${0.2 * pulse})`);
+      glow.addColorStop(1, 'rgba(40,180,255,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 2.25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = `rgba(180,255,220,${0.75 * pulse})`;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 1.65, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     if (img && img.width) {
       ctx.drawImage(img, -spriteW / 2, -spriteH * BIRD_ANCHOR_Y, spriteW, spriteH);
     } else {
@@ -2730,6 +2792,16 @@
       ctx.translate(x, centerY);
       ctx.rotate(pose.rot);
       ctx.scale(pose.sx, pose.sy);
+      if (typeKey === 'nuke') {
+        const pulse = 0.72 + 0.28 * Math.sin(timeMs / 150 + i);
+        const glow = ctx.createRadialGradient(0, 0, spriteW * 0.2, 0, 0, spriteW * 0.78);
+        glow.addColorStop(0, `rgba(190,255,225,${0.35 * pulse})`);
+        glow.addColorStop(1, 'rgba(50,190,255,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, spriteW * 0.78, 0, Math.PI * 2);
+        ctx.fill();
+      }
       if (img && img.width) ctx.drawImage(img, -spriteW / 2, -spriteH * 0.5, spriteW, spriteH);
       ctx.restore();
     });
@@ -3130,6 +3202,11 @@
     flyingBosses.forEach(drawFlyingBoss);
     drawFloaters();
     if (cutInStrength > 0) drawBossCutIn(cutInStrength, timeMs / 1000);
+    if (nukeFlash > 0) {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = `rgba(225,250,255,${0.68 * nukeFlash})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     if (state === 'edit') drawEditorOverlay();   // 网格 / 发射点 / 选中高亮
   };
   Events.on(engine, 'collisionStart', (e) => handleCollision(e.pairs));
@@ -3927,6 +4004,7 @@
   /** 开始玩一份自制关卡：用作者配置的最终阵容，不弹开局选蛋；preview 时连开场一起跳过 */
   const startCustom = (def, opts = {}) => {
     clearEndlessResume();
+    carriedNuke = 0;
     customDef = window.WorkshopLevel.normalize(def);
     mode = 'custom';
     customSource = opts.source || (opts.fromEditor ? 'editor' : 'community');
@@ -4345,6 +4423,8 @@
       mode,
       endlessLevel,
       matchSeed,
+      carriedNuke,
+      nukeFlash: Math.round(nukeFlash * 100) / 100,
       endlessResume: endlessResume ? {
         state: endlessResume.state,
         level: endlessResume.level,
@@ -4579,6 +4659,7 @@
     /** 直接跳进无尽模式的第 n 关（指定种子，方便复现和自动化测试） */
     loadEndless: (n, seed) => {
       clearEndlessResume();
+      carriedNuke = 0;
       mode = 'endless';
       endlessLevel = n;
       matchSeed = seed;
@@ -4592,6 +4673,29 @@
       autoPickSession = true; // 自动化流程不弹面板，免得每个用例都要点一次
       promptPick(window.Endless.generate(n, seed), { auto: true, silent: true });
       return { pigs: pigs.length, blocks: blocks.length, birds: levelBirds.length };
+    },
+    loadEndlessNuke: (n, seed) => {
+      clearEndlessResume();
+      carriedNuke = 0;
+      mode = 'endless';
+      endlessLevel = n;
+      matchSeed = seed;
+      score = 0;
+      totalScore = 0;
+      bossRetryUsed = false;
+      retryPending = false;
+      updateScore();
+      el.title.classList.add('hide');
+      el.end.classList.add('hide');
+      autoPickSession = true;
+      const def = window.Endless.generate(n, seed);
+      if (!def.birds.includes('nuke')) def.birds.splice(Math.min(1, def.birds.length), 0, 'nuke');
+      promptPick(def, { auto: true, silent: true });
+      return { pigs: pigs.length, blocks: blocks.length, birds: levelBirds.length };
+    },
+    equipQueueType: (type) => {
+      const i = birdQueue.indexOf(type);
+      return i >= 0 ? promoteQueue(i) : false;
     },
     restart: () => restart(true),
     shoot: (angleDeg, power = 1) => {
@@ -4616,7 +4720,7 @@
   /** 标题页的角色一览：奶蛋们都摆出来，让玩家先认识一下 */
   const buildRoster = () => {
     el.roster.innerHTML = '';
-    Object.values(BIRDS).forEach((t) => {
+    Object.values(BIRDS).filter((t) => t.key !== 'nuke').forEach((t) => {
       const card = document.createElement('div');
       card.className = 'card';
       const img = document.createElement('img');

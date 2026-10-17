@@ -108,6 +108,18 @@ window.BIRDS = {
     skillTip: '点屏幕上的位置 · 直着加速冲过去',
     tagline: '点一下 · 朝点到的地方直线加速冲过去',
   },
+  nuke: {
+    key: 'nuke',
+    name: '核爆奶蛋',
+    sprite: 'naidan_bomb',
+    r: 32,
+    density: 0.004,
+    restitution: 0.18,
+    frictionAir: 0.003,
+    damage: 1,
+    skill: null,
+    tagline: '无尽模式稀有 · 发射即清屏',
+  },
 };
 
 /** 分身奶蛋分出来的小奶蛋 */

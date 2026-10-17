@@ -66,6 +66,13 @@ const mulberry32 = (seed) => {
 const B = (x, y, w, h, material, extra) => ({ x, y, w, h, material, ...(extra || {}) });
 const P = (x, y, r = 36, extra) => ({ x, y, r, ...(extra || {}) });
 const clampInt = (v, a, b) => Math.max(a, Math.min(b, Math.round(v)));
+const NUKE_CHANCE = 0.005;
+const rollNuke = (def, R) => {
+  if (R() < NUKE_CHANCE && !def.birds.includes('nuke')) {
+    def.birds.splice(Math.min(1, def.birds.length), 0, 'nuke');
+  }
+  return def;
+};
 
 /**
  * boss 关：先在门口摆一波"前哨"（清完才推进到塔前），再打蹲在阶梯塔最上层的奶皇。
@@ -110,7 +117,7 @@ const buildBossLevel = (level, R) => {
   const order = shuffle(birds.slice(1), R);
   const queue = [birds[0], ...order.slice(0, st.birds - 1)];
 
-  return {
+  return rollNuke({
     id: `boss-${level}`,
     name: `第 ${level} 关 · BOSS`,
     subtitle: `BOSS · ${window.BOSS_NAME}${tier > 1 ? ` Lv.${tier}` : ''}`,
@@ -130,7 +137,7 @@ const buildBossLevel = (level, R) => {
     blocks,
     pigs,
     endless: true,
-  };
+  }, R);
 };
 /** Fisher-Yates 洗牌：不能用 sort(() => R() - 0.5)，那个的调用次数由引擎的排序实现决定，
  *  Node 和浏览器的结果会不一样，随机关卡就没法复现、也没法在 Node 侧校验。 */
@@ -373,6 +380,7 @@ window.Endless = {
   PREFABS,
   makeSling,
   SLING_Y,
+  NUKE_CHANCE,
   /** 同一局同一个 seed + 同一关号，生成结果完全一样（可复现、好测试） */
   generate(level, seed = 1) {
     const R = mulberry32((seed >>> 0) * 2654435761 + level * 40503);
@@ -474,7 +482,7 @@ window.Endless = {
     for (let i = 1; i < birdCount; i++) birds.push(pickBird(R));
     if (level >= 3 && R() < 0.5) birds[1] = 'dash';
 
-    return {
+    return rollNuke({
       id: `endless-${level}`,
       name: `第 ${level} 关`,
       subtitle: stageCount > 1 ? `${stageCount} 段推进 · ${worldW} 米长图` : `单段 · ${worldW} 米长图`,
@@ -489,7 +497,7 @@ window.Endless = {
       pigs,
       endless: true,
       tier,
-    };
+    }, R);
   },
 };
 
