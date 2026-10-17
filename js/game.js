@@ -179,7 +179,6 @@
     btnWkClose: document.getElementById('btnWkClose'),
     // 编辑器
     editor: document.getElementById('editorScreen'),
-    edName: document.getElementById('edName'),
     edStatus: document.getElementById('edStatus'),
     edPlay: document.getElementById('edPlay'),
     edBlockProps: document.getElementById('edBlockProps'),
@@ -203,7 +202,7 @@
     bpReset: document.getElementById('bpReset'),
     bpCancel: document.getElementById('bpCancel'),
     submitDialog: document.getElementById('submitDialog'),
-    subLevelName: document.getElementById('subLevelName'),
+    subLevelNameInput: document.getElementById('subLevelNameInput'),
     subAuthor: document.getElementById('subAuthor'),
     subStatus: document.getElementById('subStatus'),
     subSend: document.getElementById('subSend'),
@@ -249,7 +248,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 移动端优化与周榜过滤';
+  const BUILD = '2026-10-17 · 投稿时修改关卡名';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3488,13 +3487,8 @@
   const shareLink = (def) => `${location.href.split('#')[0]}#level=${window.WorkshopLevel.pack(def)}`;
   /** 匿名投稿：只需要一个公开的 Supabase publishable key，不打开外部页面 */
   const openWorkshopSubmit = (def) => {
-    const nameCheck = moderation(def.name);
-    if (!nameCheck.ok) {
-      toast(`关卡名${nameCheck.reason}`, 2400);
-      return;
-    }
     submitDef = window.WorkshopLevel.normalize(def);
-    el.subLevelName.textContent = submitDef.name;
+    el.subLevelNameInput.value = submitDef.name;
     try { el.subAuthor.value = localStorage.getItem('naidan-workshop-author') || ''; } catch (e) { el.subAuthor.value = ''; }
     el.subStatus.textContent = wkRemoteState === 'missing'
       ? '投稿服务还没初始化，请先在 Supabase 执行建表脚本'
@@ -3503,7 +3497,7 @@
     el.subSend.disabled = false;
     el.subSend.textContent = '确认投稿';
     el.submitDialog.classList.remove('hide');
-    setTimeout(() => el.subAuthor.focus(), 30);
+    setTimeout(() => el.subLevelNameInput.focus(), 30);
   };
   const fallbackCopy = (text) => {
     if (!shareBox) {
@@ -3580,7 +3574,6 @@
   };
   const syncEditorUI = () => {
     if (!editor) return;
-    el.edName.value = editor.def.name;
     [[el.edToolBlock, 'block'], [el.edToolPig, 'pig'], [el.edToolMove, 'move'], [el.edToolErase, 'erase']]
       .forEach(([b, t]) => { b.classList.toggle('on', editor.tool === t); b.classList.toggle('ghost', editor.tool !== t); });
     [[el.edMatWood, 'wood'], [el.edMatIce, 'ice'], [el.edMatStone, 'stone']]
@@ -3990,6 +3983,22 @@
     el.subSend.textContent = '正在投稿…';
     el.subStatus.textContent = '';
     el.subStatus.classList.remove('bad');
+    const name = el.subLevelNameInput.value.trim().slice(0, 24);
+    if (!name) {
+      el.subStatus.classList.add('bad');
+      el.subStatus.textContent = '关卡名不能为空';
+      el.subSend.disabled = false;
+      el.subSend.textContent = '确认投稿';
+      return;
+    }
+    const nameCheck = moderation(name);
+    if (!nameCheck.ok) {
+      el.subStatus.classList.add('bad');
+      el.subStatus.textContent = `关卡名${nameCheck.reason}`;
+      el.subSend.disabled = false;
+      el.subSend.textContent = '确认投稿';
+      return;
+    }
     const author = el.subAuthor.value.trim().slice(0, 30);
     const authorCheck = moderation(author || '匿名玩家');
     if (!authorCheck.ok) {
@@ -3999,9 +4008,23 @@
       el.subSend.textContent = '确认投稿';
       return;
     }
-    const res = await window.WorkshopCommunity.submitLevel(submitDef, author);
+    const updated = window.WorkshopLevel.normalize({ ...submitDef, name });
+    const res = await window.WorkshopCommunity.submitLevel(updated, author);
     if (res.ok) {
       try { localStorage.setItem('naidan-workshop-author', author || '匿名玩家'); } catch (e) { /* 隐私模式 */ }
+      const passed = window.WorkshopLevel.pack(updated);
+      if (editor && editor.def.id === updated.id) {
+        editor.def = updated;
+        passedCode = passed;
+        syncEditorUI();
+      }
+      const list = drafts();
+      const i = list.findIndex((entry) => entry.id === updated.id);
+      if (i >= 0) {
+        list[i] = { ...list[i], name: updated.name, def: updated, updated: Date.now(), passed };
+        saveDrafts(list);
+        renderDrafts();
+      }
       el.subStatus.textContent = '投稿成功，正在刷新社区列表…';
       await loadCommunity(true);
       toast('投稿成功，已经出现在社区里了', 2200);
@@ -4033,9 +4056,6 @@
     importText(el.wkPaste.value);
   });
   // 编辑器工具条
-  el.edName.addEventListener('input', () => {
-    if (editor) { editor.def.name = el.edName.value.slice(0, 24); persistDraft(); refreshPublishState(); }
-  });
   const setTool = (t) => { if (!editor) return; editor.tool = t; editor.selected = null; syncEditorUI(); };
   el.edToolBlock.addEventListener('click', () => setTool('block'));
   el.edToolPig.addEventListener('click', () => setTool('pig'));
@@ -4237,7 +4257,6 @@
       setName: (n) => {
         if (editor) {
           editor.def.name = String(n).slice(0, 24);
-          el.edName.value = editor.def.name;
           persistDraft();
           refreshPublishState();
         }

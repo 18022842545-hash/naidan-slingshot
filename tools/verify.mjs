@@ -1773,21 +1773,26 @@ const main = async () => {
       document.getElementById('subSend').click();
       await wait(180);
       const badAuthorStatus = document.getElementById('subStatus').textContent;
+      document.getElementById('subLevelNameInput').value = '傻逼投稿名';
       document.getElementById('subAuthor').value = '匿名测试员';
+      document.getElementById('subSend').click();
+      await wait(180);
+      const badNameStatus = document.getElementById('subStatus').textContent;
+      document.getElementById('subLevelNameInput').value = '验收小关·投稿版';
       document.getElementById('subSend').click();
       for (let i = 0; i < 40; i++) {
         await wait(100);
         const c = W.community();
-        if (c.entries.some((e) => e.name === '验收小关' && e.author === '匿名测试员')) break;
+        if (c.entries.some((e) => e.name === '验收小关·投稿版' && e.author === '匿名测试员')) break;
       }
       const submittedCommunity = W.community();
-      const submittedEntry = submittedCommunity.entries.find((e) => e.name === '验收小关' && e.author === '匿名测试员');
+      const submittedEntry = submittedCommunity.entries.find((e) => e.name === '验收小关·投稿版' && e.author === '匿名测试员');
       const submitStatus = document.getElementById('subStatus').textContent;
+      const postedEditorName = W.info() && W.info().name;
+      const topNameInputGone = !document.getElementById('edName');
       document.getElementById('subCancel').click();
       // ③ 改关卡名 → 发布资格失效，按钮也要立刻变灰
-      const nameInput = document.getElementById('edName');
-      nameInput.value = '验收小关（改名）';
-      nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      W.setName('验收小关（改名）');
       const gateAfterRename = W.gateOpen();
       const publishDisabledAfterRename = document.getElementById('edShare').disabled;
       const submitDisabledAfterRename = document.getElementById('edSubmit').disabled;
@@ -1854,7 +1859,8 @@ const main = async () => {
         unpackOk: !!unpacked && unpacked.blocks.length === placed.blocks && unpacked.pigs.length === placed.pigs,
         undoPigs, redoPigs,
         gateBefore, publishBefore, gateAfterBack, gateAfterWin, gateInEditor, published,
-        submitShown, badAuthorStatus, submitStatus, remoteState: submittedCommunity.remoteState, submittedEntry,
+        submitShown, badAuthorStatus, badNameStatus, postedEditorName, topNameInputGone,
+        submitStatus, remoteState: submittedCommunity.remoteState, submittedEntry,
         submittedWeeklyIds: submittedCommunity.weeklyIds,
         gateAfterRename, publishDisabledAfterRename, submitDisabledAfterRename, gateAfterEdit,
         hudBackShown, hudBackText, hudBackState,
@@ -1954,8 +1960,15 @@ const main = async () => {
     if (!wk.badAuthorStatus.includes('用户名') || !wk.badAuthorStatus.includes('违禁')) {
       problems.push(`违禁用户名没有被投稿面板拦住（${wk.badAuthorStatus}）`);
     }
+    if (!wk.badNameStatus.includes('关卡名') || !wk.badNameStatus.includes('违禁')) {
+      problems.push(`违禁投稿关卡名没有被拦住（${wk.badNameStatus}）`);
+    }
+    if (!wk.topNameInputGone) problems.push('编辑器顶部仍然保留关卡名输入框');
     if (wk.remoteState !== 'ready') problems.push(`Supabase 社区目录状态不对（${wk.remoteState}）`);
-    if (!wk.submittedEntry || wk.submittedEntry.author !== '匿名测试员') problems.push('匿名投稿成功后社区目录里没有这张关卡');
+    if (!wk.submittedEntry || wk.submittedEntry.author !== '匿名测试员' || wk.submittedEntry.name !== '验收小关·投稿版') {
+      problems.push('投稿时修改的关卡名没有写进社区目录');
+    }
+    if (wk.postedEditorName !== '验收小关·投稿版') problems.push(`投稿改名后草稿名称没同步（${wk.postedEditorName}）`);
     if (wk.submittedEntry && wk.submittedWeeklyIds.includes(wk.submittedEntry.id)) {
       problems.push('新投稿关卡覆盖了本周点赞前 6');
     }
