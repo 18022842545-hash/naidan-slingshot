@@ -2162,6 +2162,48 @@ const main = async () => {
     if (zeroWeeklyState.ids !== 0 || !zeroWeeklyState.hidden) problems.push('0 赞关卡仍然占用了本周前 6 的位置');
     await zeroWeekly.close();
 
+    // 恶意刷赞：即使赞数计数器高于游玩数，有效赞数也要封顶在游玩数
+    const likeLimit = await browser.newPage({ viewport: { width: 1200, height: 800 } });
+    await likeLimit.route('https://abacus.jasoncameron.dev/**', async (route) => {
+      const url = route.request().url();
+      const value = url.includes('unlike-') ? 0 : url.includes('like-') ? 9 : 5;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ value }) });
+    });
+    await likeLimit.route('https://buueozmrxfjqcaiqyzhq.supabase.co/**', async (route) => {
+      const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'apikey, content-type, prefer',
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Content-Type': 'application/json',
+      };
+      if (route.request().method() === 'OPTIONS') await route.fulfill({ status: 204, headers, body: '' });
+      else await route.fulfill({ status: 200, headers, body: '[]' });
+    });
+    await likeLimit.goto(base, { waitUntil: 'load' });
+    await likeLimit.waitForFunction(() => window.__nai && window.__nai.imagesReady(), null, { timeout: 20000 });
+    await likeLimit.click('#btnWorkshop');
+    await likeLimit.waitForFunction(
+      () => window.__nai.workshop.community().state === 'ready' && !window.__nai.workshop.community().loadingStats,
+      null,
+      { timeout: 10000 }
+    );
+    const likeLimitState = await likeLimit.evaluate(() => {
+      const entry = window.__nai.workshop.community().entries[0];
+      const btn = document.querySelector('#wkWeekly .wkLike, #wkCommunity .wkLike');
+      return {
+        likes: entry.stats.likes,
+        plays: entry.stats.plays,
+        disabled: btn ? btn.disabled : false,
+        title: btn ? btn.title : '',
+      };
+    });
+    report.likeLimit = likeLimitState;
+    if (likeLimitState.likes !== likeLimitState.plays) problems.push(`有效点赞数没有封顶在游玩数（${likeLimitState.likes}/${likeLimitState.plays}）`);
+    if (!likeLimitState.disabled || !likeLimitState.title.includes('不能超过游玩数')) {
+      problems.push('达到游玩数上限后爱心按钮仍可继续点赞');
+    }
+    await likeLimit.close();
+
     report.ok = problems.length === 0;
     await fs.writeFile(path.join(shots, 'verify-report.json'), JSON.stringify(report, null, 2), 'utf8');
     console.log(

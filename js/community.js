@@ -277,9 +277,13 @@ window.WorkshopCommunity = (() => {
           ]);
           values[entry.id].likeUp = up;
           values[entry.id].likeDown = down;
-          values[entry.id].likes = Math.max(0, up - down);
         } catch (e) { /* 保留缓存 */ }
         try { values[entry.id].plays = await getCount('play', entry.code); } catch (e) { /* 保留缓存 */ }
+        // 防刷：即使计数器被直接刷高，展示和排序用的有效点赞数也不超过游玩数
+        values[entry.id].likes = Math.min(
+          values[entry.id].plays,
+          Math.max(0, values[entry.id].likeUp - values[entry.id].likeDown)
+        );
       });
     });
     let cursor = 0;

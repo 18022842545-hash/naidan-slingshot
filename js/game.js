@@ -248,7 +248,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 点赞切换与投稿提示';
+  const BUILD = '2026-10-17 · 点赞封顶防刷';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3271,11 +3271,21 @@
     });
     const like = document.createElement('button');
     const already = window.WorkshopCommunity.isLiked(entry.code);
+    const likeLimitReached = !already && stat.likes >= stat.plays;
     like.className = `wkLike${already ? ' liked' : ''}`;
     like.textContent = `♥ ${fmtCount(stat.likes)}`;
-    like.title = already ? '再点一次取消点赞' : '给这张图点个赞';
+    like.title = already
+      ? '再点一次取消点赞'
+      : likeLimitReached
+        ? '点赞数不能超过游玩数，先玩一次再来点赞'
+        : '给这张图点个赞';
+    like.disabled = likeLimitReached;
     like.addEventListener('click', async () => {
       if (like.disabled) return;
+      if (!window.WorkshopCommunity.isLiked(entry.code) && communityStat(entry).likes >= communityStat(entry).plays) {
+        toast('点赞数不能超过游玩数，先玩一次再来点赞', 1900);
+        return;
+      }
       like.disabled = true;
       const wasLiked = window.WorkshopCommunity.isLiked(entry.code);
       const res = wasLiked
