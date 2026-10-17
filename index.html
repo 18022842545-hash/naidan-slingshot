@@ -208,8 +208,48 @@
   }
 
   /* ---------------- 创意工坊 ---------------- */
-  .panel.wide { max-width: min(92vw, 720px); }
+  .panel.wide { max-width: min(94vw, 1040px); max-height: 91vh; overflow: auto; }
   #workshopScreen .sub { font-size: 13px; color: #8a6a50; margin: 4px 0 10px; }
+  #workshopScreen .wkTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; text-align: left; }
+  #workshopScreen .wkTop h2 { margin-bottom: 2px; }
+  #workshopScreen .wkTop button { flex: none; padding: 10px 20px; font-size: 13px; }
+  #workshopScreen .wkTabs { display: flex; gap: 8px; border-bottom: 2px solid rgba(206,152,42,.18); margin-top: 12px; }
+  #workshopScreen .wkTab {
+    border-radius: 12px 12px 0 0; background: transparent; color: #8a6a50;
+    box-shadow: none; padding: 9px 18px 11px; font-size: 13px;
+  }
+  #workshopScreen .wkTab.on { background: rgba(255,255,255,.78); color: var(--jam-dark); box-shadow: inset 0 -3px 0 var(--jam); }
+  #workshopScreen .wkToolbar { display: flex; align-items: center; gap: 10px; margin: 14px 0 12px; flex-wrap: wrap; text-align: left; }
+  #wkSearch {
+    flex: 1; min-width: 180px; padding: 9px 14px; border-radius: 12px;
+    border: 2px solid rgba(206,152,42,.25); background: #fffdf5;
+    font: inherit; font-size: 12.5px; color: #6b4a30;
+  }
+  #wkSort { display: flex; gap: 5px; background: rgba(255,255,255,.55); padding: 4px; border-radius: 12px; }
+  #wkSort button { padding: 6px 12px; font-size: 11.5px; border-radius: 9px; box-shadow: none; background: transparent; color: #8a6a50; }
+  #wkSort button.on { background: var(--jam); color: #fff; box-shadow: 0 2px 0 var(--jam-dark); }
+  #btnWkRefresh { padding: 7px 12px; font-size: 12px; box-shadow: 0 3px 0 rgba(74,53,39,.18); }
+  #wkCommunity { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left; min-height: 170px; }
+  #wkCommunity .empty { grid-column: 1 / -1; text-align: center; padding: 34px 10px; color: #a89383; font-size: 13px; }
+  .wkCard {
+    background: rgba(255,255,255,.82); border-radius: 17px; overflow: hidden;
+    box-shadow: inset 0 0 0 2px rgba(206,152,42,.14), 0 5px 14px rgba(90,60,30,.08);
+    display: flex; flex-direction: column;
+  }
+  .wkPreview { display: block; width: 100%; height: 108px; background: linear-gradient(#ffe7bd, #fff4dc); }
+  .wkCardBody { padding: 9px 11px 11px; display: flex; flex-direction: column; gap: 5px; flex: 1; }
+  .wkCardTitle { font-size: 14px; font-weight: 800; color: #5e412f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wkCardAuthor { font-size: 11px; color: #9a8878; }
+  .wkCardMeta { font-size: 10.5px; color: #8a6a50; }
+  .wkCardFoot { display: flex; gap: 6px; align-items: center; margin-top: auto; padding-top: 4px; }
+  .wkPlay { flex: 1; padding: 7px 10px; font-size: 12px; box-shadow: 0 3px 0 var(--jam-dark); }
+  .wkLike {
+    padding: 7px 10px; min-width: 60px; font-size: 12px;
+    background: #fff; color: #c65a4c; box-shadow: 0 3px 0 rgba(74,53,39,.15);
+  }
+  .wkLike.liked { background: #ffe3dd; color: #b83d31; }
+  .wkStat { display: inline-flex; align-items: center; gap: 3px; margin-right: 9px; }
+  .wkLoading { opacity: .55; }
   #wkDrafts { display: grid; gap: 8px; max-height: 210px; overflow: auto; margin: 12px 0 4px; text-align: left; }
   #wkDrafts .draft {
     display: flex; align-items: center; gap: 10px;
@@ -225,6 +265,14 @@
     width: 100%; margin-top: 10px; resize: vertical; min-height: 44px;
     border-radius: 12px; border: 2px solid rgba(206,152,42,.25); padding: 8px 10px;
     font: inherit; font-size: 12px; color: #6b4a30; background: #fffdf5;
+  }
+  @media (max-width: 900px) {
+    #wkCommunity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #workshopScreen .panel.wide { padding: 20px 18px; }
+  }
+  @media (max-width: 620px) {
+    #wkCommunity { grid-template-columns: 1fr; }
+    #workshopScreen .wkTop { flex-direction: column; }
   }
 
   /* 编辑器：顶部工具条 + 底部状态 */
@@ -326,16 +374,38 @@
     <!-- 创意工坊：入口 -->
     <div class="layer hide" id="workshopScreen">
       <div class="panel wide">
-        <h2>创意工坊</h2>
-        <p class="sub">自己搭关卡、随时试玩，搭好把链接发给别人</p>
-        <div class="row">
+        <div class="wkTop">
+          <div>
+            <h2>创意工坊</h2>
+            <p class="sub">玩大家做的关卡，点爱心支持作者；也可以自己搭一关投稿</p>
+          </div>
           <button id="btnWkNew">新建关卡</button>
         </div>
-        <div id="wkDrafts"></div>
-        <textarea id="wkPaste" placeholder="也可以把关卡 JSON / 分享码粘到这里，再点下面载入"></textarea>
+        <div class="wkTabs">
+          <button class="wkTab on" id="wkTabCommunity">社区关卡</button>
+          <button class="wkTab" id="wkTabMine">我的草稿 <span id="wkMineCount">0</span></button>
+        </div>
+        <div id="wkCommunityPane">
+          <div class="wkToolbar">
+            <input id="wkSearch" type="search" placeholder="搜索关卡名或作者…" autocomplete="off" />
+            <div id="wkSort">
+              <button data-sort="latest" class="on">最新</button>
+              <button data-sort="plays">最多游玩</button>
+              <button data-sort="likes">最多点赞</button>
+            </div>
+            <button id="btnWkRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="wkCommunity"><div class="empty">正在加载社区关卡…</div></div>
+        </div>
+        <div id="wkMinePane" class="hide">
+          <div id="wkDrafts"></div>
+          <textarea id="wkPaste" placeholder="也可以把关卡 JSON / 分享码粘到这里，再点下面载入"></textarea>
+          <div class="row">
+            <button id="btnWkPaste" class="ghost">载入粘贴的关卡</button>
+            <button id="btnWkImport" class="ghost">导入 JSON 文件…</button>
+          </div>
+        </div>
         <div class="row">
-          <button id="btnWkPaste" class="ghost">载入粘贴的关卡</button>
-          <button id="btnWkImport" class="ghost">导入 JSON 文件…</button>
           <button id="btnWkClose" class="ghost">返回</button>
         </div>
         <input type="file" id="wkFile" accept=".json,application/json" hidden />
@@ -386,6 +456,7 @@
         </div>
         <div class="grp">
           <button id="edShare" class="ghost">发布链接</button>
+          <button id="edSubmit" class="ghost">投稿到工坊</button>
           <button id="edExport" class="ghost">导出</button>
           <button id="edWkBack" class="ghost">返回工坊</button>
         </div>
@@ -432,6 +503,8 @@
   <script src="js/birds.js"></script>
   <script src="js/levels.js"></script>
 <script src="js/workshop.js"></script>
+<script src="workshop/levels.js"></script>
+<script src="js/community.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>

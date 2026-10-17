@@ -1,5 +1,5 @@
 /**
- * 打包成单文件 HTML：把 matter.js、三个脚本和 6 张立绘全部内联进去，
+ * 打包成单文件 HTML：把 matter.js、全部脚本、社区目录和立绘/音频全部内联进去，
  * 产出的 dist/奶蛋弹弓-单文件.html 可以直接双击打开、也可以随手发给别人。
  */
 import fs from 'node:fs/promises';
@@ -50,6 +50,11 @@ const main = async () => {
     `<script>window.INLINE_ASSETS=${JSON.stringify(assets)};window.INLINE_AUDIO=${JSON.stringify(audio)};</script>`;
   html = html.replace('<script src="js/levels.js"></script>', assetScript + '\n  ' + (await inline('js/levels.js')));
   html = html.replace('<script src="js/workshop.js"></script>', await inline('js/workshop.js'));
+  html = html.replace('<script src="workshop/levels.js"></script>', await inline('workshop/levels.js'));
+  html = html.replace(
+    '<script src="js/community.js"></script>',
+    await inline('js/community.js')
+  );
   html = html.replace('<script src="js/game.js"></script>', await inline('js/game.js'));
   // 兜底：还有没内联的外链脚本/样式就当场报错（漏了某个 js 会变成"线上好好的、单文件版报错"）
   const leftovers = [...html.matchAll(/<script[^>]+src="([^"]+)"|<link[^>]+href="([^"]+)"/g)]

@@ -1,0 +1,57 @@
+name: 创意工坊投稿
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: workshop-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: startsWith(github.event.issue.title, '[工坊投稿]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 校验并写入目录
+        id: publish
+        continue-on-error: true
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          ISSUE_CREATED_AT: ${{ github.event.issue.created_at }}
+        run: node tools/publish-workshop-issue.mjs > /tmp/workshop-result.txt 2>&1
+      - name: 提交目录更新
+        if: steps.publish.outcome == 'success'
+        run: |
+          if git diff --quiet -- workshop/levels.json workshop/levels.js; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add workshop/levels.json workshop/levels.js
+          git commit -m "创意工坊：收录玩家投稿 #${{ github.event.issue.number }}"
+          git push
+      - name: 回复投稿结果
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RESULT: ${{ steps.publish.outcome }}
+        run: |
+          if [ "$RESULT" = "success" ]; then
+            gh issue comment "$ISSUE_NUMBER" --body "已收录到创意工坊，刷新游戏里的社区关卡即可看到。$(cat /tmp/workshop-result.txt)"
+          else
+            gh issue comment "$ISSUE_NUMBER" --body "投稿没有通过校验：$(cat /tmp/workshop-result.txt)"
+          fi

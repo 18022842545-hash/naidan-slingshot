@@ -1,0 +1,47 @@
+window.INLINE_WORKSHOP_LEVELS = {
+  "version": 1,
+  "levels": [
+    {
+      "id": "seed-门洞午睡",
+      "name": "门洞午睡",
+      "author": "小奶糖",
+      "submittedAt": "2026-10-17T02:20:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi6Zeo5rSe5Y2I552hIiwidyI6MjQwMCwicyI6W1sxOTAsNDcwXV0sImIiOltbOTAwLDU3MCwzMCwxMzAsMF0sWzEwNDAsNTcwLDMwLDEzMCwwXSxbOTcwLDQ5MCwxOTAsMzAsMF1dLCJwIjpbWzk3MCw2MDAsNDAsMF1dLCJrIjpbMCwxLDNdfQ"
+    },
+    {
+      "id": "seed-冰屋叠叠乐",
+      "name": "冰屋叠叠乐",
+      "author": "夜班奶蛙",
+      "submittedAt": "2026-10-16T11:40:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi5Yaw5bGL5Y-g5Y-g5LmQIiwidyI6MjQwMCwicyI6W1sxOTAsNDcwXV0sImIiOltbMTAwMCw1NzAsMzAsMTMwLDFdLFsxMTQwLDU3MCwzMCwxMzAsMV0sWzEwNzAsNDkwLDE5MCwzMCwxXSxbMTI4MCw1NzAsOTAsNjAsMV1dLCJwIjpbWzEwNzAsNjAwLDQwLDBdLFsxNDEwLDYwMCw0MCwxXV0sImsiOlsxLDIsNSwzXX0"
+    },
+    {
+      "id": "seed-石墙三兄弟",
+      "name": "石墙三兄弟",
+      "author": "阿弹",
+      "submittedAt": "2026-10-15T08:10:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi55-z5aKZ5LiJ5YWE5byfIiwidyI6MjQwMCwicyI6W1sxOTAsNDcwXV0sImIiOltbMTAzMCw1NzAsNjAsMTMwLDJdLFsxMDMwLDQ2MCw2MCwxMDAsMl0sWzEwMzAsMzkwLDEzMCwzMCwyXSxbMTIyMCw1NzAsOTAsNjAsMF1dLCJwIjpbWzEzODAsNjAwLDQwLDBdLFsxNTEwLDYwMCw0MCwwXSxbMTY0MCw2MDAsNDAsMV1dLCJrIjpbNCwzLDIsN119"
+    },
+    {
+      "id": "seed-双段长街",
+      "name": "双段长街",
+      "author": "Nora",
+      "submittedAt": "2026-10-14T13:05:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi5Y-M5q616ZW_6KGXIiwidyI6MjU3MCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdXSwiYiI6W1s4NjAsNTcwLDMwLDEzMCwwXSxbMTAwMCw1NzAsMzAsMTMwLDBdLFs5MzAsNDkwLDE5MCwzMCwwXSxbMTcwMCw1NzAsMzAsMTMwLDFdLFsxODQwLDU3MCwzMCwxMzAsMV0sWzE3NzAsNDkwLDE5MCwzMCwxXSxbMTUxMCw1NzAsNjAsMTMwLDJdXSwicCI6W1s5MzAsNjAwLDQwLDBdLFsxNzcwLDYwMCw0MCwwXV0sImsiOlswLDEsMyw2XX0"
+    },
+    {
+      "id": "seed-高脚屋",
+      "name": "高脚屋",
+      "author": "摸鱼建筑队",
+      "submittedAt": "2026-10-13T06:30:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi6auY6ISa5bGLIiwidyI6MjQwMCwicyI6W1sxOTAsNDcwXV0sImIiOltbMTA1MCw1NzAsMzAsMTMwLDBdLFsxMjAwLDU3MCwzMCwxMzAsMF0sWzExMzAsNDkwLDIyMCwzMCwwXSxbMTA4MCw0MjAsMzAsMTAwLDBdLFsxMTcwLDQyMCwzMCwxMDAsMF0sWzExMzAsMzUwLDE4MCwzMCwxXSxbOTAwLDU3MCw5MCw2MCwyXV0sInAiOltbMTEzMCw2MDAsNDAsMF0sWzExMzAsMzAwLDQwLDFdXSwiayI6WzIsMyw1LDddfQ"
+    },
+    {
+      "id": "seed-三站追击",
+      "name": "三站追击",
+      "author": "奶蛋工坊",
+      "submittedAt": "2026-10-12T01:15:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi5LiJ56uZ6L-95Ye7IiwidyI6MzI1MCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdLFsyMTkwLDQ3MF1dLCJiIjpbWzgzMCw1NzAsMzAsMTMwLDBdLFs5NzAsNTcwLDMwLDEzMCwwXSxbOTAwLDQ5MCwxOTAsMzAsMF0sWzE2MzAsNTcwLDMwLDEzMCwyXSxbMTc3MCw1NzAsMzAsMTMwLDJdLFsxNzAwLDQ5MCwxOTAsMzAsMl0sWzIzODAsNTcwLDMwLDEzMCwxXSxbMjUyMCw1NzAsMzAsMTMwLDFdLFsyNDUwLDQ5MCwxOTAsMzAsMV1dLCJwIjpbWzkwMCw2MDAsNDAsMF0sWzE3MDAsNjAwLDQwLDFdLFsyNDUwLDYwMCw0MCwwXV0sImsiOlswLDEsMywyLDddfQ"
+    }
+  ]
+};

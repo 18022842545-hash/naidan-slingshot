@@ -153,6 +153,15 @@
     wkDrafts: document.getElementById('wkDrafts'),
     wkPaste: document.getElementById('wkPaste'),
     wkFile: document.getElementById('wkFile'),
+    wkTabCommunity: document.getElementById('wkTabCommunity'),
+    wkTabMine: document.getElementById('wkTabMine'),
+    wkMineCount: document.getElementById('wkMineCount'),
+    wkCommunityPane: document.getElementById('wkCommunityPane'),
+    wkMinePane: document.getElementById('wkMinePane'),
+    wkCommunity: document.getElementById('wkCommunity'),
+    wkSearch: document.getElementById('wkSearch'),
+    wkSort: document.getElementById('wkSort'),
+    btnWkRefresh: document.getElementById('btnWkRefresh'),
     btnWkNew: document.getElementById('btnWkNew'),
     btnWkPaste: document.getElementById('btnWkPaste'),
     btnWkImport: document.getElementById('btnWkImport'),
@@ -170,6 +179,7 @@
     edUndo: document.getElementById('edUndo'),
     edRedo: document.getElementById('edRedo'),
     edShare: document.getElementById('edShare'),
+    edSubmit: document.getElementById('edSubmit'),
     edExport: document.getElementById('edExport'),
     edWkBack: document.getElementById('edWkBack'),
     edStageMinus: document.getElementById('edStageMinus'),
@@ -220,7 +230,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 工坊阵容直开';
+  const BUILD = '2026-10-17 · 社区创意工坊';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -2995,11 +3005,19 @@
   };
   // ---------------------------------------------------------------- 创意工坊
   const WK_KEY = 'naidan-workshop-v1';
+  const WK_REPO = 'busgm666-cloud/naidan-slingshot';
   const BLOCK_SIZES = { s: [60, 60], m: [90, 60], l: [120, 90], long: [180, 34] };
   let editor = null;          // 编辑器状态
   let cameFromEditor = false; // 从编辑器点"试玩"进来的 → 结算面板给一个"回编辑器"
   let customDef = null;       // 当前在玩的自制关卡
   let shareBox = null;
+  let wkEntries = [];         // 社区关卡（目录 + 解出来的 def）
+  let wkStats = {};           // id → { likes, plays }
+  let wkSort = 'latest';
+  let wkQuery = '';
+  let wkTab = 'community';
+  let wkCatalogState = 'idle'; // idle | loading | ready | error
+  let wkStatsLoading = false;
   // "试玩通关"的那一份关卡（分享码即指纹）：内容一改就对不上，得重新通关才允许发布
   let passedCode = null;
   const gateOpen = () => !!(editor && passedCode && window.WorkshopLevel.pack(editor.def) === passedCode);
@@ -3016,6 +3034,206 @@
     el.edShare.disabled = errs.length > 0 || !passed;
     el.edShare.style.opacity = errs.length > 0 || !passed ? 0.45 : 1;
     el.edShare.title = passed ? '把链接发给别人' : '先试玩通关，才能发布';
+    el.edSubmit.disabled = errs.length > 0 || !passed;
+    el.edSubmit.style.opacity = errs.length > 0 || !passed ? 0.45 : 1;
+    el.edSubmit.title = passed ? '提交到社区工坊（需要 GitHub 账号）' : '先试玩通关，才能投稿';
+  };
+
+  const communityStat = (entry) => wkStats[entry.id] || { likes: 0, plays: 0 };
+  const fmtCount = (n) => {
+    const v = Math.max(0, Number(n) || 0);
+    return v >= 10000 ? `${(v / 10000).toFixed(v >= 100000 ? 0 : 1)}万` : String(v);
+  };
+  /** 卡片上的小地图：照着真实方块/奶蛙位置画一个缩略图，比纯文字好找 */
+  const drawCommunityPreview = (canvas, def) => {
+    const wide = canvas.width;
+    const high = canvas.height;
+    const g = canvas.getContext('2d');
+    g.clearRect(0, 0, wide, high);
+    const grad = g.createLinearGradient(0, 0, 0, high);
+    grad.addColorStop(0, '#ffe5b7');
+    grad.addColorStop(1, '#fff7e5');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, wide, high);
+    const xs = [
+      ...def.blocks.map((b) => b.x - b.w / 2),
+      ...def.blocks.map((b) => b.x + b.w / 2),
+      ...def.pigs.map((p) => p.x - p.r),
+      ...def.pigs.map((p) => p.x + p.r),
+      ...def.launchPoints.map((p) => p.x),
+    ];
+    const minX = Math.min(...xs) - 90;
+    const maxX = Math.max(...xs) + 90;
+    const span = Math.max(500, maxX - minX);
+    const scale = wide / span;
+    const px = (x) => (x - minX) * scale;
+    const ground = high - 18;
+    g.fillStyle = '#8cc55c';
+    g.fillRect(0, ground - 4, wide, 22);
+    g.fillStyle = '#9a663c';
+    g.fillRect(0, ground + 12, wide, high - ground);
+    const colors = { wood: '#b5763f', ice: '#8ed8ed', stone: '#8d8b86' };
+    def.blocks.forEach((b) => {
+      g.fillStyle = colors[b.material] || colors.wood;
+      const h = Math.max(4, b.h * scale);
+      g.fillRect(px(b.x - b.w / 2), ground - h, Math.max(3, b.w * scale), h);
+    });
+    def.pigs.forEach((p) => {
+      g.fillStyle = p.bonus ? '#ffd86e' : '#f3c852';
+      g.beginPath();
+      g.arc(px(p.x), ground - Math.max(5, p.r * scale * 0.8), Math.max(5, p.r * scale), 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#5a3a26';
+      g.fillRect(px(p.x) - 3, ground - 12, 2, 2);
+      g.fillRect(px(p.x) + 1, ground - 12, 2, 2);
+    });
+    const sling = def.launchPoints[0];
+    g.strokeStyle = '#82512f';
+    g.lineWidth = 4;
+    g.beginPath();
+    g.moveTo(px(sling.x), ground);
+    g.lineTo(px(sling.x), ground - 28);
+    g.stroke();
+  };
+  const communityCard = (entry) => {
+    const stat = communityStat(entry);
+    const card = document.createElement('article');
+    card.className = `wkCard${wkStatsLoading ? ' wkLoading' : ''}`;
+    card.dataset.levelId = entry.id;
+    const preview = document.createElement('canvas');
+    preview.className = 'wkPreview';
+    preview.width = 360;
+    preview.height = 150;
+    drawCommunityPreview(preview, entry.def);
+    const body = document.createElement('div');
+    body.className = 'wkCardBody';
+    const title = document.createElement('div');
+    title.className = 'wkCardTitle';
+    title.textContent = entry.name;
+    title.title = entry.name;
+    const author = document.createElement('div');
+    author.className = 'wkCardAuthor';
+    author.textContent = `作者 · ${entry.author}`;
+    const meta = document.createElement('div');
+    meta.className = 'wkCardMeta';
+    meta.textContent = `${entry.def.pigs.length} 奶蛙 · ${entry.def.blocks.length} 方块 · ${entry.def.birds.length} 发 · ${entry.def.launchPoints.length} 段`;
+    const counts = document.createElement('div');
+    counts.className = 'wkCardMeta';
+    const playLabel = document.createElement('span');
+    playLabel.className = 'wkStat';
+    playLabel.title = '游玩人数（同一浏览器去重）';
+    playLabel.textContent = `▶ ${fmtCount(stat.plays)}`;
+    const likeLabel = document.createElement('span');
+    likeLabel.className = 'wkStat';
+    likeLabel.title = '点赞数';
+    likeLabel.textContent = `♥ ${fmtCount(stat.likes)}`;
+    counts.append(playLabel, likeLabel);
+    const foot = document.createElement('div');
+    foot.className = 'wkCardFoot';
+    const play = document.createElement('button');
+    play.className = 'wkPlay';
+    play.textContent = '开玩';
+    play.addEventListener('click', () => {
+      window.WorkshopCommunity.recordPlay(entry).then((res) => {
+        if (res.ok && !res.already && Number.isFinite(res.value)) {
+          wkStats[entry.id] = { ...communityStat(entry), plays: res.value };
+          renderCommunity();
+        }
+      });
+      startCustom(entry.def, {});
+      toast(`社区关卡：${entry.name}`, 1800);
+    });
+    const like = document.createElement('button');
+    const already = window.WorkshopCommunity.isLiked(entry.code);
+    like.className = `wkLike${already ? ' liked' : ''}`;
+    like.textContent = `♥ ${fmtCount(stat.likes)}`;
+    like.title = already ? '已经点过赞了' : '给这张图点个赞';
+    like.disabled = already;
+    like.addEventListener('click', async () => {
+      if (like.disabled) return;
+      like.disabled = true;
+      const res = await window.WorkshopCommunity.like(entry);
+      if (!res.ok) {
+        like.disabled = false;
+        toast('点赞服务暂时不可用，稍后再试', 1900);
+        return;
+      }
+      const next = Number.isFinite(res.value) ? res.value : communityStat(entry).likes + 1;
+      wkStats[entry.id] = { ...communityStat(entry), likes: next };
+      renderCommunity();
+      toast('谢谢点赞！', 1200);
+    });
+    foot.append(play, like);
+    body.append(title, author, meta, counts, foot);
+    card.append(preview, body);
+    return card;
+  };
+  const renderCommunity = () => {
+    if (!el.wkCommunity || wkTab !== 'community') return;
+    const q = wkQuery.trim().toLowerCase();
+    const list = wkEntries.filter((entry) =>
+      !q || entry.name.toLowerCase().includes(q) || entry.author.toLowerCase().includes(q)
+    );
+    const when = (entry) => new Date(entry.submittedAt || 0).getTime() || 0;
+    list.sort((a, b) => {
+      if (wkSort === 'plays') return communityStat(b).plays - communityStat(a).plays || when(b) - when(a);
+      if (wkSort === 'likes') return communityStat(b).likes - communityStat(a).likes || when(b) - when(a);
+      return when(b) - when(a);
+    });
+    el.wkCommunity.innerHTML = '';
+    if (wkCatalogState === 'loading' && !wkEntries.length) {
+      const tip = document.createElement('div');
+      tip.className = 'empty';
+      tip.textContent = '正在加载社区关卡…';
+      el.wkCommunity.appendChild(tip);
+      return;
+    }
+    if (wkCatalogState === 'error') {
+      const tip = document.createElement('div');
+      tip.className = 'empty';
+      tip.textContent = '社区目录没加载出来，点「刷新」再试一次';
+      el.wkCommunity.appendChild(tip);
+      return;
+    }
+    if (!list.length) {
+      const tip = document.createElement('div');
+      tip.className = 'empty';
+      tip.textContent = q ? '没有找到匹配的关卡' : '社区里还没有关卡';
+      el.wkCommunity.appendChild(tip);
+      return;
+    }
+    list.forEach((entry) => el.wkCommunity.appendChild(communityCard(entry)));
+  };
+  const loadCommunity = async (force = false) => {
+    if (wkCatalogState === 'loading') return;
+    if (wkCatalogState === 'ready' && !force) return;
+    wkCatalogState = 'loading';
+    renderCommunity();
+    try {
+      wkEntries = await window.WorkshopCommunity.loadCatalog();
+      wkCatalogState = 'ready';
+      wkStatsLoading = true;
+      renderCommunity();
+      const loaded = await window.WorkshopCommunity.loadStats(wkEntries, { force });
+      wkStats = loaded.values || {};
+      wkStatsLoading = false;
+      renderCommunity();
+    } catch (e) {
+      wkCatalogState = 'error';
+      wkStatsLoading = false;
+      renderCommunity();
+    }
+  };
+  const setWorkshopTab = (tab) => {
+    wkTab = tab === 'mine' ? 'mine' : 'community';
+    el.wkTabCommunity.classList.toggle('on', wkTab === 'community');
+    el.wkTabMine.classList.toggle('on', wkTab === 'mine');
+    el.wkCommunityPane.classList.toggle('hide', wkTab !== 'community');
+    el.wkMinePane.classList.toggle('hide', wkTab !== 'mine');
+    if (wkTab === 'community') {
+      renderCommunity();
+      if (wkCatalogState === 'idle') loadCommunity();
+    }
   };
 
   const drafts = () => {
@@ -3046,6 +3264,7 @@
   const renderDrafts = () => {
     if (!el.wkDrafts) return;
     const list = drafts();
+    if (el.wkMineCount) el.wkMineCount.textContent = String(list.length);
     el.wkDrafts.innerHTML = '';
     if (!list.length) {
       const d = document.createElement('div');
@@ -3075,6 +3294,15 @@
         if (!passed) { toast('这一关还没试玩通关，先「打开」玩通一次', 2400); return; }
         copyText(shareLink(entry.def), '发布链接已复制');
       });
+      const submit = document.createElement('button');
+      submit.className = 'ghost';
+      submit.textContent = passed ? '投稿' : '未通关';
+      submit.disabled = !passed;
+      submit.style.opacity = passed ? 1 : 0.45;
+      submit.addEventListener('click', () => {
+        if (!passed) { toast('先打开这一关试玩通关，才能投稿', 2200); return; }
+        openWorkshopSubmit(entry.def);
+      });
       const del = document.createElement('button');
       del.className = 'ghost';
       del.textContent = '删';
@@ -3083,12 +3311,31 @@
         renderDrafts();
         toast('草稿删掉了', 1200);
       });
-      row.append(nm, meta, open, share, del);
+      row.append(nm, meta, open, submit, share, del);
       el.wkDrafts.appendChild(row);
     });
   };
 
   const shareLink = (def) => `${location.href.split('#')[0]}#level=${window.WorkshopLevel.pack(def)}`;
+  /** 投稿不经过服务器：打开预填好的 GitHub Issue，Actions 校验后自动收进社区目录 */
+  const openWorkshopSubmit = (def) => {
+    const code = window.WorkshopLevel.pack(def);
+    const body = [
+      '### 分享码',
+      '',
+      '```',
+      code,
+      '```',
+      '',
+      '### 备注',
+      '',
+      `关卡名：${def.name}`,
+      '已经试玩通关，申请收录到创意工坊。',
+    ].join('\n');
+    const url = `https://github.com/${WK_REPO}/issues/new?title=${encodeURIComponent(`[工坊投稿] ${def.name}`)}&body=${encodeURIComponent(body)}`;
+    window.open(url, '_blank', 'noopener');
+    toast('已打开投稿页，登录 GitHub 后提交即可', 2600);
+  };
   const fallbackCopy = (text) => {
     if (!shareBox) {
       shareBox = document.createElement('textarea');
@@ -3119,10 +3366,16 @@
     el.editor.classList.add('hide');
     el.workshop.classList.remove('hide');
     state = 'workshop';
+    intro = null;
+    floaters = [];
+    el.introLabel.classList.remove('on');
+    el.skipTip.classList.remove('on');
+    el.pick.classList.add('hide');
     el.hint.classList.add('hide');
     el.hud.classList.add('hide');
     el.btnToEditor.classList.add('hide');
     renderDrafts();
+    setWorkshopTab('community');
   };
   const closeWorkshop = () => {
     el.workshop.classList.add('hide');
@@ -3440,6 +3693,20 @@
 
   // 工坊入口
   el.btnWkNew.addEventListener('click', () => openEditor(starterLevel()));
+  el.wkTabCommunity.addEventListener('click', () => setWorkshopTab('community'));
+  el.wkTabMine.addEventListener('click', () => setWorkshopTab('mine'));
+  el.wkSearch.addEventListener('input', () => {
+    wkQuery = el.wkSearch.value;
+    renderCommunity();
+  });
+  el.wkSort.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('button[data-sort]');
+    if (!btn) return;
+    wkSort = btn.dataset.sort;
+    el.wkSort.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === btn));
+    renderCommunity();
+  });
+  el.btnWkRefresh.addEventListener('click', () => loadCommunity(true));
   el.btnWkClose.addEventListener('click', closeWorkshop);
   el.btnWkImport.addEventListener('click', () => el.wkFile.click());
   el.wkFile.addEventListener('change', () => {
@@ -3570,6 +3837,11 @@
     if (!gateOpen()) { toast('先点「试玩」通关一次，才能发布链接', 2200); return; }
     copyText(shareLink(editor.def), '发布链接已复制');
   });
+  el.edSubmit.addEventListener('click', () => {
+    if (!editor) return;
+    if (!gateOpen()) { toast('先试玩通关一次，才能投稿到社区', 2200); return; }
+    openWorkshopSubmit(editor.def);
+  });
   el.edExport.addEventListener('click', () => { if (editor) { persistDraft(); exportJSON(editor.def); } });
   el.edWkBack.addEventListener('click', () => { persistDraft(); leaveEditor(); });
   el.btnBackEditor.addEventListener('click', () => {
@@ -3589,6 +3861,31 @@
       open: () => { openWorkshop(); return state; },
       create: () => { openEditor(starterLevel()); return !!editor; },
       edit: (def) => { openEditor(def); return !!editor; },
+      community: () => ({
+        state: wkCatalogState,
+        tab: wkTab,
+        sort: wkSort,
+        query: wkQuery,
+        loadingStats: wkStatsLoading,
+        entries: wkEntries.map((e) => ({
+          id: e.id, name: e.name, author: e.author, submittedAt: e.submittedAt,
+          stats: communityStat(e), liked: window.WorkshopCommunity.isLiked(e.code),
+          played: window.WorkshopCommunity.isPlayed(e.code),
+        })),
+      }),
+      setCommunitySort: (s) => {
+        wkSort = ['latest', 'plays', 'likes'].includes(s) ? s : 'latest';
+        el.wkSort.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.sort === wkSort));
+        renderCommunity();
+        return wkSort;
+      },
+      searchCommunity: (q) => {
+        wkQuery = String(q || '');
+        el.wkSearch.value = wkQuery;
+        renderCommunity();
+        return wkQuery;
+      },
+      refreshCommunity: () => loadCommunity(true),
       info: () => (editor ? {
         tool: editor.tool, material: editor.material, size: editor.size, bonus: !!editor.bonus,
         name: editor.def.name,

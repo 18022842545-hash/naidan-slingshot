@@ -81,6 +81,29 @@ const main = async () => {
     if (!(await waitServer(base))) throw new Error('静态服务器没起来');
     browser = await chromium.launch({ executablePath: CHROME, headless: true, args: ['--mute-audio', '--disable-gpu'] });
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 1 });
+    // 社区计数走真实接口；验收时用本地假计数，既快又不会污染线上点赞/游玩数据
+    const mockCounters = new Map();
+    await page.route('https://abacus.jasoncameron.dev/**', async (route) => {
+      const u = new URL(route.request().url());
+      const parts = u.pathname.split('/').filter(Boolean);
+      const action = parts[0];
+      const key = parts[2] || '';
+      if (!mockCounters.has(key)) {
+        let seed = 0;
+        for (const ch of key) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+        mockCounters.set(key, key.startsWith('like-') ? 20 + seed % 17 : 40 + seed % 29);
+      }
+      let value = mockCounters.get(key);
+      if (action === 'hit') {
+        value += 1;
+        mockCounters.set(key, value);
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ value }),
+      });
+    });
     page.on('console', (m) => {
       if (m.type() === 'error' || m.type() === 'warning') problems.push(`console.${m.type()}: ${m.text()}`);
     });
@@ -1449,6 +1472,38 @@ const main = async () => {
       const W = window.__nai.workshop;
       W.open();
       const hub = window.__nai.state().state;
+      for (let i = 0; i < 80; i++) {
+        const c = W.community();
+        if (c.state === 'ready' && !c.loadingStats) break;
+        await wait(100);
+      }
+      const communityBefore = W.community();
+      const communityCards = document.querySelectorAll('.wkCard').length;
+      const byPlays = communityBefore.entries.slice()
+        .sort((a, b) => b.stats.plays - a.stats.plays || String(b.submittedAt).localeCompare(String(a.submittedAt)))
+        .map((e) => e.id);
+      W.setCommunitySort('plays');
+      const shownByPlays = [...document.querySelectorAll('.wkCard')].map((e) => e.dataset.levelId);
+      W.searchCommunity('冰屋');
+      const searchCards = document.querySelectorAll('.wkCard').length;
+      W.searchCommunity('');
+      W.setCommunitySort('latest');
+      const firstCard = document.querySelector('.wkCard');
+      const firstId = firstCard && firstCard.dataset.levelId;
+      const beforeStat = communityBefore.entries.find((e) => e.id === firstId);
+      const likeBtn = firstCard && firstCard.querySelector('.wkLike');
+      const likeBefore = likeBtn ? likeBtn.textContent : '';
+      if (likeBtn) likeBtn.click();
+      await wait(320);
+      const likeAfter = document.querySelector('.wkCard[data-level-id="' + firstId + '"] .wkLike');
+      const afterLike = W.community().entries.find((e) => e.id === firstId);
+      const playBtn = document.querySelector('.wkCard[data-level-id="' + firstId + '"] .wkPlay');
+      if (playBtn) playBtn.click();
+      await wait(420);
+      const communityPlaying = window.__nai.state();
+      const afterPlay = W.community().entries.find((e) => e.id === firstId);
+      W.open();
+      await wait(220);
       W.create();
       const starter = W.info();
       W.setTool('block'); W.setMaterial('ice'); W.setSize('l');
@@ -1499,17 +1554,43 @@ const main = async () => {
       const backInfo = W.info();
       const gateInEditor = W.gateOpen();
       const published = W.publish();
+      let submitUrl = '';
+      const realOpen = window.open;
+      window.open = (url) => { submitUrl = String(url || ''); return null; };
+      document.getElementById('edSubmit').click();
+      window.open = realOpen;
       // ③ 改关卡名 → 发布资格失效，按钮也要立刻变灰
       const nameInput = document.getElementById('edName');
       nameInput.value = '验收小关（改名）';
       nameInput.dispatchEvent(new Event('input', { bubbles: true }));
       const gateAfterRename = W.gateOpen();
       const publishDisabledAfterRename = document.getElementById('edShare').disabled;
+      const submitDisabledAfterRename = document.getElementById('edSubmit').disabled;
       // ④ 再改内容 → 发布资格继续失效
       W.setTool('block'); W.tap(1180, 520);
       const gateAfterEdit = W.gateOpen();
       return {
         hub,
+        community: {
+          state: communityBefore.state,
+          count: communityBefore.entries.length,
+          cards: communityCards,
+          playsSorted: JSON.stringify(shownByPlays) === JSON.stringify(byPlays),
+          searchCards,
+          likeBefore,
+          likeAfter: likeAfter ? likeAfter.textContent : '',
+          likeDelta: beforeStat ? afterLike.stats.likes - beforeStat.stats.likes : 0,
+          liked: afterLike ? afterLike.liked : false,
+          playDelta: beforeStat ? afterPlay.stats.plays - beforeStat.stats.plays : 0,
+          played: afterPlay ? afterPlay.played : false,
+          playing: {
+            state: communityPlaying.state,
+            mode: communityPlaying.mode,
+            name: communityPlaying.levelName,
+            birds: communityPlaying.birdsLeft,
+            pickShown: communityPlaying.pickShown,
+          },
+        },
         starter: { blocks: starter.blocks, pigs: starter.pigs, errors: starter.errors },
         placed: { blocks: placed.blocks, pigs: placed.pigs, errors: placed.errors },
         stages: two.stages,
@@ -1519,7 +1600,7 @@ const main = async () => {
         unpackOk: !!unpacked && unpacked.blocks.length === placed.blocks && unpacked.pigs.length === placed.pigs,
         undoPigs, redoPigs,
         gateBefore, publishBefore, gateAfterBack, gateAfterWin, gateInEditor, published,
-        gateAfterRename, publishDisabledAfterRename, gateAfterEdit,
+        submitUrl, gateAfterRename, publishDisabledAfterRename, submitDisabledAfterRename, gateAfterEdit,
         hudBackShown, hudBackState,
         playing: {
           state: playing.state, mode: playing.mode, blocks: playing.blocksAlive, pigs: playing.pigsAlive,
@@ -1531,6 +1612,18 @@ const main = async () => {
     });
     report.workshop = wk;
     if (wk.hub !== 'workshop') problems.push('创意工坊打不开');
+    if (wk.community.state !== 'ready' || wk.community.count < 6) {
+      problems.push(`社区关卡没加载出来（${wk.community.state}，${wk.community.count} 张）`);
+    }
+    if (wk.community.cards !== wk.community.count) problems.push('社区关卡目录和页面卡片数对不上');
+    if (!wk.community.playsSorted) problems.push('“最多游玩”排序没有生效');
+    if (wk.community.searchCards !== 1) problems.push(`搜索“冰屋”应该只剩 1 张，实际 ${wk.community.searchCards}`);
+    if (wk.community.likeDelta !== 1 || !wk.community.liked) problems.push('点赞没有让数字 +1 或没有记住已点赞');
+    if (wk.community.playDelta !== 1 || !wk.community.played) problems.push('从社区开玩没有记录游玩人数');
+    if (wk.community.playing.state !== 'intro' || wk.community.playing.mode !== 'custom') {
+      problems.push(`社区卡片没能直接进自制关卡（${wk.community.playing.state}/${wk.community.playing.mode}）`);
+    }
+    if (wk.community.playing.pickShown) problems.push('社区关卡又弹了开局选蛋');
     if (wk.starter.errors.length) problems.push(`新建关卡的默认关卡就有问题：${wk.starter.errors[0]}`);
     if (wk.placed.blocks !== wk.starter.blocks + 1) problems.push('编辑器里点空地没有放下方块');
     if (wk.placed.pigs !== wk.starter.pigs + 1) problems.push('编辑器里点空地没有放下奶蛙');
@@ -1561,9 +1654,21 @@ const main = async () => {
     if (wk.gateAfterBack) problems.push('只回编辑器没通关，却拿到了发布资格');
     if (!wk.gateAfterWin) problems.push('试玩通关之后没有拿到发布资格');
     if (!wk.gateInEditor || !wk.published) problems.push('通关回编辑器之后"发布链接"还是不可用');
+    if (!wk.submitUrl.includes('github.com/busgm666-cloud/naidan-slingshot/issues/new') || !wk.submitUrl.includes('%5B%E5%B7%A5%E5%9D%8A%E6%8A%95%E7%A8%BF%5D')) {
+      problems.push('“投稿到工坊”没有打开预填好的 GitHub Issue');
+    }
     if (wk.gateAfterRename || !wk.publishDisabledAfterRename) problems.push('改关卡名之后发布资格没立刻失效');
+    if (!wk.submitDisabledAfterRename) problems.push('改关卡名之后投稿按钮没有立刻变灰');
     if (wk.gateAfterEdit) problems.push('改了关卡内容之后发布资格没失效（应该重新试玩通关）');
+    await page.evaluate(() => {
+      const t = document.getElementById('toast');
+      t.style.transition = 'none';
+      t.style.opacity = '0';
+    });
     await shot(page, '09d-workshop-editor.png');
+    await page.evaluate(() => window.__nai.workshop.back());
+    await sleep(280);
+    await shot(page, '09e-community.png');
 
     // ---------------------------------------------------------- file:// 直开
     for (const [label, target, file] of [
@@ -1576,6 +1681,9 @@ const main = async () => {
         if (label === '单文件版') { problems.push('单文件版还没打包，先跑 npm run build'); continue; }
       }
       const p2 = await browser.newPage({ viewport: { width: 1280, height: 760 } });
+      await p2.route('https://abacus.jasoncameron.dev/**', async (route) => {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: '{"value":1}' });
+      });
       p2.on('pageerror', (e) => problems.push(`[${label}] pageerror: ${e.message}`));
       p2.on('console', (m) => { if (m.type() === 'error') problems.push(`[${label}] console.error: ${m.text()}`); });
       await p2.goto(pathToFileURL(target).href, { waitUntil: 'load' });
@@ -1586,6 +1694,12 @@ const main = async () => {
         roster: document.querySelectorAll('#roster .card').length,
       }));
       await p2.click('#btnWorkshop');
+      await p2.waitForFunction(
+        () => window.__nai.workshop.community().state === 'ready' && !window.__nai.workshop.community().loadingStats,
+        null,
+        { timeout: 10000 }
+      );
+      const communityCount = await p2.evaluate(() => window.__nai.workshop.community().entries.length);
       // 工坊面板要能打开；再用调试入口进第一关（第一关已从标题页下掉）
       await p2.evaluate(() => window.__nai.start('level1'));
       await p2.evaluate(() => window.__nai.skipIntro());
@@ -1594,8 +1708,9 @@ const main = async () => {
       await p2.screenshot({ path: path.join(shots, file) });
       report.shots.push(file);
       const imagesOk = Object.values(status.images).every((w) => w > 0);
-      report[label] = { canvas: status.canvas, roster: status.roster, images: imagesOk, state: st.state };
+      report[label] = { canvas: status.canvas, roster: status.roster, images: imagesOk, communityCount, state: st.state };
       if (!imagesOk || !status.canvas || status.roster < 8) problems.push(`[${label}] file:// 直接打开时初始化不完整`);
+      if (communityCount < 6) problems.push(`[${label}] 单文件/源码版没有内联完整的社区关卡目录（${communityCount} 张）`);
       if (st.state !== 'intro' && st.state !== 'aim') problems.push(`[${label}] 点了开始之后状态不对（${st.state}）`);
       await p2.close();
     }
