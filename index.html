@@ -308,6 +308,7 @@
   #edTop button { padding: 6px 10px; font-size: 12px; border-radius: 10px; box-shadow: 0 3px 0 var(--jam-dark); letter-spacing: 0; }
   #edTop button.ghost { box-shadow: 0 3px 0 rgba(74,53,39,.18); }
   #edTop button.on { background: var(--jam-dark); box-shadow: 0 3px 0 #a83f16; }
+  #edTop button:disabled { cursor: default; opacity: .45; }
   #edTop input[type=text] {
     width: 150px; padding: 6px 10px; border-radius: 10px;
     border: 2px solid rgba(206,152,42,.3); background: #fffdf5;
@@ -320,6 +321,19 @@
     font-size: 12.5px; font-weight: 700; color: #3f7a58; box-shadow: 0 6px 18px rgba(60,38,20,.22);
   }
   #edStatus.bad { color: #c2410c; }
+  #edRotateFloat { display: none; }
+  @media (max-width: 700px) {
+    #edTop { max-width: calc(100vw - 12px); gap: 6px; padding: 7px; font-size: 11px; }
+    #edTop button { min-height: 38px; padding: 7px 9px; font-size: 11px; touch-action: manipulation; }
+    #edTop input[type=text] { width: 118px; min-height: 38px; }
+    #edRotateFloat:not(.hide) {
+      display: block; position: absolute; right: 14px; bottom: 160px; z-index: 4;
+      pointer-events: auto; min-width: 116px; min-height: 48px;
+      background: var(--jam); color: #fff; font-size: 14px;
+      box-shadow: 0 5px 0 var(--jam-dark), 0 8px 20px rgba(60,38,20,.25);
+      touch-action: manipulation;
+    }
+  }
   #edHint {
     pointer-events: none; position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
     font-size: 12px; color: #7a5b42; background: rgba(255,246,228,.9);
@@ -475,6 +489,7 @@
           <button id="edSizeM" class="on">中</button>
           <button id="edSizeL" class="ghost">大</button>
           <button id="edSizeLong" class="ghost">长</button>
+          <button id="edRotate" class="ghost" disabled title="旋转 15°；Shift+点击 45°">旋转 15°</button>
         </div>
         <div class="grp" id="edPigProps" style="display:none">
           <label style="display:flex;gap:5px;align-items:center;font-size:12px;color:#6b4a30">
@@ -501,8 +516,9 @@
           <button id="edWkBack" class="ghost">返回工坊</button>
         </div>
       </div>
+      <button id="edRotateFloat" class="ghost hide">↻ 旋转 15°</button>
       <div id="edStatus">可以玩了</div>
-      <div id="edHint">点空地放置 · 拖已有物体移动 · 拖空白处平移 · 滚轮缩放 · Delete 删除选中</div>
+      <div id="edHint">点空地放置 · 拖已有物体移动 · 选中方块后旋转 15° · 拖空白处平移 · 滚轮缩放 · Delete 删除</div>
     </div>
 
     <!-- 奶蛋阵容选择 -->

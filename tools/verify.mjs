@@ -1658,6 +1658,10 @@ const main = async () => {
       W.setName('我的关卡');
       W.setTool('block'); W.setMaterial('ice'); W.setSize('l');
       W.tap(1300, 560);
+      const rotateButtonEnabled = !document.getElementById('edRotate').disabled;
+      const angleBefore = W.info().blockAngles.at(-1);
+      document.getElementById('edRotate').click();
+      const angleAfter = W.info().blockAngles.at(-1);
       W.setTool('pig'); W.setBonus(true);
       W.tap(1520, 600);
       const placed = W.info();
@@ -1676,6 +1680,9 @@ const main = async () => {
       const code = W.code();
       const json = W.json();
       const unpacked = window.WorkshopLevel.unpack(code);
+      const unpackedAngle = unpacked && unpacked.blocks.length
+        ? Math.round((unpacked.blocks[unpacked.blocks.length - 1].angle || 0) * 180 / Math.PI)
+        : null;
       const gateBefore = W.gateOpen();     // 还没通关 → 不能发布
       const publishBefore = W.publish();
       W.playtest();
@@ -1780,6 +1787,7 @@ const main = async () => {
         stages: two.stages,
         pigStages: two.pigStages,
         rosterOk, roster, rosterCount,
+        rotateButtonEnabled, angleBefore, angleAfter, unpackedAngle,
         codeLen: code.length, jsonLen: json.length, codeStarts: code.slice(0, 3),
         unpackOk: !!unpacked && unpacked.blocks.length === placed.blocks && unpacked.pigs.length === placed.pigs,
         undoPigs, redoPigs,
@@ -1840,6 +1848,10 @@ const main = async () => {
     if (wk.community.exitState !== 'workshop') problems.push(`社区关卡返回按钮没有回到工坊（${wk.community.exitState}）`);
     if (wk.starter.errors.length) problems.push(`新建关卡的默认关卡就有问题：${wk.starter.errors[0]}`);
     if (wk.placed.blocks !== wk.starter.blocks + 1) problems.push('编辑器里点空地没有放下方块');
+    if (!wk.rotateButtonEnabled || wk.angleBefore !== 0 || wk.angleAfter !== 15) {
+      problems.push(`方块旋转按钮没有把角度从 0° 转到 15°（${wk.angleBefore} → ${wk.angleAfter}）`);
+    }
+    if (wk.unpackedAngle !== 15) problems.push(`分享码没有保存方块旋转角度（解出来 ${wk.unpackedAngle}°）`);
     if (wk.placed.pigs !== wk.starter.pigs + 1) problems.push('编辑器里点空地没有放下奶蛙');
     if (wk.placed.errors.length) problems.push(`摆完之后校验不通过：${wk.placed.errors[0]}`);
     if (wk.stages !== 2) problems.push(`改分段数没生效（${wk.stages}）`);
@@ -1946,6 +1958,38 @@ const main = async () => {
       if (st.state !== 'intro' && st.state !== 'aim') problems.push(`[${label}] 点了开始之后状态不对（${st.state}）`);
       await p2.close();
     }
+
+    // ---------------------------------------------------------- 手机端旋转按钮
+    const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+    mobile.on('pageerror', (e) => problems.push(`[手机端] pageerror: ${e.message}`));
+    await mobile.goto(base, { waitUntil: 'load' });
+    await mobile.waitForFunction(() => window.__nai && window.__nai.imagesReady(), null, { timeout: 20000 });
+    await mobile.evaluate(() => {
+      window.__nai.workshop.create();
+      window.__nai.workshop.tap(1100, 560);
+    });
+    await sleep(150);
+    const mobileRotateBox = await mobile.locator('#edRotateFloat').boundingBox();
+    const mobileAngleBefore = await mobile.evaluate(() => window.__nai.workshop.info().blockAngles.at(-1));
+    if (mobileRotateBox) await mobile.locator('#edRotateFloat').click();
+    await sleep(150);
+    const mobileAngleAfter = await mobile.evaluate(() => window.__nai.workshop.info().blockAngles.at(-1));
+    report.mobileRotate = {
+      visible: !!mobileRotateBox,
+      width: mobileRotateBox ? Math.round(mobileRotateBox.width) : 0,
+      height: mobileRotateBox ? Math.round(mobileRotateBox.height) : 0,
+      before: mobileAngleBefore,
+      after: mobileAngleAfter,
+    };
+    if (!mobileRotateBox || mobileRotateBox.width < 44 || mobileRotateBox.height < 44) {
+      problems.push('手机端没有显示足够大的浮动旋转按钮');
+    }
+    if (mobileAngleBefore !== 0 || mobileAngleAfter !== 15) {
+      problems.push(`手机端旋转按钮没有生效（${mobileAngleBefore}° → ${mobileAngleAfter}°）`);
+    }
+    await mobile.screenshot({ path: path.join(shots, '17-mobile-rotate.png') });
+    report.shots.push('17-mobile-rotate.png');
+    await mobile.close();
 
     report.ok = problems.length === 0;
     await fs.writeFile(path.join(shots, 'verify-report.json'), JSON.stringify(report, null, 2), 'utf8');

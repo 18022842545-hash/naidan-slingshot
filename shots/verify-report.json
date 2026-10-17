@@ -25,7 +25,8 @@
     "09d-workshop-editor.png",
     "09e-community.png",
     "11-file-source.png",
-    "12-file-single.png"
+    "12-file-single.png",
+    "17-mobile-rotate.png"
   ],
   "images": {
     "naidan_idle": 319,
@@ -44,8 +45,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-17 · 放置上限提示",
-    "stamp": "版本 2026-10-17 · 放置上限提示"
+    "build": "2026-10-17 · 每周热门榜",
+    "stamp": "版本 2026-10-17 · 每周热门榜"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -102,9 +103,9 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 11,
-    "minDy": -62.1,
-    "maxDeg": 344
+    "distinctPoses": 33,
+    "minDy": -62.4,
+    "maxDeg": 359
   },
   "initialDrift": 1.4,
   "fallDamage": {
@@ -126,7 +127,7 @@
   },
   "chargeFx": {
     "power": 1,
-    "charge": 0.98,
+    "charge": 0.97,
     "shakePeak": 1.32
   },
   "sweep": [
@@ -245,10 +246,10 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.59,
-      "vxMid": 24.23,
-      "xMid": 733,
-      "xSoon": 1222
+      "vxBefore": 24.66,
+      "vxMid": 24.29,
+      "xMid": 709,
+      "xSoon": 1213
     },
     {
       "type": "dash",
@@ -264,8 +265,8 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.84,
-      "vxMid": 33.53,
-      "xMid": 766,
+      "vxMid": 33.6,
+      "xMid": 733,
       "xSoon": 1329
     },
     {
@@ -318,9 +319,9 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.54,
-      "vxMid": 24.07,
-      "xMid": 731,
-      "xSoon": 1222
+      "vxMid": 24.14,
+      "xMid": 707,
+      "xSoon": 1210
     },
     {
       "type": "milk",
@@ -333,12 +334,12 @@
       "blocksBefore": 3,
       "blocksAfter": 2,
       "pigsBefore": 1,
-      "pigsAfter": 0,
+      "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.55,
+      "vxBefore": 24.62,
       "vxMid": 13.33,
-      "xMid": 654,
-      "xSoon": 988
+      "xMid": 643,
+      "xSoon": 965
     },
     {
       "type": "back",
@@ -353,10 +354,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.77,
-      "vxMid": -25.91,
-      "xMid": 407,
-      "xSoon": 101
+      "vxBefore": 24.71,
+      "vxMid": -25.85,
+      "xMid": 432,
+      "xSoon": 93
     },
     {
       "type": "seek",
@@ -396,12 +397,12 @@
       "y": -0.376
     },
     "straight": 0.8,
-    "guidedFrames": 17,
+    "guidedFrames": 18,
     "maxV": 30,
     "marks": 1
   },
   "spinTest": {
-    "samples": 52,
+    "samples": 59,
     "peak": 0.036,
     "restAv": 0.003
   },
@@ -622,7 +623,7 @@
     {
       "seed": 7,
       "level": 12,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 8,
       "blocks": 27,
       "birds": 7,
@@ -1048,14 +1049,14 @@
   },
   "bossCutIn": {
     "label": "BOSS",
-    "maxZoom": 2.349,
+    "maxZoom": 2.35,
     "barShown": true
   },
   "bossDamage": {
     "maxHp": 980,
     "direct": 86,
     "towerIntact": true,
-    "fall": 347,
+    "fall": 288,
     "fallKind": "direct",
     "barWidth": "91.3%"
   },
@@ -1080,7 +1081,7 @@
       "shots": 3,
       "summons": 1,
       "hp": 345,
-      "x": 2137
+      "x": 2138
     },
     "heal": 245,
     "pigsBefore": 2,
@@ -1126,9 +1127,9 @@
     "hpAfterFall": 765,
     "falls": [
       765,
-      640
+      642
     ],
-    "shots": 6,
+    "shots": 3,
     "laugh": {
       "ready": 4,
       "attempts": 1,
@@ -1150,16 +1151,16 @@
   "endlessResume": {
     "beforeLevel": 5,
     "beforeBirds": 4,
-    "flyingX": 475,
+    "flyingX": 499,
     "pausedState": "title",
     "pausedLevel": 5,
-    "pausedBirdX": 475,
+    "pausedBirdX": 499,
     "resumeShown": true,
     "resumeText": "继续无尽 · 第 5 关",
     "resumedState": "fly",
     "resumedLevel": 5,
     "resumedBirds": 4,
-    "resumedBirdX": 834
+    "resumedBirdX": 849
   },
   "endlessFlow": {
     "levels": [
@@ -1211,7 +1212,7 @@
       "levelBirds": [
         "naidan",
         "naidan",
-        "split",
+        "dash",
         "bomb"
       ]
     }
@@ -1327,8 +1328,12 @@
       "bomb": 2
     },
     "rosterCount": 3,
-    "codeLen": 260,
-    "jsonLen": 423,
+    "rotateButtonEnabled": true,
+    "angleBefore": 0,
+    "angleAfter": 15,
+    "unpackedAngle": 15,
+    "codeLen": 272,
+    "jsonLen": 448,
     "codeStarts": "eyJ",
     "unpackOk": true,
     "undoPigs": 1,
@@ -1338,7 +1343,7 @@
     "gateAfterBack": false,
     "gateAfterWin": true,
     "gateInEditor": true,
-    "published": "http://127.0.0.1:8849/#level=eyJ2IjoxLCJuIjoi6aqM5pS25bCP5YWzIiwidyI6MjcyMCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdXSwiYiI6W1s5MDAsNTcwLDMwLDEzMCwwXSxbMTA0MCw1NzAsMzAsMTMwLDBdLFs5NzAsNDkwLDE5MCwzMCwwXSxbMTMwMCw1NjAsMTIwLDkwLDFdXSwicCI6W1s5NzAsNjAwLDQwLDBdLFsxNTIwLDYwMCw0MCwxXV0sImsiOlswLDMsM119",
+    "published": "http://127.0.0.1:8849/#level=eyJ2IjoxLCJuIjoi6aqM5pS25bCP5YWzIiwidyI6MjcyMCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdXSwiYiI6W1s5MDAsNTcwLDMwLDEzMCwwLDBdLFsxMDQwLDU3MCwzMCwxMzAsMCwwXSxbOTcwLDQ5MCwxOTAsMzAsMCwwXSxbMTMwMCw1NjAsMTIwLDkwLDEsMTVdXSwicCI6W1s5NzAsNjAwLDQwLDBdLFsxNTIwLDYwMCw0MCwxXV0sImsiOlswLDMsM119",
     "submitShown": true,
     "badAuthorStatus": "用户名包含违禁词「傻逼」",
     "submitStatus": "投稿成功，正在刷新社区列表…",
@@ -1347,7 +1352,7 @@
       "id": "mock-1",
       "name": "验收小关",
       "author": "匿名测试员",
-      "submittedAt": "2026-10-17T08:34:37.933Z",
+      "submittedAt": "2026-10-17T09:06:44.505Z",
       "stats": {
         "likes": 0,
         "plays": 0
@@ -1402,6 +1407,13 @@
     "images": true,
     "communityCount": 8,
     "state": "aim"
+  },
+  "mobileRotate": {
+    "visible": true,
+    "width": 131,
+    "height": 48,
+    "before": 0,
+    "after": 15
   },
   "ok": true
 }

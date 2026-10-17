@@ -214,6 +214,8 @@
     edSizeM: document.getElementById('edSizeM'),
     edSizeL: document.getElementById('edSizeL'),
     edSizeLong: document.getElementById('edSizeLong'),
+    edRotate: document.getElementById('edRotate'),
+    edRotateFloat: document.getElementById('edRotateFloat'),
     levelChip: document.getElementById('levelChip'),
     skillChip: document.getElementById('skillChip'),
     skillChipImg: document.querySelector('#skillChip img'),
@@ -241,7 +243,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 每周热门榜';
+  const BUILD = '2026-10-17 · 方块旋转与移动端';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -372,6 +374,7 @@
         restitution: mat.restitution,
         label: 'block',
       });
+      if (b.angle) Body.setAngle(body, b.angle);
       // 血量按面积缩放：标准件（约 6000 平方像素）拿满血，小件按比例打折
       const scale = 0.42 + 0.58 * ((b.w * b.h) / 6000);
       const hp = mat.hp * scale * (b.hpScale || 1);
@@ -1929,6 +1932,11 @@
       }
       if (e.key === 'Escape') { leaveEditor(); return; }
       if (e.key === 'z' || e.key === 'Z') { undoEditor(); return; }
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        rotateSelectedBlock(e.shiftKey ? 45 : 15);
+        return;
+      }
       return;
     }
     if (state === 'workshop') return;
@@ -3181,17 +3189,23 @@
     const colors = { wood: '#b5763f', ice: '#8ed8ed', stone: '#8d8b86' };
     def.blocks.forEach((b) => {
       g.fillStyle = colors[b.material] || colors.wood;
+      const w = Math.max(3, b.w * scale);
       const h = Math.max(4, b.h * scale);
-      g.fillRect(px(b.x - b.w / 2), ground - h, Math.max(3, b.w * scale), h);
+      g.save();
+      g.translate(px(b.x), ground - ((def.groundY || 636) - b.y) * scale);
+      g.rotate(b.angle || 0);
+      g.fillRect(-w / 2, -h / 2, w, h);
+      g.restore();
     });
     def.pigs.forEach((p) => {
+      const py = ground - ((def.groundY || 636) - p.y) * scale;
       g.fillStyle = p.bonus ? '#ffd86e' : '#f3c852';
       g.beginPath();
-      g.arc(px(p.x), ground - Math.max(5, p.r * scale * 0.8), Math.max(5, p.r * scale), 0, Math.PI * 2);
+      g.arc(px(p.x), py, Math.max(5, p.r * scale), 0, Math.PI * 2);
       g.fill();
       g.fillStyle = '#5a3a26';
-      g.fillRect(px(p.x) - 3, ground - 12, 2, 2);
-      g.fillRect(px(p.x) + 1, ground - 12, 2, 2);
+      g.fillRect(px(p.x) - 3, py - 2, 2, 2);
+      g.fillRect(px(p.x) + 1, py - 2, 2, 2);
     });
     const sling = def.launchPoints[0];
     g.strokeStyle = '#82512f';
@@ -3540,7 +3554,7 @@
     level = editor.def;
     setStage(0);
     blocks = editor.def.blocks.map((b) => ({
-      position: { x: b.x, y: b.y }, angle: 0, velocity: { x: 0, y: 0 }, angularVelocity: 0, circleRadius: 0,
+      position: { x: b.x, y: b.y }, angle: b.angle || 0, velocity: { x: 0, y: 0 }, angularVelocity: 0, circleRadius: 0,
       game: { kind: 'block', material: b.material, w: b.w, h: b.h, hp: 1, maxHp: 1, flash: 0, stage: b.stage },
     }));
     pigs = editor.def.pigs.map((p) => ({
@@ -3557,6 +3571,19 @@
       .forEach(([b, t]) => { b.classList.toggle('on', editor.material === t); b.classList.toggle('ghost', editor.material !== t); });
     [[el.edSizeS, 's'], [el.edSizeM, 'm'], [el.edSizeL, 'l'], [el.edSizeLong, 'long']]
       .forEach(([b, t]) => { b.classList.toggle('on', editor.size === t); b.classList.toggle('ghost', editor.size !== t); });
+    const selectedBlock = editor.selected && editor.selected.kind === 'block'
+      ? editor.def.blocks[editor.selected.index]
+      : null;
+    const canRotate = !!selectedBlock;
+    el.edRotate.disabled = !canRotate;
+    el.edRotateFloat.disabled = !canRotate;
+    el.edRotateFloat.classList.toggle('hide', !canRotate);
+    if (canRotate) {
+      const degrees = Math.round((selectedBlock.angle || 0) * 180 / Math.PI) % 360;
+      el.edRotate.title = `当前 ${degrees}°；点击旋转 15°，Shift+点击旋转 45°`;
+    } else {
+      el.edRotate.title = '先选中一个方块';
+    }
     el.edBlockProps.style.display = editor.tool === 'block' ? 'flex' : 'none';
     el.edPigProps.style.display = editor.tool === 'pig' ? 'flex' : 'none';
     el.edPigBonus.checked = !!editor.bonus;
@@ -3631,13 +3658,30 @@
     syncEditorUI();
     persistDraft();
   };
+  const rotateSelectedBlock = (degrees = 15) => {
+    if (!editor || !editor.selected || editor.selected.kind !== 'block') return false;
+    const block = editor.def.blocks[editor.selected.index];
+    if (!block) return false;
+    editorSnapshot();
+    block.angle = (block.angle || 0) + degrees * Math.PI / 180;
+    editorChanged();
+    const turned = editor.def.blocks[editor.selected.index];
+    const value = turned ? Math.round((turned.angle || 0) * 180 / Math.PI) % 360 : 0;
+    toast(`旋转到 ${value}°`, 1000);
+    return true;
+  };
   const editorHit = (p) => {
     for (let i = pigs.length - 1; i >= 0; i--) {
       if (Math.hypot(p.x - pigs[i].position.x, p.y - pigs[i].position.y) <= pigs[i].game.r + 10) return { kind: 'pig', index: i };
     }
     for (let i = blocks.length - 1; i >= 0; i--) {
       const g = blocks[i].game;
-      if (Math.abs(p.x - blocks[i].position.x) <= g.w / 2 + 4 && Math.abs(p.y - blocks[i].position.y) <= g.h / 2 + 4) return { kind: 'block', index: i };
+      const a = -(blocks[i].angle || 0);
+      const dx = p.x - blocks[i].position.x;
+      const dy = p.y - blocks[i].position.y;
+      const lx = dx * Math.cos(a) - dy * Math.sin(a);
+      const ly = dx * Math.sin(a) + dy * Math.cos(a);
+      if (Math.abs(lx) <= g.w / 2 + 4 && Math.abs(ly) <= g.h / 2 + 4) return { kind: 'block', index: i };
     }
     return null;
   };
@@ -3761,7 +3805,9 @@
     ctx.lineWidth = 2.5;
     ctx.setLineDash([6, 4]);
     if (sel.kind === 'block') {
-      ctx.strokeRect(it.position.x - it.game.w / 2 - 4, it.position.y - it.game.h / 2 - 4, it.game.w + 8, it.game.h + 8);
+      ctx.translate(it.position.x, it.position.y);
+      ctx.rotate(it.angle || 0);
+      ctx.strokeRect(-it.game.w / 2 - 4, -it.game.h / 2 - 4, it.game.w + 8, it.game.h + 8);
     } else {
       ctx.beginPath(); ctx.arc(it.position.x, it.position.y, it.game.r + 6, 0, Math.PI * 2); ctx.stroke();
     }
@@ -3944,6 +3990,8 @@
   el.edSizeM.addEventListener('click', () => setSize('m'));
   el.edSizeL.addEventListener('click', () => setSize('l'));
   el.edSizeLong.addEventListener('click', () => setSize('long'));
+  el.edRotate.addEventListener('click', (ev) => rotateSelectedBlock(ev.shiftKey ? 45 : 15));
+  el.edRotateFloat.addEventListener('click', () => rotateSelectedBlock(15));
   el.edPigBonus.addEventListener('change', () => { if (editor) editor.bonus = el.edPigBonus.checked; });
   const setStages = (n) => {
     if (!editor) return;
@@ -4111,6 +4159,7 @@
         tool: editor.tool, material: editor.material, size: editor.size, bonus: !!editor.bonus,
         name: editor.def.name,
         blocks: editor.def.blocks.length,
+        blockAngles: editor.def.blocks.map((b) => Math.round((b.angle || 0) * 180 / Math.PI)),
         pigs: editor.def.pigs.length,
         stages: editor.def.launchPoints.length,
         birds: editor.def.birds.length,
@@ -4124,6 +4173,7 @@
       setMaterial: (m) => { if (editor) { editor.material = m; syncEditorUI(); } return editor && editor.material; },
       setSize: (s) => { if (editor) { editor.size = s; syncEditorUI(); } return editor && editor.size; },
       setBonus: (b) => { if (editor) { editor.bonus = !!b; syncEditorUI(); } return editor && editor.bonus; },
+      rotateBlock: (degrees = 15) => rotateSelectedBlock(Number(degrees) || 15),
       setName: (n) => {
         if (editor) {
           editor.def.name = String(n).slice(0, 24);

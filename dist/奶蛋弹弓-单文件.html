@@ -308,6 +308,7 @@
   #edTop button { padding: 6px 10px; font-size: 12px; border-radius: 10px; box-shadow: 0 3px 0 var(--jam-dark); letter-spacing: 0; }
   #edTop button.ghost { box-shadow: 0 3px 0 rgba(74,53,39,.18); }
   #edTop button.on { background: var(--jam-dark); box-shadow: 0 3px 0 #a83f16; }
+  #edTop button:disabled { cursor: default; opacity: .45; }
   #edTop input[type=text] {
     width: 150px; padding: 6px 10px; border-radius: 10px;
     border: 2px solid rgba(206,152,42,.3); background: #fffdf5;
@@ -320,6 +321,19 @@
     font-size: 12.5px; font-weight: 700; color: #3f7a58; box-shadow: 0 6px 18px rgba(60,38,20,.22);
   }
   #edStatus.bad { color: #c2410c; }
+  #edRotateFloat { display: none; }
+  @media (max-width: 700px) {
+    #edTop { max-width: calc(100vw - 12px); gap: 6px; padding: 7px; font-size: 11px; }
+    #edTop button { min-height: 38px; padding: 7px 9px; font-size: 11px; touch-action: manipulation; }
+    #edTop input[type=text] { width: 118px; min-height: 38px; }
+    #edRotateFloat:not(.hide) {
+      display: block; position: absolute; right: 14px; bottom: 160px; z-index: 4;
+      pointer-events: auto; min-width: 116px; min-height: 48px;
+      background: var(--jam); color: #fff; font-size: 14px;
+      box-shadow: 0 5px 0 var(--jam-dark), 0 8px 20px rgba(60,38,20,.25);
+      touch-action: manipulation;
+    }
+  }
   #edHint {
     pointer-events: none; position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
     font-size: 12px; color: #7a5b42; background: rgba(255,246,228,.9);
@@ -475,6 +489,7 @@
           <button id="edSizeM" class="on">中</button>
           <button id="edSizeL" class="ghost">大</button>
           <button id="edSizeLong" class="ghost">长</button>
+          <button id="edRotate" class="ghost" disabled title="旋转 15°；Shift+点击 45°">旋转 15°</button>
         </div>
         <div class="grp" id="edPigProps" style="display:none">
           <label style="display:flex;gap:5px;align-items:center;font-size:12px;color:#6b4a30">
@@ -501,8 +516,9 @@
           <button id="edWkBack" class="ghost">返回工坊</button>
         </div>
       </div>
+      <button id="edRotateFloat" class="ghost hide">↻ 旋转 15°</button>
       <div id="edStatus">可以玩了</div>
-      <div id="edHint">点空地放置 · 拖已有物体移动 · 拖空白处平移 · 滚轮缩放 · Delete 删除选中</div>
+      <div id="edHint">点空地放置 · 拖已有物体移动 · 选中方块后旋转 15° · 拖空白处平移 · 滚轮缩放 · Delete 删除</div>
     </div>
 
     <!-- 奶蛋阵容选择 -->
@@ -1510,6 +1526,16 @@ window.WorkshopLevel = (() => {
   const num = (v, d) => (Number.isFinite(Number(v)) ? Number(v) : d);
   const snap = (v, step = 10) => Math.round(v / step) * step;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const angleStep = Math.PI / 12; // 15°
+  const normalizeAngle = (v) => {
+    const a = Math.round(num(v, 0) / angleStep) * angleStep;
+    return ((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  };
+  const aabbOf = (b) => {
+    const c = Math.abs(Math.cos(b.angle || 0));
+    const s = Math.abs(Math.sin(b.angle || 0));
+    return { halfW: (b.w * c + b.h * s) / 2, halfH: (b.w * s + b.h * c) / 2 };
+  };
 
   const blank = () => ({
     id: `custom-${Date.now().toString(36)}`,
@@ -1538,6 +1564,7 @@ window.WorkshopLevel = (() => {
       w: clamp(snap(num(b.w, 90)), 20, 420),
       h: clamp(snap(num(b.h, 60)), 16, 200),
       material: MATS.includes(b.material) ? b.material : 'wood',
+      angle: normalizeAngle(b.angle),
     }));
     const pigs = (Array.isArray(input.pigs) ? input.pigs : []).slice(0, LIMITS.pigs).map((p) => {
       const pig = {
@@ -1576,8 +1603,14 @@ window.WorkshopLevel = (() => {
     };
   };
 
-  const circleHitsRect = (p, b) =>
-    Math.abs(p.x - b.x) < b.w / 2 + p.r * 0.8 && Math.abs(p.y - b.y) < b.h / 2 + p.r * 0.8;
+  const circleHitsRect = (p, b) => {
+    const a = -(b.angle || 0);
+    const dx = p.x - b.x;
+    const dy = p.y - b.y;
+    const lx = dx * Math.cos(a) - dy * Math.sin(a);
+    const ly = dx * Math.sin(a) + dy * Math.cos(a);
+    return Math.abs(lx) < b.w / 2 + p.r * 0.8 && Math.abs(ly) < b.h / 2 + p.r * 0.8;
+  };
 
   /** 返回一组"没法玩"的原因；空数组 = 可以玩 */
   const validate = (def) => {
@@ -1598,8 +1631,9 @@ window.WorkshopLevel = (() => {
       if (def.blocks.some((b) => circleHitsRect(p, b))) errs.push(`${tag}和方块叠在一起了`);
     });
     def.blocks.forEach((b, i) => {
-      if (b.x - b.w / 2 < -40) errs.push(`第 ${i + 1} 个方块跑出地图左边了`);
-      if (b.x + b.w / 2 > def.worldW + 40) errs.push(`第 ${i + 1} 个方块跑出地图右边了`);
+      const box = aabbOf(b);
+      if (b.x - box.halfW < -40) errs.push(`第 ${i + 1} 个方块跑出地图左边了`);
+      if (b.x + box.halfW > def.worldW + 40) errs.push(`第 ${i + 1} 个方块跑出地图右边了`);
     });
     return errs;
   };
@@ -1614,11 +1648,12 @@ window.WorkshopLevel = (() => {
       changed = false;
       def.blocks.forEach((b, i) => {
         if (supported.has(i)) return;
-        const bottom = b.y + b.h / 2;
+        const box = aabbOf(b);
+        const bottom = b.y + box.halfH;
         const onGround = Math.abs(bottom - def.groundY) <= 6;
         const onBlock = def.blocks.some((o, j) => supported.has(j)
-          && Math.abs(o.y - o.h / 2 - bottom) <= 6
-          && Math.abs(o.x - b.x) < (o.w + b.w) / 2 - 6);
+          && Math.abs(o.y - aabbOf(o).halfH - bottom) <= 6
+          && Math.abs(o.x - b.x) < (aabbOf(o).halfW + box.halfW) - 6);
         if (onGround || onBlock) { supported.add(i); changed = true; }
       });
     }
@@ -1632,7 +1667,7 @@ window.WorkshopLevel = (() => {
     n: def.name,
     w: def.worldW,
     s: def.launchPoints.map((p) => [p.x, p.y]),
-    b: def.blocks.map((b) => [b.x, b.y, b.w, b.h, MATS.indexOf(b.material)]),
+    b: def.blocks.map((b) => [b.x, b.y, b.w, b.h, MATS.indexOf(b.material), Math.round((b.angle || 0) * 180 / Math.PI)]),
     p: def.pigs.map((p) => [p.x, p.y, p.r, p.bonus ? 1 : 0]),
     k: def.birds.map((k) => BIRDS.indexOf(k)),
   });
@@ -1640,7 +1675,10 @@ window.WorkshopLevel = (() => {
     name: o.n,
     worldW: o.w,
     launchPoints: (o.s || []).map(([x, y]) => ({ x, y })),
-    blocks: (o.b || []).map(([x, y, w, h, m]) => ({ x, y, w, h, material: MATS[m] || 'wood' })),
+    blocks: (o.b || []).map(([x, y, w, h, m, angle]) => ({
+      x, y, w, h, material: MATS[m] || 'wood',
+      angle: angle === undefined ? 0 : Number(angle) * Math.PI / 180,
+    })),
     pigs: (o.p || []).map(([x, y, r, b]) => ({ x, y, r, bonus: !!b })),
     birds: (o.k || []).map((i) => BIRDS[i]).filter(Boolean),
     stages: (o.s || []).length,
@@ -2358,6 +2396,8 @@ window.WorkshopCommunity = (() => {
     edSizeM: document.getElementById('edSizeM'),
     edSizeL: document.getElementById('edSizeL'),
     edSizeLong: document.getElementById('edSizeLong'),
+    edRotate: document.getElementById('edRotate'),
+    edRotateFloat: document.getElementById('edRotateFloat'),
     levelChip: document.getElementById('levelChip'),
     skillChip: document.getElementById('skillChip'),
     skillChipImg: document.querySelector('#skillChip img'),
@@ -2385,7 +2425,7 @@ window.WorkshopCommunity = (() => {
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 每周热门榜';
+  const BUILD = '2026-10-17 · 方块旋转与移动端';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -2516,6 +2556,7 @@ window.WorkshopCommunity = (() => {
         restitution: mat.restitution,
         label: 'block',
       });
+      if (b.angle) Body.setAngle(body, b.angle);
       // 血量按面积缩放：标准件（约 6000 平方像素）拿满血，小件按比例打折
       const scale = 0.42 + 0.58 * ((b.w * b.h) / 6000);
       const hp = mat.hp * scale * (b.hpScale || 1);
@@ -4073,6 +4114,11 @@ window.WorkshopCommunity = (() => {
       }
       if (e.key === 'Escape') { leaveEditor(); return; }
       if (e.key === 'z' || e.key === 'Z') { undoEditor(); return; }
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        rotateSelectedBlock(e.shiftKey ? 45 : 15);
+        return;
+      }
       return;
     }
     if (state === 'workshop') return;
@@ -5325,17 +5371,23 @@ window.WorkshopCommunity = (() => {
     const colors = { wood: '#b5763f', ice: '#8ed8ed', stone: '#8d8b86' };
     def.blocks.forEach((b) => {
       g.fillStyle = colors[b.material] || colors.wood;
+      const w = Math.max(3, b.w * scale);
       const h = Math.max(4, b.h * scale);
-      g.fillRect(px(b.x - b.w / 2), ground - h, Math.max(3, b.w * scale), h);
+      g.save();
+      g.translate(px(b.x), ground - ((def.groundY || 636) - b.y) * scale);
+      g.rotate(b.angle || 0);
+      g.fillRect(-w / 2, -h / 2, w, h);
+      g.restore();
     });
     def.pigs.forEach((p) => {
+      const py = ground - ((def.groundY || 636) - p.y) * scale;
       g.fillStyle = p.bonus ? '#ffd86e' : '#f3c852';
       g.beginPath();
-      g.arc(px(p.x), ground - Math.max(5, p.r * scale * 0.8), Math.max(5, p.r * scale), 0, Math.PI * 2);
+      g.arc(px(p.x), py, Math.max(5, p.r * scale), 0, Math.PI * 2);
       g.fill();
       g.fillStyle = '#5a3a26';
-      g.fillRect(px(p.x) - 3, ground - 12, 2, 2);
-      g.fillRect(px(p.x) + 1, ground - 12, 2, 2);
+      g.fillRect(px(p.x) - 3, py - 2, 2, 2);
+      g.fillRect(px(p.x) + 1, py - 2, 2, 2);
     });
     const sling = def.launchPoints[0];
     g.strokeStyle = '#82512f';
@@ -5684,7 +5736,7 @@ window.WorkshopCommunity = (() => {
     level = editor.def;
     setStage(0);
     blocks = editor.def.blocks.map((b) => ({
-      position: { x: b.x, y: b.y }, angle: 0, velocity: { x: 0, y: 0 }, angularVelocity: 0, circleRadius: 0,
+      position: { x: b.x, y: b.y }, angle: b.angle || 0, velocity: { x: 0, y: 0 }, angularVelocity: 0, circleRadius: 0,
       game: { kind: 'block', material: b.material, w: b.w, h: b.h, hp: 1, maxHp: 1, flash: 0, stage: b.stage },
     }));
     pigs = editor.def.pigs.map((p) => ({
@@ -5701,6 +5753,19 @@ window.WorkshopCommunity = (() => {
       .forEach(([b, t]) => { b.classList.toggle('on', editor.material === t); b.classList.toggle('ghost', editor.material !== t); });
     [[el.edSizeS, 's'], [el.edSizeM, 'm'], [el.edSizeL, 'l'], [el.edSizeLong, 'long']]
       .forEach(([b, t]) => { b.classList.toggle('on', editor.size === t); b.classList.toggle('ghost', editor.size !== t); });
+    const selectedBlock = editor.selected && editor.selected.kind === 'block'
+      ? editor.def.blocks[editor.selected.index]
+      : null;
+    const canRotate = !!selectedBlock;
+    el.edRotate.disabled = !canRotate;
+    el.edRotateFloat.disabled = !canRotate;
+    el.edRotateFloat.classList.toggle('hide', !canRotate);
+    if (canRotate) {
+      const degrees = Math.round((selectedBlock.angle || 0) * 180 / Math.PI) % 360;
+      el.edRotate.title = `当前 ${degrees}°；点击旋转 15°，Shift+点击旋转 45°`;
+    } else {
+      el.edRotate.title = '先选中一个方块';
+    }
     el.edBlockProps.style.display = editor.tool === 'block' ? 'flex' : 'none';
     el.edPigProps.style.display = editor.tool === 'pig' ? 'flex' : 'none';
     el.edPigBonus.checked = !!editor.bonus;
@@ -5775,13 +5840,30 @@ window.WorkshopCommunity = (() => {
     syncEditorUI();
     persistDraft();
   };
+  const rotateSelectedBlock = (degrees = 15) => {
+    if (!editor || !editor.selected || editor.selected.kind !== 'block') return false;
+    const block = editor.def.blocks[editor.selected.index];
+    if (!block) return false;
+    editorSnapshot();
+    block.angle = (block.angle || 0) + degrees * Math.PI / 180;
+    editorChanged();
+    const turned = editor.def.blocks[editor.selected.index];
+    const value = turned ? Math.round((turned.angle || 0) * 180 / Math.PI) % 360 : 0;
+    toast(`旋转到 ${value}°`, 1000);
+    return true;
+  };
   const editorHit = (p) => {
     for (let i = pigs.length - 1; i >= 0; i--) {
       if (Math.hypot(p.x - pigs[i].position.x, p.y - pigs[i].position.y) <= pigs[i].game.r + 10) return { kind: 'pig', index: i };
     }
     for (let i = blocks.length - 1; i >= 0; i--) {
       const g = blocks[i].game;
-      if (Math.abs(p.x - blocks[i].position.x) <= g.w / 2 + 4 && Math.abs(p.y - blocks[i].position.y) <= g.h / 2 + 4) return { kind: 'block', index: i };
+      const a = -(blocks[i].angle || 0);
+      const dx = p.x - blocks[i].position.x;
+      const dy = p.y - blocks[i].position.y;
+      const lx = dx * Math.cos(a) - dy * Math.sin(a);
+      const ly = dx * Math.sin(a) + dy * Math.cos(a);
+      if (Math.abs(lx) <= g.w / 2 + 4 && Math.abs(ly) <= g.h / 2 + 4) return { kind: 'block', index: i };
     }
     return null;
   };
@@ -5905,7 +5987,9 @@ window.WorkshopCommunity = (() => {
     ctx.lineWidth = 2.5;
     ctx.setLineDash([6, 4]);
     if (sel.kind === 'block') {
-      ctx.strokeRect(it.position.x - it.game.w / 2 - 4, it.position.y - it.game.h / 2 - 4, it.game.w + 8, it.game.h + 8);
+      ctx.translate(it.position.x, it.position.y);
+      ctx.rotate(it.angle || 0);
+      ctx.strokeRect(-it.game.w / 2 - 4, -it.game.h / 2 - 4, it.game.w + 8, it.game.h + 8);
     } else {
       ctx.beginPath(); ctx.arc(it.position.x, it.position.y, it.game.r + 6, 0, Math.PI * 2); ctx.stroke();
     }
@@ -6088,6 +6172,8 @@ window.WorkshopCommunity = (() => {
   el.edSizeM.addEventListener('click', () => setSize('m'));
   el.edSizeL.addEventListener('click', () => setSize('l'));
   el.edSizeLong.addEventListener('click', () => setSize('long'));
+  el.edRotate.addEventListener('click', (ev) => rotateSelectedBlock(ev.shiftKey ? 45 : 15));
+  el.edRotateFloat.addEventListener('click', () => rotateSelectedBlock(15));
   el.edPigBonus.addEventListener('change', () => { if (editor) editor.bonus = el.edPigBonus.checked; });
   const setStages = (n) => {
     if (!editor) return;
@@ -6255,6 +6341,7 @@ window.WorkshopCommunity = (() => {
         tool: editor.tool, material: editor.material, size: editor.size, bonus: !!editor.bonus,
         name: editor.def.name,
         blocks: editor.def.blocks.length,
+        blockAngles: editor.def.blocks.map((b) => Math.round((b.angle || 0) * 180 / Math.PI)),
         pigs: editor.def.pigs.length,
         stages: editor.def.launchPoints.length,
         birds: editor.def.birds.length,
@@ -6268,6 +6355,7 @@ window.WorkshopCommunity = (() => {
       setMaterial: (m) => { if (editor) { editor.material = m; syncEditorUI(); } return editor && editor.material; },
       setSize: (s) => { if (editor) { editor.size = s; syncEditorUI(); } return editor && editor.size; },
       setBonus: (b) => { if (editor) { editor.bonus = !!b; syncEditorUI(); } return editor && editor.bonus; },
+      rotateBlock: (degrees = 15) => rotateSelectedBlock(Number(degrees) || 15),
       setName: (n) => {
         if (editor) {
           editor.def.name = String(n).slice(0, 24);

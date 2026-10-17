@@ -18,6 +18,16 @@ window.WorkshopLevel = (() => {
   const num = (v, d) => (Number.isFinite(Number(v)) ? Number(v) : d);
   const snap = (v, step = 10) => Math.round(v / step) * step;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const angleStep = Math.PI / 12; // 15°
+  const normalizeAngle = (v) => {
+    const a = Math.round(num(v, 0) / angleStep) * angleStep;
+    return ((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  };
+  const aabbOf = (b) => {
+    const c = Math.abs(Math.cos(b.angle || 0));
+    const s = Math.abs(Math.sin(b.angle || 0));
+    return { halfW: (b.w * c + b.h * s) / 2, halfH: (b.w * s + b.h * c) / 2 };
+  };
 
   const blank = () => ({
     id: `custom-${Date.now().toString(36)}`,
@@ -46,6 +56,7 @@ window.WorkshopLevel = (() => {
       w: clamp(snap(num(b.w, 90)), 20, 420),
       h: clamp(snap(num(b.h, 60)), 16, 200),
       material: MATS.includes(b.material) ? b.material : 'wood',
+      angle: normalizeAngle(b.angle),
     }));
     const pigs = (Array.isArray(input.pigs) ? input.pigs : []).slice(0, LIMITS.pigs).map((p) => {
       const pig = {
@@ -84,8 +95,14 @@ window.WorkshopLevel = (() => {
     };
   };
 
-  const circleHitsRect = (p, b) =>
-    Math.abs(p.x - b.x) < b.w / 2 + p.r * 0.8 && Math.abs(p.y - b.y) < b.h / 2 + p.r * 0.8;
+  const circleHitsRect = (p, b) => {
+    const a = -(b.angle || 0);
+    const dx = p.x - b.x;
+    const dy = p.y - b.y;
+    const lx = dx * Math.cos(a) - dy * Math.sin(a);
+    const ly = dx * Math.sin(a) + dy * Math.cos(a);
+    return Math.abs(lx) < b.w / 2 + p.r * 0.8 && Math.abs(ly) < b.h / 2 + p.r * 0.8;
+  };
 
   /** 返回一组"没法玩"的原因；空数组 = 可以玩 */
   const validate = (def) => {
@@ -106,8 +123,9 @@ window.WorkshopLevel = (() => {
       if (def.blocks.some((b) => circleHitsRect(p, b))) errs.push(`${tag}和方块叠在一起了`);
     });
     def.blocks.forEach((b, i) => {
-      if (b.x - b.w / 2 < -40) errs.push(`第 ${i + 1} 个方块跑出地图左边了`);
-      if (b.x + b.w / 2 > def.worldW + 40) errs.push(`第 ${i + 1} 个方块跑出地图右边了`);
+      const box = aabbOf(b);
+      if (b.x - box.halfW < -40) errs.push(`第 ${i + 1} 个方块跑出地图左边了`);
+      if (b.x + box.halfW > def.worldW + 40) errs.push(`第 ${i + 1} 个方块跑出地图右边了`);
     });
     return errs;
   };
@@ -122,11 +140,12 @@ window.WorkshopLevel = (() => {
       changed = false;
       def.blocks.forEach((b, i) => {
         if (supported.has(i)) return;
-        const bottom = b.y + b.h / 2;
+        const box = aabbOf(b);
+        const bottom = b.y + box.halfH;
         const onGround = Math.abs(bottom - def.groundY) <= 6;
         const onBlock = def.blocks.some((o, j) => supported.has(j)
-          && Math.abs(o.y - o.h / 2 - bottom) <= 6
-          && Math.abs(o.x - b.x) < (o.w + b.w) / 2 - 6);
+          && Math.abs(o.y - aabbOf(o).halfH - bottom) <= 6
+          && Math.abs(o.x - b.x) < (aabbOf(o).halfW + box.halfW) - 6);
         if (onGround || onBlock) { supported.add(i); changed = true; }
       });
     }
@@ -140,7 +159,7 @@ window.WorkshopLevel = (() => {
     n: def.name,
     w: def.worldW,
     s: def.launchPoints.map((p) => [p.x, p.y]),
-    b: def.blocks.map((b) => [b.x, b.y, b.w, b.h, MATS.indexOf(b.material)]),
+    b: def.blocks.map((b) => [b.x, b.y, b.w, b.h, MATS.indexOf(b.material), Math.round((b.angle || 0) * 180 / Math.PI)]),
     p: def.pigs.map((p) => [p.x, p.y, p.r, p.bonus ? 1 : 0]),
     k: def.birds.map((k) => BIRDS.indexOf(k)),
   });
@@ -148,7 +167,10 @@ window.WorkshopLevel = (() => {
     name: o.n,
     worldW: o.w,
     launchPoints: (o.s || []).map(([x, y]) => ({ x, y })),
-    blocks: (o.b || []).map(([x, y, w, h, m]) => ({ x, y, w, h, material: MATS[m] || 'wood' })),
+    blocks: (o.b || []).map(([x, y, w, h, m, angle]) => ({
+      x, y, w, h, material: MATS[m] || 'wood',
+      angle: angle === undefined ? 0 : Number(angle) * Math.PI / 180,
+    })),
     pigs: (o.p || []).map(([x, y, r, b]) => ({ x, y, r, bonus: !!b })),
     birds: (o.k || []).map((i) => BIRDS[i]).filter(Boolean),
     stages: (o.s || []).length,
