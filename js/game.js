@@ -220,12 +220,12 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 创意工坊（阵容 + 发布门禁）';
+  const BUILD = '2026-10-17 · 工坊阵容直开';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
   let birdQueue = [];      // 还没上弓的奶蛋类型
-  let levelBirds = [];     // 这一关的完整阵容（含"开局选蛋"挑出来的那颗），开场动画和弹药显示都看它
+  let levelBirds = [];     // 这一关的完整阵容（无尽模式含"开局选蛋"挑出来的那颗），开场动画和弹药显示都看它
   let pickChoice = null;   // 玩家在"开局选蛋"里挑的那颗：同一局后面几关自动沿用它，不再问
   let autoPickSession = false; // 调试/自动流程里不弹"开局选蛋"，也不记玩家的选择
   let currentBird = 'naidan';
@@ -1480,7 +1480,7 @@
       // 重开自制关卡：同一份关卡数据重建
       score = 0;
       updateScore();
-      promptPick(customDef || window.LEVEL1, { quick: true, auto, ask: true });
+      promptPick(customDef || window.LEVEL1, { quick: true, auto, ask: true, extra: false });
     } else if (mode === 'endless') {
       score = 0;
       totalScore = 0;
@@ -1607,9 +1607,9 @@
   };
 
   // ---------------------------------------------------------------- 开局选蛋
-  // 每关的奶蛋数在原基础上 +1，这一颗由玩家在开局挑，选中后排在队首首发
+  // 无尽模式每关的奶蛋数在原基础上 +1，这一颗由玩家在一局开头挑；创意工坊用作者配置的最终阵容
   const PICK_ORDER = ['naidan', 'dash', 'split', 'bomb', 'heavy', 'milk', 'back', 'seek'];
-  let pendingPick = null; // { def, quick, auto, silent }
+  let pendingPick = null; // { def, quick, auto, silent, ask, extra }
   const defaultPickOf = () => {
     // 自动流程用：从这一关原有阵容里挑一颗，假装是玩家挑的
     const base = (pendingPick && pendingPick.def ? pendingPick.def.birds : level.birds) || [];
@@ -1619,18 +1619,20 @@
    * 搭好这一关，再决定那颗"多带的奶蛋"怎么来。
    * ask=true 的那一关（一局的第 1 关）弹面板让玩家挑一次；之后每关直接沿用挑过的那颗。
    * auto=true 不弹面板也不记选择（调试/自动流程），silent=true 连开场动画都跳过（调试跳关）。
+   * extra=false 用在创意工坊：奶蛋阵容就是作者配的数量，不弹开局选蛋、也不额外加一颗。
    */
   const promptPick = (def, options = {}) => {
     const quick = !!options.quick;
     const auto = options.auto === undefined ? autoPickSession : !!options.auto;
     const silent = !!options.silent;
-    const ask = !auto && options.ask !== false && !pickChoice;
+    const extra = options.extra !== false;
+    const ask = extra && !auto && options.ask !== false && !pickChoice;
     buildLevel(def, false);        // 先搭场景、不上弹，等挑完再装
     levelBirds = [];
     birdQueue = [];
-    birdsLeft = def.birds.length + 1; // 面板上先按"原基础上 +1"显示，免得数字跳一下
+    birdsLeft = def.birds.length + (extra ? 1 : 0); // 面板上先按最终数量显示，免得数字跳一下
     updateLevelChip();
-    pendingPick = { def, quick, auto, silent, ask };
+    pendingPick = { def, quick, auto, silent, ask, extra };
     if (ask) {
       el.pickSub.textContent = mode === 'endless'
         ? `第 1 关 · 这一关总共 ${birdsLeft} 发；挑中的这颗首发，后面每关也照样多带一颗它`
@@ -1647,14 +1649,15 @@
     const base = (p.def || level).birds || [];
     const quick = !!p.quick;
     const silent = !!p.silent;
+    const extra = p.extra !== false;
     const lead = !!p.ask;          // 只有玩家亲手挑的那次才首发；其余情况挂在队尾当备用
     pendingPick = null;
     autoPickSession = !!p.auto;
     if (lead) pickChoice = type;   // 一局只挑一次：后面几关都带它
     el.pick.classList.add('hide');
-    // 玩家选的那颗 + 这一关原本的阵容 = 原基础上 +1
-    // 挂队尾时关卡的首发和节奏保持原样（验收量的还是同一套数），点一下等候区就能把它提到前面
-    levelBirds = lead ? [type, ...base] : [...base, type];
+    // 无尽模式：玩家选的那颗 + 这一关原本的阵容 = 原基础上 +1
+    // 创意工坊：extra=false，直接用作者配置的阵容，不加隐藏弹
+    levelBirds = extra ? (lead ? [type, ...base] : [...base, type]) : [...base];
     birdQueue = levelBirds.slice();
     birdsLeft = birdQueue.length;
     updateAmmo();
@@ -3349,7 +3352,7 @@
     ctx.restore();
   };
 
-  /** 开始玩一份自制关卡：preview=从编辑器点"试玩"（不弹选蛋、不放开场，快进快出） */
+  /** 开始玩一份自制关卡：用作者配置的最终阵容，不弹开局选蛋；preview 时连开场一起跳过 */
   const startCustom = (def, opts = {}) => {
     customDef = window.WorkshopLevel.normalize(def);
     mode = 'custom';
@@ -3365,7 +3368,7 @@
     bossRetryUsed = false;
     retryPending = false;
     updateScore();
-    promptPick(customDef, { quick: true, auto: !!opts.preview, silent: !!opts.preview });
+    promptPick(customDef, { quick: true, silent: !!opts.preview, extra: false });
     updateLevelChip();
     el.btnToEditor.classList.toggle('hide', !cameFromEditor);
   };

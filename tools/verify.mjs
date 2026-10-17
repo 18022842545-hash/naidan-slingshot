@@ -146,11 +146,10 @@ const main = async () => {
     if (!titleButtons.includes('创意工坊')) problems.push(`标题页没有"创意工坊"按钮（现在是 ${titleButtons.join('、')}）`);
     if (titleButtons.some((t) => t.includes('第一关'))) problems.push('标题页还留着"第一关"按钮（应该换掉了）');
 
-    // ---------------------------------------------------------- 开局选蛋：每关多带一颗，开局让玩家挑
+    // ---------------------------------------------------------- 创意工坊：分享链接直接用作者阵容，不弹开局选蛋
     const pickCards = await page.locator('#pickRoster .card').count();
-    // 第一关入口已下掉；用"分享链接进关"这条真实路径来验选蛋面板（它会先让你挑一颗）
     const shareCode = await page.evaluate(() => window.WorkshopLevel.pack(window.WorkshopLevel.normalize({
-      name: '选蛋测试',
+      name: '工坊直开测试',
       blocks: [
         { x: 900, y: 571, w: 34, h: 130, material: 'wood' },
         { x: 1040, y: 571, w: 34, h: 130, material: 'wood' },
@@ -161,31 +160,24 @@ const main = async () => {
     })));
     await page.goto(`${base}#level=${shareCode}`, { waitUntil: 'load' });
     await page.waitForFunction(() => window.__nai && window.__nai.imagesReady(), null, { timeout: 20000 });
-    await page.waitForFunction(() => window.__nai.state().state === 'pick', null, { timeout: 15000 });
+    await page.waitForFunction(() => window.__nai.state().state === 'intro', null, { timeout: 15000 });
     await sleep(280);
-    const picking = await page.evaluate(() => window.__nai.state());
-    report.pickPanel = { cards: pickCards, state: picking.state, shown: picking.pickShown, birdsLeft: picking.birdsLeft };
-    await shot(page, '00b-pick.png');
-    if (pickCards < 8) problems.push(`开局选蛋面板只有 ${pickCards} 张卡（8 个奶蛋都该能挑）`);
-    if (picking.state !== 'pick' || !picking.pickShown) problems.push('从工坊点"试玩第一关"之后没有先弹开局选蛋面板');
-    if (picking.birdsLeft !== 4) problems.push(`面板上该显示 4 发（这份关卡原本 3 发 +1），实际 ${picking.birdsLeft}`);
-    // 点第 4 张卡（爆奶蛋）当首发
-    await page.locator('#pickRoster .card').nth(3).click();
-    await sleep(320);
-    const picked = await page.evaluate(() => window.__nai.state());
-    report.pickResult = {
-      state: picked.state,
-      shown: picked.pickShown,
-      currentBird: picked.currentBird,
-      birdsLeft: picked.birdsLeft,
-      levelBirds: picked.levelBirds,
+    const customStart = await page.evaluate(() => window.__nai.state());
+    report.customStart = {
+      cards: pickCards,
+      state: customStart.state,
+      shown: customStart.pickShown,
+      birdsLeft: customStart.birdsLeft,
+      levelBirds: customStart.levelBirds,
     };
-    if (picked.pickShown) problems.push('选完奶蛋之后面板没关掉');
-    if (picked.currentBird !== 'bomb') problems.push(`挑中的奶蛋没排到队首首发（首发是 ${picked.currentBird}）`);
-    if (picked.levelBirds[0] !== 'bomb' || picked.levelBirds.length !== 4) {
-      problems.push(`这一关的阵容不对：${picked.levelBirds.join('、')}`);
+    await shot(page, '00b-custom-nopick.png');
+    if (pickCards < 8) problems.push(`开局选蛋面板只有 ${pickCards} 张卡（8 个奶蛋都该能挑）`);
+    if (customStart.pickShown || customStart.state === 'pick') problems.push('打开工坊分享链接还弹了开局选蛋');
+    if (customStart.state !== 'intro') problems.push(`工坊分享链接没有直接进开场（${customStart.state}）`);
+    if (customStart.birdsLeft !== 3) problems.push(`工坊关卡的奶蛋数应该严格等于阵容（3 发），实际 ${customStart.birdsLeft}`);
+    if (customStart.levelBirds.join(',') !== 'naidan,dash,bomb') {
+      problems.push(`工坊关卡阵容被改动了：${customStart.levelBirds.join('、')}`);
     }
-    if (picked.birdsLeft !== 4) problems.push(`选完之后这一关该有 4 发奶蛋，实际 ${picked.birdsLeft}`);
 
     // ---------------------------------------------------------- 开场动画
     await sleep(120);
@@ -209,6 +201,13 @@ const main = async () => {
     report.introEnd = { state: introC.state, zoom: introC.camZoom, camX: Math.round(introC.camX) };
     if (introC.state !== 'aim') problems.push('跳过开场之后没有进入瞄准状态');
     if (Math.abs(introC.camZoom - 1) > 0.02) problems.push('跳过开场之后镜头没有回到 1.0 倍');
+
+    // 后面第一关的结构/扫射用例仍用内置回归场景；工坊分享关本身已经验过“无选蛋直开”
+    await page.evaluate(() => {
+      window.__nai.start('level1');
+      window.__nai.skipIntro();
+    });
+    await sleep(240);
 
     // ---------------------------------------------------------- 等候区奶蛋的待机动作
     const idle = await page.evaluate(async () => {
@@ -1522,7 +1521,10 @@ const main = async () => {
         gateBefore, publishBefore, gateAfterBack, gateAfterWin, gateInEditor, published,
         gateAfterRename, publishDisabledAfterRename, gateAfterEdit,
         hudBackShown, hudBackState,
-        playing: { state: playing.state, mode: playing.mode, blocks: playing.blocksAlive, pigs: playing.pigsAlive, birds: playing.birdsLeft, name: playing.levelName },
+        playing: {
+          state: playing.state, mode: playing.mode, blocks: playing.blocksAlive, pigs: playing.pigsAlive,
+          birds: playing.birdsLeft, rosterBirds: rosterCount, pickShown: playing.pickShown, name: playing.levelName,
+        },
         ended, backShown, backState,
         backKept: backInfo ? { blocks: backInfo.blocks, pigs: backInfo.pigs, name: backInfo.name } : null,
       };
@@ -1540,6 +1542,10 @@ const main = async () => {
     if (!(wk.codeLen > 60 && wk.codeLen < 1400)) problems.push(`分享码长度不正常（${wk.codeLen}）`);
     if (!wk.unpackOk) problems.push('分享码解出来的关卡和编辑器里的不一致');
     if (wk.playing.state !== 'aim' || wk.playing.mode !== 'custom') problems.push(`试玩没进自制关卡（${wk.playing.state}/${wk.playing.mode}）`);
+    if (wk.playing.pickShown) problems.push('创意工坊试玩仍然弹出开局选蛋');
+    if (wk.playing.birds !== wk.playing.rosterBirds) {
+      problems.push(`创意工坊试玩的奶蛋数应等于阵容（${wk.playing.rosterBirds}），实际 ${wk.playing.birds}`);
+    }
     if (wk.playing.blocks !== wk.placed.blocks || wk.playing.pigs !== wk.placed.pigs) problems.push('试玩出来的关卡和编辑器里摆的不一致');
     if (wk.ended !== 'over') problems.push(`自制关卡清场后没结算（${wk.ended}）`);
     if (!wk.backShown) problems.push('自制关卡结算面板没有"回编辑器"');

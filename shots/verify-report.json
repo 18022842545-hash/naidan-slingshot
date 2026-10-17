@@ -3,7 +3,7 @@
   "problems": [],
   "shots": [
     "00-title.png",
-    "00b-pick.png",
+    "00b-custom-nopick.png",
     "01-intro-ally.png",
     "02-intro-enemy.png",
     "03b-queue-idle.png",
@@ -43,8 +43,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-17 · 创意工坊（阵容 + 发布门禁）",
-    "stamp": "版本 2026-10-17 · 创意工坊（阵容 + 发布门禁）"
+    "build": "2026-10-17 · 工坊阵容直开",
+    "stamp": "版本 2026-10-17 · 工坊阵容直开"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -72,19 +72,12 @@
     "创意工坊",
     "无尽模式"
   ],
-  "pickPanel": {
+  "customStart": {
     "cards": 8,
-    "state": "pick",
-    "shown": true,
-    "birdsLeft": 4
-  },
-  "pickResult": {
     "state": "intro",
     "shown": false,
-    "currentBird": "bomb",
-    "birdsLeft": 4,
+    "birdsLeft": 3,
     "levelBirds": [
-      "bomb",
       "naidan",
       "dash",
       "bomb"
@@ -108,10 +101,10 @@
   "queueIdle": {
     "samples": 70,
     "distinctPoses": 12,
-    "minDy": -62.9,
-    "maxDeg": 349
+    "minDy": -62.5,
+    "maxDeg": 357
   },
-  "initialDrift": 0,
+  "initialDrift": 1.4,
   "fallDamage": {
     "low": {
       "max": 141,
@@ -132,7 +125,7 @@
   "chargeFx": {
     "power": 1,
     "charge": 0.98,
-    "shakePeak": 1.31
+    "shakePeak": 1.32
   },
   "sweep": [
     {
@@ -250,10 +243,10 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.59,
-      "vxMid": 24.23,
-      "xMid": 733,
-      "xSoon": 1222
+      "vxBefore": 24.66,
+      "vxMid": 24.29,
+      "xMid": 709,
+      "xSoon": 1213
     },
     {
       "type": "dash",
@@ -266,12 +259,12 @@
       "blocksBefore": 3,
       "blocksAfter": 1,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.79,
-      "vxMid": 33.58,
-      "xMid": 757,
-      "xSoon": 1389
+      "vxBefore": 24.84,
+      "vxMid": 33.53,
+      "xMid": 766,
+      "xSoon": 1329
     },
     {
       "type": "split",
@@ -289,7 +282,7 @@
       "vxBefore": 24.69,
       "vxMid": 23.1,
       "xMid": 690,
-      "xSoon": 1177
+      "xSoon": 1191
     },
     {
       "type": "bomb",
@@ -338,12 +331,12 @@
       "blocksBefore": 3,
       "blocksAfter": 2,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.62,
-      "vxMid": 13.33,
-      "xMid": 643,
-      "xSoon": 965
+      "vxBefore": 24.55,
+      "vxMid": 13.3,
+      "xMid": 667,
+      "xSoon": 988
     },
     {
       "type": "back",
@@ -358,16 +351,16 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.71,
-      "vxMid": -25.85,
-      "xMid": 432,
-      "xSoon": 93
+      "vxBefore": 24.77,
+      "vxMid": -25.91,
+      "xMid": 407,
+      "xSoon": 108
     },
     {
       "type": "seek",
       "used": true,
       "speedBefore": 25,
-      "speedMid": 28,
+      "speedMid": 29,
       "inFlightMid": 1,
       "bombsMid": 0,
       "bombsAfter": 0,
@@ -377,9 +370,9 @@
       "pigsAfter": 1,
       "shockwave": 0,
       "vxBefore": 24.92,
-      "vxMid": 28.06,
-      "xMid": 695,
-      "xSoon": 1469
+      "vxMid": 28.69,
+      "xMid": 723,
+      "xSoon": 1498
     }
   ],
   "plowTest": {
@@ -406,7 +399,7 @@
     "marks": 1
   },
   "spinTest": {
-    "samples": 59,
+    "samples": 58,
     "peak": 0.036,
     "restAv": 0.003
   },
@@ -563,7 +556,7 @@
     {
       "seed": 7,
       "level": 6,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 5,
       "blocks": 12,
       "birds": 5,
@@ -1053,7 +1046,7 @@
   },
   "bossCutIn": {
     "label": "BOSS",
-    "maxZoom": 2.35,
+    "maxZoom": 2.349,
     "barShown": true
   },
   "bossDamage": {
@@ -1128,12 +1121,12 @@
       "fallK": 0
     },
     "state": "aim",
-    "hpAfterFall": 771,
+    "hpAfterFall": 765,
     "falls": [
-      771,
-      650
+      765,
+      642
     ],
-    "shots": 6,
+    "shots": 3,
     "laugh": {
       "ready": 4,
       "attempts": 1,
@@ -1202,7 +1195,7 @@
       "levelBirds": [
         "naidan",
         "naidan",
-        "dash",
+        "naidan",
         "bomb"
       ]
     }
@@ -1276,7 +1269,9 @@
       "mode": "custom",
       "blocks": 4,
       "pigs": 2,
-      "birds": 4,
+      "birds": 3,
+      "rosterBirds": 3,
+      "pickShown": false,
       "name": "验收小关"
     },
     "ended": "over",
