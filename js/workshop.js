@@ -103,6 +103,35 @@ window.WorkshopLevel = (() => {
     const ly = dx * Math.sin(a) + dy * Math.cos(a);
     return Math.abs(lx) < b.w / 2 + p.r * 0.8 && Math.abs(ly) < b.h / 2 + p.r * 0.8;
   };
+  const cornersOf = (b) => {
+    const c = Math.cos(b.angle || 0);
+    const s = Math.sin(b.angle || 0);
+    const hw = b.w / 2;
+    const hh = b.h / 2;
+    return [
+      [-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh],
+    ].map(([x, y]) => ({ x: b.x + x * c - y * s, y: b.y + x * s + y * c }));
+  };
+  /** 旋转矩形 SAT：支持任意 15° 角度；刚好贴边不算重叠 */
+  const blocksOverlap = (a, b) => {
+    const ca = cornersOf(a);
+    const cb = cornersOf(b);
+    const axes = [
+      { x: Math.cos(a.angle || 0), y: Math.sin(a.angle || 0) },
+      { x: -Math.sin(a.angle || 0), y: Math.cos(a.angle || 0) },
+      { x: Math.cos(b.angle || 0), y: Math.sin(b.angle || 0) },
+      { x: -Math.sin(b.angle || 0), y: Math.cos(b.angle || 0) },
+    ];
+    const project = (points, axis) => {
+      const values = points.map((p) => p.x * axis.x + p.y * axis.y);
+      return { min: Math.min(...values), max: Math.max(...values) };
+    };
+    return axes.every((axis) => {
+      const pa = project(ca, axis);
+      const pb = project(cb, axis);
+      return !(pa.max <= pb.min + 0.5 || pb.max <= pa.min + 0.5);
+    });
+  };
 
   /** 返回一组"没法玩"的原因；空数组 = 可以玩 */
   const validate = (def) => {
@@ -127,6 +156,22 @@ window.WorkshopLevel = (() => {
       if (b.x - box.halfW < -40) errs.push(`第 ${i + 1} 个方块跑出地图左边了`);
       if (b.x + box.halfW > def.worldW + 40) errs.push(`第 ${i + 1} 个方块跑出地图右边了`);
     });
+    for (let i = 0; i < def.blocks.length; i++) {
+      for (let j = i + 1; j < def.blocks.length; j++) {
+        if (blocksOverlap(def.blocks[i], def.blocks[j])) {
+          errs.push(`第 ${i + 1} 个和第 ${j + 1} 个方块叠在一起了`);
+        }
+      }
+    }
+    for (let i = 0; i < def.pigs.length; i++) {
+      for (let j = i + 1; j < def.pigs.length; j++) {
+        const a = def.pigs[i];
+        const b = def.pigs[j];
+        if (Math.hypot(a.x - b.x, a.y - b.y) < (a.r + b.r) * 0.8) {
+          errs.push(`第 ${i + 1} 只和第 ${j + 1} 只奶蛙叠在一起了`);
+        }
+      }
+    }
     return errs;
   };
 
@@ -207,5 +252,9 @@ window.WorkshopLevel = (() => {
     return unpack(t);
   };
 
-  return { GROUND_Y, SLING_Y, MATS, BIRDS, LIMITS, blank, normalize, validate, warnings, pack, unpack, toPack, fromPack, toJSON, fromJSON };
+  return {
+    GROUND_Y, SLING_Y, MATS, BIRDS, LIMITS, blank, normalize, validate, warnings,
+    blocksOverlap, circleHitsBlock: circleHitsRect,
+    pack, unpack, toPack, fromPack, toJSON, fromJSON,
+  };
 })();

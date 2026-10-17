@@ -243,7 +243,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 模式选择新背景';
+  const BUILD = '2026-10-17 · 方块不可堆叠';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3663,8 +3663,13 @@
     if (!editor || !editor.selected || editor.selected.kind !== 'block') return false;
     const block = editor.def.blocks[editor.selected.index];
     if (!block) return false;
+    const candidate = { ...block, angle: (block.angle || 0) + degrees * Math.PI / 180 };
+    if (blockCollides(candidate, editor.selected.index)) {
+      toast('旋转后会和其他方块或奶蛙重叠', 2000);
+      return false;
+    }
     editorSnapshot();
-    block.angle = (block.angle || 0) + degrees * Math.PI / 180;
+    block.angle = candidate.angle;
     editorChanged();
     const turned = editor.def.blocks[editor.selected.index];
     const value = turned ? Math.round((turned.angle || 0) * 180 / Math.PI) % 360 : 0;
@@ -3686,6 +3691,18 @@
     }
     return null;
   };
+  const blockCollides = (candidate, ignoreIndex = -1) => {
+    const W = window.WorkshopLevel;
+    if (editor.def.blocks.some((other, i) => i !== ignoreIndex && W.blocksOverlap(candidate, other))) return true;
+    return editor.def.pigs.some((pig) => W.circleHitsBlock(pig, candidate));
+  };
+  const pigCollides = (candidate, ignoreIndex = -1) => {
+    const W = window.WorkshopLevel;
+    if (editor.def.blocks.some((block) => W.circleHitsBlock(candidate, block))) return true;
+    return editor.def.pigs.some((other, i) =>
+      i !== ignoreIndex && Math.hypot(candidate.x - other.x, candidate.y - other.y) < (candidate.r + other.r) * 0.8
+    );
+  };
   const editorPlace = (p) => {
     const x = Math.round(p.x / 10) * 10;
     const y = Math.round(p.y / 10) * 10;
@@ -3695,8 +3712,13 @@
         return;
       }
       const [w, h] = BLOCK_SIZES[editor.size] || BLOCK_SIZES.m;
+      const candidate = { x, y, w, h, material: editor.material, angle: 0, stage: 0 };
+      if (blockCollides(candidate)) {
+        toast('这里会和已有方块或奶蛙重叠', 2000);
+        return;
+      }
       editorSnapshot();
-      editor.def.blocks.push({ x: Math.max(40, x), y: Math.min(GROUND_Y - h / 2, y), w, h, material: editor.material });
+      editor.def.blocks.push({ x: Math.max(40, x), y: Math.min(GROUND_Y - h / 2, y), w, h, material: editor.material, angle: 0 });
       editor.selected = { kind: 'block', index: editor.def.blocks.length - 1 };
       editorChanged();
     } else if (editor.tool === 'pig') {
@@ -3704,8 +3726,13 @@
         toast(`奶蛙已达上限（${window.WorkshopLevel.LIMITS.pigs} 只），请先删除一只`, 2400);
         return;
       }
+      const pig = { x: Math.max(300, x), y: Math.min(GROUND_Y - 36, y), r: 36, ...(editor.bonus ? { bonus: true } : {}) };
+      if (pigCollides(pig)) {
+        toast('这里会和已有奶蛙或方块重叠', 2000);
+        return;
+      }
       editorSnapshot();
-      editor.def.pigs.push({ x: Math.max(300, x), y: Math.min(GROUND_Y - 36, y), r: 36, ...(editor.bonus ? { bonus: true } : {}) });
+      editor.def.pigs.push(pig);
       editor.selected = { kind: 'pig', index: editor.def.pigs.length - 1 };
       editorChanged();
     }
@@ -3738,7 +3765,12 @@
       const it = hit.kind === 'block' ? blocks[hit.index] : pigs[hit.index];
       editorSnapshot();                       // 记下"拖动之前"，松手时才有得撤销
       editor.selected = hit;
-      editor.drag = { sel: hit, dx: p.x - it.position.x, dy: p.y - it.position.y };
+      editor.drag = {
+        sel: hit,
+        dx: p.x - it.position.x,
+        dy: p.y - it.position.y,
+        origin: { x: it.position.x, y: it.position.y, angle: it.angle || 0 },
+      };
       syncEditorUI();
       return;
     }
@@ -3765,6 +3797,18 @@
   const edUp = () => {
     if (!editor) return;
     if (editor.drag) {
+      const { sel, origin } = editor.drag;
+      const list = sel.kind === 'block' ? editor.def.blocks : editor.def.pigs;
+      const item = list[sel.index];
+      const blocked = item && (sel.kind === 'block'
+        ? blockCollides(item, sel.index)
+        : pigCollides(item, sel.index));
+      if (blocked && item) {
+        item.x = origin.x;
+        item.y = origin.y;
+        if (sel.kind === 'block') item.angle = origin.angle;
+        toast('移动后会和其他物体重叠，已退回原位', 2200);
+      }
       editor.drag = null;
       editorChanged();
       return;

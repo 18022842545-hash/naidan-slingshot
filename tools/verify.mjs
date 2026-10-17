@@ -1590,6 +1590,31 @@ const main = async () => {
       const W = window.__nai.workshop;
       W.open();
       const hub = window.__nai.state().state;
+      W.edit({
+        name: '叠放测试',
+        blocks: [{ x: 900, y: 500, w: 60, h: 60, material: 'wood' }],
+        pigs: [],
+        birds: ['naidan', 'bomb'],
+      });
+      W.setTool('block'); W.setSize('l');
+      W.tap(960, 500);
+      const overlapToast = document.getElementById('toast').textContent;
+      const blocksAfterOverlap = W.info().blocks;
+      W.tap(1200, 500);
+      const blocksAfterFree = W.info().blocks;
+      W.setTool('pig');
+      W.tap(950, 500);
+      const pigOverlapToast = document.getElementById('toast').textContent;
+      const pigsAfterBlocked = W.info().pigs;
+      const overlapValidation = window.WorkshopLevel.validate(window.WorkshopLevel.normalize({
+        name: '重叠校验',
+        blocks: [
+          { x: 900, y: 500, w: 90, h: 60, material: 'wood' },
+          { x: 930, y: 500, w: 90, h: 60, material: 'wood' },
+        ],
+        pigs: [{ x: 1300, y: 600 }],
+        birds: ['naidan', 'bomb'],
+      }));
       const limitDef = {
         name: '上限测试',
         worldW: 6200,
@@ -1765,6 +1790,14 @@ const main = async () => {
       return {
         hub,
         moderationProbe,
+        blockCollision: {
+          overlapToast,
+          blocksAfterOverlap,
+          blocksAfterFree,
+          pigOverlapToast,
+          pigsAfterBlocked,
+          validationError: overlapValidation.find((e) => e.includes('方块叠在一起')) || '',
+        },
         placementLimit: {
           beforeBlocks: limitBefore.blocks,
           afterBlocks: blocksAfterLimit,
@@ -1828,6 +1861,13 @@ const main = async () => {
     });
     report.workshop = wk;
     if (wk.hub !== 'workshop') problems.push('创意工坊打不开');
+    if (wk.blockCollision.blocksAfterOverlap !== 1) problems.push('重叠位置的方块没有被禁止放置');
+    if (!wk.blockCollision.overlapToast.includes('重叠')) problems.push('方块重叠放置没有明确提示');
+    if (wk.blockCollision.blocksAfterFree !== 2) problems.push('不重叠的位置也无法正常放方块');
+    if (wk.blockCollision.pigsAfterBlocked !== 0 || !wk.blockCollision.pigOverlapToast.includes('重叠')) {
+      problems.push('奶蛙仍然可以放进方块里');
+    }
+    if (!wk.blockCollision.validationError) problems.push('关卡校验没有报告方块互相重叠');
     if (wk.placementLimit.beforeBlocks !== 200 || wk.placementLimit.afterBlocks !== 200) {
       problems.push(`方块上限没有禁止继续放置（${wk.placementLimit.beforeBlocks} → ${wk.placementLimit.afterBlocks}）`);
     }
@@ -1988,7 +2028,7 @@ const main = async () => {
     await mobile.waitForFunction(() => window.__nai && window.__nai.imagesReady(), null, { timeout: 20000 });
     await mobile.evaluate(() => {
       window.__nai.workshop.create();
-      window.__nai.workshop.tap(1100, 560);
+      window.__nai.workshop.tap(1300, 560);
     });
     await sleep(150);
     const mobileRotateBox = await mobile.locator('#edRotateFloat').boundingBox();
