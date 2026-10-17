@@ -248,7 +248,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 点赞封顶防刷';
+  const BUILD = '2026-10-17 · 点赞即时切换';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3273,7 +3273,7 @@
     const already = window.WorkshopCommunity.isLiked(entry.code);
     const likeLimitReached = !already && stat.likes >= stat.plays;
     like.className = `wkLike${already ? ' liked' : ''}`;
-    like.textContent = `♥ ${fmtCount(stat.likes)}`;
+    like.textContent = already ? `♥ ${fmtCount(stat.likes)} 已赞` : `♥ ${fmtCount(stat.likes)}`;
     like.title = already
       ? '再点一次取消点赞'
       : likeLimitReached
@@ -3286,20 +3286,22 @@
         toast('点赞数不能超过游玩数，先玩一次再来点赞', 1900);
         return;
       }
-      like.disabled = true;
       const wasLiked = window.WorkshopCommunity.isLiked(entry.code);
-      const res = wasLiked
-        ? await window.WorkshopCommunity.unlike(entry)
-        : await window.WorkshopCommunity.like(entry);
+      const previous = { ...communityStat(entry) };
+      // 先立即更新 UI，网络计数在后台同步；避免慢请求期间按钮像“点不动”
+      const request = wasLiked
+        ? window.WorkshopCommunity.unlike(entry)
+        : window.WorkshopCommunity.like(entry);
+      const delta = Number(wasLiked ? -1 : 1);
+      wkStats[entry.id] = { ...previous, likes: Math.max(0, previous.likes + delta) };
+      renderCommunity();
+      const res = await request;
       if (!res.ok) {
-        like.disabled = false;
+        wkStats[entry.id] = previous;
+        renderCommunity();
         toast(wasLiked ? '取消点赞失败，稍后再试' : '点赞服务暂时不可用，稍后再试', 1900);
         return;
       }
-      const delta = Number(res.delta) || (wasLiked ? -1 : 1);
-      const next = Math.max(0, communityStat(entry).likes + delta);
-      wkStats[entry.id] = { ...communityStat(entry), likes: next };
-      renderCommunity();
       toast(wasLiked ? '已取消点赞' : '谢谢点赞！', 1200);
     });
     foot.append(play, like);
@@ -4230,7 +4232,7 @@
         weeklyIds: wkWeeklyIds.slice(),
         weeklyResetAt: window.WorkshopCommunity.weeklyPeriod().nextResetMs,
         entries: wkEntries.map((e) => ({
-          id: e.id, name: e.name, author: e.author, submittedAt: e.submittedAt,
+          id: e.id, code: e.code, name: e.name, author: e.author, submittedAt: e.submittedAt,
           stats: communityStat(e), liked: window.WorkshopCommunity.isLiked(e.code),
           played: window.WorkshopCommunity.isPlayed(e.code),
         })),

@@ -2195,12 +2195,55 @@ const main = async () => {
         plays: entry.stats.plays,
         disabled: btn ? btn.disabled : false,
         title: btn ? btn.title : '',
+        id: entry.id,
+        code: entry.code,
       };
     });
     report.likeLimit = likeLimitState;
     if (likeLimitState.likes !== likeLimitState.plays) problems.push(`有效点赞数没有封顶在游玩数（${likeLimitState.likes}/${likeLimitState.plays}）`);
     if (!likeLimitState.disabled || !likeLimitState.title.includes('不能超过游玩数')) {
       problems.push('达到游玩数上限后爱心按钮仍可继续点赞');
+    }
+    await likeLimit.evaluate(({ code }) => {
+      localStorage.setItem('naidan-workshop-liked-v1', JSON.stringify({ [code]: Date.now() }));
+    }, { code: likeLimitState.code });
+    await likeLimit.reload({ waitUntil: 'load' });
+    await likeLimit.waitForFunction(() => window.__nai && window.__nai.imagesReady(), null, { timeout: 20000 });
+    await likeLimit.click('#btnWorkshop');
+    await likeLimit.waitForFunction(
+      () => window.__nai.workshop.community().state === 'ready' && !window.__nai.workshop.community().loadingStats,
+      null,
+      { timeout: 10000 }
+    );
+    const cappedBeforeUnlike = await likeLimit.evaluate((id) => {
+      const entry = window.__nai.workshop.community().entries.find((e) => e.id === id);
+      const card = [...document.querySelectorAll('.wkCard')].find((c) => c.dataset.levelId === id);
+      const btn = card && card.querySelector('.wkLike');
+      return {
+        likes: entry.stats.likes,
+        liked: entry.liked,
+        disabled: btn ? btn.disabled : true,
+        text: btn ? btn.textContent : '',
+      };
+    }, likeLimitState.id);
+    await likeLimit.evaluate((id) => {
+      const card = [...document.querySelectorAll('.wkCard')].find((c) => c.dataset.levelId === id);
+      const btn = card && card.querySelector('.wkLike');
+      if (btn) btn.click();
+    }, likeLimitState.id);
+    await sleep(120);
+    const cappedAfterUnlike = await likeLimit.evaluate((id) => {
+      const entry = window.__nai.workshop.community().entries.find((e) => e.id === id);
+      const card = [...document.querySelectorAll('.wkCard')].find((c) => c.dataset.levelId === id);
+      const btn = card && card.querySelector('.wkLike');
+      return { likes: entry.stats.likes, liked: entry.liked, disabled: btn ? btn.disabled : false };
+    }, likeLimitState.id);
+    report.likeLimitUnlike = { before: cappedBeforeUnlike, after: cappedAfterUnlike };
+    if (cappedBeforeUnlike.disabled || !cappedBeforeUnlike.liked || !cappedBeforeUnlike.text.includes('已赞')) {
+      problems.push('已达到游玩数上限时，已点赞的关卡无法再次点击取消');
+    }
+    if (cappedAfterUnlike.liked || cappedAfterUnlike.likes !== cappedBeforeUnlike.likes - 1) {
+      problems.push('达到上限后的取消点赞没有立即生效');
     }
     await likeLimit.close();
 

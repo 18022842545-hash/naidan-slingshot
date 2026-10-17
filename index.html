@@ -267,6 +267,10 @@
     background: #fff; color: #c65a4c; box-shadow: 0 3px 0 rgba(74,53,39,.15);
   }
   .wkLike.liked { background: #ffe3dd; color: #b83d31; }
+  .wkLike:disabled {
+    opacity: .48; cursor: not-allowed; color: #9a8878;
+    background: #f1ede7; box-shadow: none;
+  }
   .wkStat { display: inline-flex; align-items: center; gap: 3px; margin-right: 9px; }
   .wkLoading { opacity: .55; }
   #wkDrafts { display: grid; gap: 8px; max-height: 210px; overflow: auto; margin: 12px 0 4px; text-align: left; }

@@ -46,8 +46,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-17 · 点赞切换与投稿提示",
-    "stamp": "版本 2026-10-17 · 点赞切换与投稿提示"
+    "build": "2026-10-17 · 点赞封顶防刷",
+    "stamp": "版本 2026-10-17 · 点赞封顶防刷"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -112,9 +112,9 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 20,
-    "minDy": -62.5,
-    "maxDeg": 358
+    "distinctPoses": 16,
+    "minDy": -62.1,
+    "maxDeg": 356
   },
   "initialDrift": 1.4,
   "fallDamage": {
@@ -137,7 +137,7 @@
   "chargeFx": {
     "power": 1,
     "charge": 0.98,
-    "shakePeak": 1.31,
+    "shakePeak": 1.32,
     "aimAssist": {
       "fill": "#d8f5ff",
       "stroke": "rgba(0,120,220,0.92)"
@@ -259,7 +259,7 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.59,
+      "vxBefore": 24.66,
       "vxMid": 24.29,
       "xMid": 709,
       "xSoon": 1222
@@ -275,12 +275,12 @@
       "blocksBefore": 3,
       "blocksAfter": 1,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.79,
-      "vxMid": 33.58,
-      "xMid": 757,
-      "xSoon": 1389
+      "vxBefore": 24.84,
+      "vxMid": 33.6,
+      "xMid": 733,
+      "xSoon": 1329
     },
     {
       "type": "split",
@@ -332,8 +332,8 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.48,
-      "vxMid": 24.14,
-      "xMid": 707,
+      "vxMid": 24.07,
+      "xMid": 731,
       "xSoon": 1222
     },
     {
@@ -347,12 +347,12 @@
       "blocksBefore": 3,
       "blocksAfter": 2,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.62,
+      "vxBefore": 24.55,
       "vxMid": 13.33,
-      "xMid": 643,
-      "xSoon": 965
+      "xMid": 654,
+      "xSoon": 988
     },
     {
       "type": "back",
@@ -368,8 +368,8 @@
       "pigsAfter": 1,
       "shockwave": 0,
       "vxBefore": 24.77,
-      "vxMid": -25.91,
-      "xMid": 407,
+      "vxMid": -25.85,
+      "xMid": 381,
       "xSoon": 108
     },
     {
@@ -388,7 +388,7 @@
       "vxBefore": 24.92,
       "vxMid": 28.69,
       "xMid": 723,
-      "xSoon": 1469
+      "xSoon": 1498
     }
   ],
   "plowTest": {
@@ -402,20 +402,20 @@
   "seekAim": {
     "used": true,
     "dir": {
-      "nx": 0.928,
-      "ny": -0.374
+      "nx": 0.927,
+      "ny": -0.375
     },
     "wantN": {
       "x": 0.927,
-      "y": -0.374
+      "y": -0.376
     },
-    "straight": 0.7,
-    "guidedFrames": 13,
+    "straight": 0.8,
+    "guidedFrames": 18,
     "maxV": 30,
     "marks": 1
   },
   "spinTest": {
-    "samples": 45,
+    "samples": 60,
     "peak": 0.036,
     "restAv": 0.003
   },
@@ -556,7 +556,7 @@
     {
       "seed": 7,
       "level": 5,
-      "drift": 5,
+      "drift": 5.1,
       "pigs": 4,
       "blocks": 16,
       "birds": 5,
@@ -572,7 +572,7 @@
     {
       "seed": 7,
       "level": 6,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 5,
       "blocks": 12,
       "birds": 5,
@@ -636,7 +636,7 @@
     {
       "seed": 7,
       "level": 12,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 8,
       "blocks": 27,
       "birds": 7,
@@ -1069,7 +1069,7 @@
     "maxHp": 980,
     "direct": 86,
     "towerIntact": true,
-    "fall": 288,
+    "fall": 347,
     "fallKind": "direct",
     "barWidth": "91.3%"
   },
@@ -1094,7 +1094,7 @@
       "shots": 3,
       "summons": 1,
       "hp": 345,
-      "x": 2137
+      "x": 2138
     },
     "heal": 245,
     "pigsBefore": 2,
@@ -1173,7 +1173,7 @@
     "resumedState": "fly",
     "resumedLevel": 5,
     "resumedBirds": 4,
-    "resumedBirdX": 849
+    "resumedBirdX": 834
   },
   "endlessFlow": {
     "levels": [
@@ -1224,8 +1224,8 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
-        "naidan",
-        "back",
+        "dash",
+        "seek",
         "bomb"
       ]
     }
@@ -1308,7 +1308,7 @@
       "playsSorted": true,
       "searchCards": 1,
       "likeBefore": "♥ 35",
-      "likeAfter": "♥ 36",
+      "likeAfter": "♥ 36 已赞",
       "likeDelta": 1,
       "liked": true,
       "unlikeDelta": 0,
@@ -1381,9 +1381,10 @@
     "remoteState": "ready",
     "submittedEntry": {
       "id": "mock-1",
+      "code": "eyJ2IjoxLCJuIjoi6aqM5pS25bCP5YWzwrfmipXnqL_niYgiLCJ3IjoyNzIwLCJzIjpbWzE5MCw0NzBdLFsxMTkwLDQ3MF1dLCJiIjpbWzkwMCw1NzAsMzAsMTMwLDAsMF0sWzEwNDAsNTcwLDMwLDEzMCwwLDBdLFs5NzAsNDkwLDE5MCwzMCwwLDBdLFsxMzAwLDU2MCwxMjAsOTAsMSwxNV1dLCJwIjpbWzk3MCw2MDAsNDAsMF0sWzE1MjAsNjAwLDQwLDFdXSwiayI6WzAsMywzXX0",
       "name": "验收小关·投稿版",
       "author": "匿名测试员",
-      "submittedAt": "2026-10-17T12:04:12.130Z",
+      "submittedAt": "2026-10-17T13:17:18.404Z",
       "stats": {
         "likes": 0,
         "plays": 0
@@ -1461,7 +1462,22 @@
     "likes": 5,
     "plays": 5,
     "disabled": true,
-    "title": "点赞数不能超过游玩数，先玩一次再来点赞"
+    "title": "点赞数不能超过游玩数，先玩一次再来点赞",
+    "id": "seed-门洞午睡",
+    "code": "eyJ2IjoxLCJuIjoi6Zeo5rSe5Y2I552hIiwidyI6MjQwMCwicyI6W1sxOTAsNDcwXV0sImIiOltbOTAwLDU3MCwzMCwxMzAsMF0sWzEwNDAsNTcwLDMwLDEzMCwwXSxbOTcwLDQ5MCwxOTAsMzAsMF1dLCJwIjpbWzk3MCw2MDAsNDAsMF1dLCJrIjpbMCwxLDNdfQ"
+  },
+  "likeLimitUnlike": {
+    "before": {
+      "likes": 5,
+      "liked": true,
+      "disabled": false,
+      "text": "♥ 5 已赞"
+    },
+    "after": {
+      "likes": 4,
+      "liked": false,
+      "disabled": false
+    }
   },
   "ok": true
 }

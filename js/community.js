@@ -305,13 +305,19 @@ window.WorkshopCommunity = (() => {
 
   const like = async (entry) => {
     if (isLiked(entry.code)) return { ok: true, already: true };
+    const stamp = Date.now();
+    const all = liked();
+    all[entry.code] = stamp;
+    writeObject(LIKED_KEY, all);
     try {
       const value = await hitCount('like', entry.code);
-      const all = liked();
-      all[entry.code] = Date.now();
-      writeObject(LIKED_KEY, all);
       return { ok: true, value, delta: 1 };
     } catch (e) {
+      const current = liked();
+      if (current[entry.code] === stamp) {
+        delete current[entry.code];
+        writeObject(LIKED_KEY, current);
+      }
       return { ok: false };
     }
   };
@@ -319,13 +325,19 @@ window.WorkshopCommunity = (() => {
   /** 取消点赞：公共接口没有直接减一权限，用独立的“撤回赞”计数器做净点赞数 */
   const unlike = async (entry) => {
     if (!isLiked(entry.code)) return { ok: true, already: true };
+    const previous = liked()[entry.code];
+    const all = liked();
+    delete all[entry.code];
+    writeObject(LIKED_KEY, all);
     try {
       const value = await hitCount('unlike', entry.code);
-      const all = liked();
-      delete all[entry.code];
-      writeObject(LIKED_KEY, all);
       return { ok: true, value, delta: -1 };
     } catch (e) {
+      const current = liked();
+      if (!current[entry.code]) {
+        current[entry.code] = previous || Date.now();
+        writeObject(LIKED_KEY, current);
+      }
       return { ok: false };
     }
   };
