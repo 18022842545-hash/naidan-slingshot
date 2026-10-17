@@ -49,7 +49,15 @@ const main = async () => {
   const assetScript =
     `<script>window.INLINE_ASSETS=${JSON.stringify(assets)};window.INLINE_AUDIO=${JSON.stringify(audio)};</script>`;
   html = html.replace('<script src="js/levels.js"></script>', assetScript + '\n  ' + (await inline('js/levels.js')));
+  html = html.replace('<script src="js/workshop.js"></script>', await inline('js/workshop.js'));
   html = html.replace('<script src="js/game.js"></script>', await inline('js/game.js'));
+  // 兜底：还有没内联的外链脚本/样式就当场报错（漏了某个 js 会变成"线上好好的、单文件版报错"）
+  const leftovers = [...html.matchAll(/<script[^>]+src="([^"]+)"|<link[^>]+href="([^"]+)"/g)]
+    .map((m) => m[1] || m[2])
+    .filter((u) => u && !/^(data:|https?:|#)/.test(u));   // data URI / 绝对地址不算外链
+  if (leftovers.length) {
+    throw new Error(`还有没内联的外链资源：${leftovers.join('、')}`);
+  }
 
   await fs.mkdir(path.join(root, 'dist'), { recursive: true });
   const out = path.join(root, 'dist', '奶蛋弹弓-单文件.html');

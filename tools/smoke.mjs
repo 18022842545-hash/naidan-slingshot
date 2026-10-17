@@ -47,9 +47,18 @@ const startWithPick = async (selector) => {
   await sleep(140);
 };
 
+/** 从标题页进第一关：现在要先进创意工坊，再点"试玩第一关" */
+const startLevel1 = async () => {
+  await page.click('#btnWorkshop');
+  await sleep(220);
+  await page.click('#btnWkPlay1');
+  await page.locator('#pickRoster .card').nth(0).click();
+  await sleep(140);
+};
+
 if (which === 'showcase') {
   // 给 README 抓几张有代表性的图：技能飞行中 / 分身 / 爆炸 / 奶泡 / 无尽关卡
-  await startWithPick('#btnStart');
+  await startLevel1();
   await page.evaluate(() => window.__nai.skipIntro());
   const take = async (type, delay, act, file, waitAfter = 120) => {
     await page.evaluate((t) => window.__nai.sandbox(t), type);
@@ -199,7 +208,7 @@ if (which === 'showcase') {
   log('倒下', await page.evaluate(() => ({ score: window.__nai.state().score, boss: window.__nai.bossInfo().boss })));
 } else if (which === 'charge') {
   // 满弓特效：真的用鼠标把弓拉到最满
-  await startWithPick('#btnStart');
+  await startLevel1();
   await page.evaluate(() => window.__nai.skipIntro());
   const box = await page.locator('#game').boundingBox();
   const cam = await page.evaluate(() => window.__nai.state());
@@ -226,7 +235,7 @@ if (which === 'showcase') {
 }
 
 if (which === 'intro') {
-  await startWithPick('#btnStart');
+  await startLevel1();
   for (const t of [200, 900, 1800, 2800, 3600, 4600]) {
     await sleep(t === 200 ? 200 : 800);
     const s = await page.evaluate(() => window.__nai.state());
@@ -238,7 +247,7 @@ if (which === 'intro') {
   log('after intro', { state: s2.state, zoom: s2.camZoom, queue: s2.birdQueue, cur: s2.currentBird });
   await page.screenshot({ path: path.join(shots, 'smoke-aim.png') });
 } else if (which === 'skills') {
-  await startWithPick('#btnStart');
+  await startLevel1();
   await page.evaluate(() => window.__nai.skipIntro());
   const types = await page.evaluate(() => window.__nai.birdTypes());
   console.log('角色表', JSON.stringify(types, null, 0));

@@ -140,15 +140,23 @@ const main = async () => {
     if (Math.abs(zoomProbe.near - 1.7) > 0.01) problems.push(`放到最大时 zoom 应该是 1.7，实际 ${zoomProbe.near}`);
     if (Math.abs(zoomProbe.normal - 1) > 0.001) problems.push('按回 100% 时镜头没复位');
 
+    // ---------------------------------------------------------- 标题页：第一关换成创意工坊
+    const titleButtons = await page.evaluate(() => [...document.querySelectorAll('#titleScreen .row button')].map((b) => b.textContent.trim()));
+    report.titleButtons = titleButtons;
+    if (!titleButtons.includes('创意工坊')) problems.push(`标题页没有"创意工坊"按钮（现在是 ${titleButtons.join('、')}）`);
+    if (titleButtons.some((t) => t.includes('第一关'))) problems.push('标题页还留着"第一关"按钮（应该换掉了）');
+
     // ---------------------------------------------------------- 开局选蛋：每关多带一颗，开局让玩家挑
     const pickCards = await page.locator('#pickRoster .card').count();
-    await page.click('#btnStart');
+    await page.click('#btnWorkshop');      // 第一关现在从创意工坊里进
+    await sleep(250);
+    await page.click('#btnWkPlay1');
     await sleep(280);
     const picking = await page.evaluate(() => window.__nai.state());
     report.pickPanel = { cards: pickCards, state: picking.state, shown: picking.pickShown, birdsLeft: picking.birdsLeft };
     await shot(page, '00b-pick.png');
     if (pickCards < 8) problems.push(`开局选蛋面板只有 ${pickCards} 张卡（8 个奶蛋都该能挑）`);
-    if (picking.state !== 'pick' || !picking.pickShown) problems.push('点了"第一关"没有先弹开局选蛋面板');
+    if (picking.state !== 'pick' || !picking.pickShown) problems.push('从工坊点"试玩第一关"之后没有先弹开局选蛋面板');
     if (picking.birdsLeft !== 4) problems.push(`面板上该显示 4 发（第一关原本 3 发 +1），实际 ${picking.birdsLeft}`);
     // 点第 4 张卡（爆奶蛋）当首发
     await page.locator('#pickRoster .card').nth(3).click();
@@ -1422,6 +1430,78 @@ const main = async () => {
       await shot(page, '09c-queue-swap.png');
     }
 
+    // ---------------------------------------------------------- 创意工坊：搭关 → 试玩 → 通关 → 回编辑器
+    const wk = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const W = window.__nai.workshop;
+      W.open();
+      const hub = window.__nai.state().state;
+      W.create();
+      const starter = W.info();
+      W.setTool('block'); W.setMaterial('ice'); W.setSize('l');
+      W.tap(1300, 560);
+      W.setTool('pig'); W.setBonus(true);
+      W.tap(1520, 600);
+      const placed = W.info();
+      // 先测撤销/重做（此时栈顶正好是"放下这只奶蛙之前"）
+      W.undo();
+      const undoPigs = W.info().pigs;
+      W.redo();
+      const redoPigs = W.info().pigs;
+      W.setStages(2);
+      const two = W.info();
+      W.setName('验收小关');
+      const code = W.code();
+      const json = W.json();
+      const unpacked = window.WorkshopLevel.unpack(code);
+      W.playtest();
+      await wait(400);
+      const playing = window.__nai.state();
+      // 两段都清掉（先清第一段 → 推进 → 再清第二段），看自制关的结算面板
+      window.__nai.clearStage();
+      await wait(1600);
+      window.__nai.clearStage();
+      await wait(1900);
+      const ended = window.__nai.state().state;
+      const backShown = !document.getElementById('btnBackEditor').classList.contains('hide');
+      document.getElementById('btnBackEditor').click();
+      await wait(400);
+      const backState = window.__nai.state().state;
+      const backInfo = W.info();
+      return {
+        hub,
+        starter: { blocks: starter.blocks, pigs: starter.pigs, errors: starter.errors },
+        placed: { blocks: placed.blocks, pigs: placed.pigs, errors: placed.errors },
+        stages: two.stages,
+        pigStages: two.pigStages,
+        codeLen: code.length, jsonLen: json.length, codeStarts: code.slice(0, 3),
+        unpackOk: !!unpacked && unpacked.blocks.length === placed.blocks && unpacked.pigs.length === placed.pigs,
+        undoPigs, redoPigs,
+        playing: { state: playing.state, mode: playing.mode, blocks: playing.blocksAlive, pigs: playing.pigsAlive, birds: playing.birdsLeft, name: playing.levelName },
+        ended, backShown, backState,
+        backKept: backInfo ? { blocks: backInfo.blocks, pigs: backInfo.pigs, name: backInfo.name } : null,
+      };
+    });
+    report.workshop = wk;
+    if (wk.hub !== 'workshop') problems.push('创意工坊打不开');
+    if (wk.starter.errors.length) problems.push(`新建关卡的默认关卡就有问题：${wk.starter.errors[0]}`);
+    if (wk.placed.blocks !== wk.starter.blocks + 1) problems.push('编辑器里点空地没有放下方块');
+    if (wk.placed.pigs !== wk.starter.pigs + 1) problems.push('编辑器里点空地没有放下奶蛙');
+    if (wk.placed.errors.length) problems.push(`摆完之后校验不通过：${wk.placed.errors[0]}`);
+    if (wk.stages !== 2) problems.push(`改分段数没生效（${wk.stages}）`);
+    if (wk.undoPigs !== wk.placed.pigs - 1 || wk.redoPigs !== wk.placed.pigs) {
+      problems.push(`撤销/重做不对（${wk.placed.pigs} → ${wk.undoPigs} → ${wk.redoPigs}）`);
+    }
+    if (!(wk.codeLen > 60 && wk.codeLen < 1400)) problems.push(`分享码长度不正常（${wk.codeLen}）`);
+    if (!wk.unpackOk) problems.push('分享码解出来的关卡和编辑器里的不一致');
+    if (wk.playing.state !== 'aim' || wk.playing.mode !== 'custom') problems.push(`试玩没进自制关卡（${wk.playing.state}/${wk.playing.mode}）`);
+    if (wk.playing.blocks !== wk.placed.blocks || wk.playing.pigs !== wk.placed.pigs) problems.push('试玩出来的关卡和编辑器里摆的不一致');
+    if (wk.ended !== 'over') problems.push(`自制关卡清场后没结算（${wk.ended}）`);
+    if (!wk.backShown) problems.push('自制关卡结算面板没有"回编辑器"');
+    if (wk.backState !== 'edit') problems.push(`点"回编辑器"没回到编辑器（${wk.backState}）`);
+    if (!wk.backKept || wk.backKept.blocks !== wk.placed.blocks || wk.backKept.pigs !== wk.placed.pigs) problems.push('回编辑器之后关卡内容丢了');
+    await shot(page, '09d-workshop-editor.png');
+
     // ---------------------------------------------------------- file:// 直开
     for (const [label, target, file] of [
       ['源码版', path.join(root, 'index.html'), '11-file-source.png'],
@@ -1442,7 +1522,8 @@ const main = async () => {
         canvas: document.querySelector('canvas').width > 0,
         roster: document.querySelectorAll('#roster .card').length,
       }));
-      await p2.click('#btnStart');
+      await p2.click('#btnWorkshop');
+      await p2.click('#btnWkPlay1');
       await p2.locator('#pickRoster .card').nth(0).click(); // 单文件版也要能走完"开局选蛋"
       await sleep(700);
       const st = await p2.evaluate(() => window.__nai.state());

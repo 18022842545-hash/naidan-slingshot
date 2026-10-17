@@ -134,18 +134,61 @@
     ammo: document.getElementById('ammo'),
     hint: document.getElementById('hint'),
     title: document.getElementById('titleScreen'),
+    hud: document.getElementById('hud'),
     end: document.getElementById('endScreen'),
     endTitle: document.getElementById('endTitle'),
     endStars: document.getElementById('endStars'),
     endScore: document.getElementById('endScore'),
     endNote: document.getElementById('endNote'),
     toast: document.getElementById('toast'),
-    btnStart: document.getElementById('btnStart'),
+    btnWorkshop: document.getElementById('btnWorkshop'),
     btnAgain: document.getElementById('btnAgain'),
     btnRestart: document.getElementById('btnRestart'),
     btnSound: document.getElementById('btnSound'),
     btnEndless: document.getElementById('btnEndless'),
     btnBackMenu: document.getElementById('btnBackMenu'),
+    btnBackEditor: document.getElementById('btnBackEditor'),
+    // 创意工坊
+    workshop: document.getElementById('workshopScreen'),
+    wkDrafts: document.getElementById('wkDrafts'),
+    wkPaste: document.getElementById('wkPaste'),
+    wkFile: document.getElementById('wkFile'),
+    btnWkNew: document.getElementById('btnWkNew'),
+    btnWkEdit1: document.getElementById('btnWkEdit1'),
+    btnWkPlay1: document.getElementById('btnWkPlay1'),
+    btnWkPaste: document.getElementById('btnWkPaste'),
+    btnWkImport: document.getElementById('btnWkImport'),
+    btnWkClose: document.getElementById('btnWkClose'),
+    // 编辑器
+    editor: document.getElementById('editorScreen'),
+    edName: document.getElementById('edName'),
+    edStatus: document.getElementById('edStatus'),
+    edPlay: document.getElementById('edPlay'),
+    edBlockProps: document.getElementById('edBlockProps'),
+    edPigProps: document.getElementById('edPigProps'),
+    edPigBonus: document.getElementById('edPigBonus'),
+    edStageVal: document.getElementById('edStageVal'),
+    edBirdVal: document.getElementById('edBirdVal'),
+    edUndo: document.getElementById('edUndo'),
+    edRedo: document.getElementById('edRedo'),
+    edShare: document.getElementById('edShare'),
+    edExport: document.getElementById('edExport'),
+    edWkBack: document.getElementById('edWkBack'),
+    edStageMinus: document.getElementById('edStageMinus'),
+    edStagePlus: document.getElementById('edStagePlus'),
+    edBirdMinus: document.getElementById('edBirdMinus'),
+    edBirdPlus: document.getElementById('edBirdPlus'),
+    edToolBlock: document.getElementById('edToolBlock'),
+    edToolPig: document.getElementById('edToolPig'),
+    edToolMove: document.getElementById('edToolMove'),
+    edToolErase: document.getElementById('edToolErase'),
+    edMatWood: document.getElementById('edMatWood'),
+    edMatIce: document.getElementById('edMatIce'),
+    edMatStone: document.getElementById('edMatStone'),
+    edSizeS: document.getElementById('edSizeS'),
+    edSizeM: document.getElementById('edSizeM'),
+    edSizeL: document.getElementById('edSizeL'),
+    edSizeLong: document.getElementById('edSizeLong'),
     levelChip: document.getElementById('levelChip'),
     skillChip: document.getElementById('skillChip'),
     skillChipImg: document.querySelector('#skillChip img'),
@@ -173,7 +216,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-14 · 先清后段也能结算';
+  const BUILD = '2026-10-17 · 创意工坊（分享码 + 编辑器）';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -713,6 +756,8 @@
   };
   const onDown = (ev) => {
     AudioKit.unlock();
+    if (state === 'edit') { edDown(ev); ev.preventDefault(); return; }
+    if (state === 'workshop') return;
     if (state === 'intro') { skipIntro(); ev.preventDefault(); return; }
     // 飞行中点屏幕 = 放技能；制导奶蛋要的是"点在哪里"，所以把世界坐标一起传进去
     if (state === 'fly') { activateSkill(pointerToWorld(ev)); ev.preventDefault(); return; }
@@ -740,6 +785,7 @@
     ev.preventDefault();
   };
   const onMove = (ev) => {
+    if (state === 'edit') { edMove(ev); return; }
     if (pan && ev.pointerId === pan.pointerId) {
       const p = pointerToWorld(ev);
       CAM.x = clampCamX(pan.startCamX + (pan.startWorld.x - p.x));
@@ -767,6 +813,11 @@
     ev.preventDefault();
   };
   const onUp = (ev) => {
+    if (state === 'edit') {
+      if (ev && ev.type === 'pointercancel') { if (editor) { editor.press = null; editor.drag = null; } return; }
+      edUp();
+      return;
+    }
     if (pan && ev.pointerId === pan.pointerId) {
       pan = null;
       ev.preventDefault();
@@ -1301,6 +1352,8 @@
   };
   const showEnd = (won, stars, remaining = 0, custom = null) => {
     el.end.classList.remove('hide');
+    // 从编辑器点"试玩"进来的，结算面板给一个"回编辑器"
+    el.btnBackEditor.classList.toggle('hide', !cameFromEditor);
     if (custom) {
       el.endTitle.textContent = custom.title;
       el.endStars.textContent = '';
@@ -1377,6 +1430,7 @@
   const startRun = (which, auto = false) => {
     AudioKit.unlock();
     mode = which;
+    el.hud.classList.remove('hide');
     el.title.classList.add('hide');
     el.end.classList.add('hide');
     el.endStars.textContent = '';
@@ -1410,7 +1464,12 @@
     el.end.classList.add('hide');
     AudioKit.flyStop();
     pickChoice = null;   // 重开也算新的一局
-    if (mode === 'endless') {
+    if (mode === 'custom') {
+      // 重开自制关卡：同一份关卡数据重建
+      score = 0;
+      updateScore();
+      promptPick(customDef || window.LEVEL1, { quick: true, auto, ask: true });
+    } else if (mode === 'endless') {
       score = 0;
       totalScore = 0;
       endlessLevel = 1;
@@ -1718,7 +1777,7 @@
     finishIntro();
   };
 
-  el.btnStart.addEventListener('click', () => startRun('level1'));
+  el.btnWorkshop.addEventListener('click', () => openWorkshop());
   el.btnEndless.addEventListener('click', () => startRun('endless'));
   el.btnAgain.addEventListener('click', () => {
     if (retryPending) {
@@ -1749,6 +1808,16 @@
   el.btnZoomFit.addEventListener('click', () => setZoom(MIN_ZOOM));
 
   window.addEventListener('keydown', (e) => {
+    if (state === 'edit') {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (editor && editor.selected) { editorErase(editor.selected); e.preventDefault(); }
+        return;
+      }
+      if (e.key === 'Escape') { leaveEditor(); return; }
+      if (e.key === 'z' || e.key === 'Z') { undoEditor(); return; }
+      return;
+    }
+    if (state === 'workshop') return;
     if (e.key === 'r' || e.key === 'R') {
       if (state === 'title') return;
       if (mode === 'endless') startRun('endless');
@@ -1771,6 +1840,7 @@
   // ---------------------------------------------------------------- 每帧逻辑
   const step = () => {
     timeMs += STEP;
+    if (state === 'edit' || state === 'workshop') return;   // 工坊/编辑器里不跑物理，画面是静态摆位
     Engine.update(engine, STEP);
     blinkTimer += STEP;
     if (blinkTimer > 2600) {
@@ -2886,6 +2956,7 @@
     flyingBosses.forEach(drawFlyingBoss);
     drawFloaters();
     if (cutInStrength > 0) drawBossCutIn(cutInStrength, timeMs / 1000);
+    if (state === 'edit') drawEditorOverlay();   // 网格 / 发射点 / 选中高亮
   };
   Events.on(engine, 'collisionStart', (e) => handleCollision(e.pairs));
   let acc = 0;
@@ -2906,9 +2977,508 @@
     render();
     requestAnimationFrame(frame);
   };
-  // ---------------------------------------------------------------- 对外调试接口
+  // ---------------------------------------------------------------- 创意工坊
+  const WK_KEY = 'naidan-workshop-v1';
+  const BLOCK_SIZES = { s: [60, 60], m: [90, 60], l: [120, 90], long: [180, 34] };
+  let editor = null;          // 编辑器状态
+  let cameFromEditor = false; // 从编辑器点"试玩"进来的 → 结算面板给一个"回编辑器"
+  let customDef = null;       // 当前在玩的自制关卡
+  let shareBox = null;
+
+  const drafts = () => {
+    try {
+      const o = JSON.parse(localStorage.getItem(WK_KEY) || '{}');
+      return Array.isArray(o.drafts) ? o.drafts : [];
+    } catch (e) { return []; }
+  };
+  const saveDrafts = (list) => {
+    try { localStorage.setItem(WK_KEY, JSON.stringify({ drafts: list.slice(0, 30) })); } catch (e) { /* 隐私模式存不了 */ }
+  };
+  /** 编辑中的关卡随手存草稿（每次改动都存，最多 30 份） */
+  const persistDraft = () => {
+    if (!editor) return;
+    const d = window.WorkshopLevel.normalize(editor.def);
+    editor.def = d;
+    const list = drafts();
+    const i = list.findIndex((x) => x.id === d.id);
+    const entry = { id: d.id, name: d.name, def: d, updated: Date.now() };
+    if (i >= 0) list[i] = entry; else list.unshift(entry);
+    saveDrafts(list);
+    renderDrafts();
+  };
+  const fmtTime = (t) => {
+    const d = new Date(t);
+    return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+  const renderDrafts = () => {
+    if (!el.wkDrafts) return;
+    const list = drafts();
+    el.wkDrafts.innerHTML = '';
+    if (!list.length) {
+      const d = document.createElement('div');
+      d.className = 'empty';
+      d.textContent = '还没有自己搭的关卡——点「新建关卡」开始';
+      el.wkDrafts.appendChild(d);
+      return;
+    }
+    list.forEach((entry) => {
+      const row = document.createElement('div');
+      row.className = 'draft';
+      const nm = document.createElement('div');
+      nm.className = 'nm';
+      nm.textContent = entry.name || '未命名';
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = `${(entry.def.blocks || []).length} 方块 · ${(entry.def.pigs || []).length} 奶蛙 · ${fmtTime(entry.updated)}`;
+      const open = document.createElement('button');
+      open.textContent = '打开';
+      open.addEventListener('click', () => openEditor(entry.def));
+      const share = document.createElement('button');
+      share.className = 'ghost';
+      share.textContent = '分享';
+      share.addEventListener('click', () => copyText(shareLink(entry.def), '分享链接已复制'));
+      const del = document.createElement('button');
+      del.className = 'ghost';
+      del.textContent = '删';
+      del.addEventListener('click', () => {
+        saveDrafts(drafts().filter((x) => x.id !== entry.id));
+        renderDrafts();
+        toast('草稿删掉了', 1200);
+      });
+      row.append(nm, meta, open, share, del);
+      el.wkDrafts.appendChild(row);
+    });
+  };
+
+  const shareLink = (def) => `${location.href.split('#')[0]}#level=${window.WorkshopLevel.pack(def)}`;
+  const fallbackCopy = (text) => {
+    if (!shareBox) {
+      shareBox = document.createElement('textarea');
+      shareBox.id = 'shareBox';
+      shareBox.style.cssText = 'position:fixed;left:50%;bottom:7%;transform:translateX(-50%);width:min(82vw,720px);height:62px;z-index:60;border-radius:12px;padding:8px 10px;font-size:11.5px;border:2px solid rgba(206,152,42,.4);background:#fffdf5;color:#6b4a30';
+      document.getElementById('stage').appendChild(shareBox);
+    }
+    shareBox.value = text;
+    shareBox.classList.remove('hide');
+    shareBox.focus();
+    shareBox.select();
+    toast('链接已选中，Ctrl+C 复制', 2600);
+  };
+  /** 复制文本：https 下走剪贴板；file:// 没有剪贴板权限，退回到"选中一段文本" */
+  const copyText = (text, okMsg) => {
+    if (window.isSecureContext && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => toast(okMsg || '已复制', 1600)).catch(() => fallbackCopy(text));
+    } else {
+      fallbackCopy(text);
+    }
+  };
+
+  const openWorkshop = () => {
+    AudioKit.unlock();
+    AudioKit.ready();
+    el.title.classList.add('hide');
+    el.end.classList.add('hide');
+    el.editor.classList.add('hide');
+    el.workshop.classList.remove('hide');
+    state = 'workshop';
+    el.hint.classList.add('hide');
+    el.hud.classList.add('hide');
+    renderDrafts();
+  };
+  const closeWorkshop = () => {
+    el.workshop.classList.add('hide');
+    el.title.classList.remove('hide');
+    el.hud.classList.remove('hide');
+    state = 'title';
+  };
+  /** 新建关卡的起点：一个小门洞 + 一只奶蛙，保证一进去就能试玩 */
+  const starterLevel = () => {
+    const d = window.WorkshopLevel.blank();
+    d.blocks = [
+      { x: 900, y: 571, w: 34, h: 130, material: 'wood' },
+      { x: 1040, y: 571, w: 34, h: 130, material: 'wood' },
+      { x: 970, y: 489, w: 190, h: 34, material: 'wood' },
+    ];
+    d.pigs = [{ x: 970, y: 600, r: 36 }];
+    return d;
+  };
+
+  /** 编辑器里的方块/奶蛙是"假刚体"：只为了让现有渲染函数直接画出来，不进物理世界 */
+  const rebuildEditorScene = () => {
+    level = editor.def;
+    setStage(0);
+    blocks = editor.def.blocks.map((b) => ({
+      position: { x: b.x, y: b.y }, angle: 0, velocity: { x: 0, y: 0 }, angularVelocity: 0, circleRadius: 0,
+      game: { kind: 'block', material: b.material, w: b.w, h: b.h, hp: 1, maxHp: 1, flash: 0, stage: b.stage },
+    }));
+    pigs = editor.def.pigs.map((p) => ({
+      position: { x: p.x, y: p.y }, angle: 0, velocity: { x: 0, y: 0 }, angularVelocity: 0, circleRadius: p.r,
+      game: { kind: 'pig', r: p.r, hp: 1, maxHp: 1, hurt: 0, bonus: !!p.bonus, born: 0, stage: p.stage },
+    }));
+  };
+  const syncEditorUI = () => {
+    if (!editor) return;
+    el.edName.value = editor.def.name;
+    [[el.edToolBlock, 'block'], [el.edToolPig, 'pig'], [el.edToolMove, 'move'], [el.edToolErase, 'erase']]
+      .forEach(([b, t]) => { b.classList.toggle('on', editor.tool === t); b.classList.toggle('ghost', editor.tool !== t); });
+    [[el.edMatWood, 'wood'], [el.edMatIce, 'ice'], [el.edMatStone, 'stone']]
+      .forEach(([b, t]) => { b.classList.toggle('on', editor.material === t); b.classList.toggle('ghost', editor.material !== t); });
+    [[el.edSizeS, 's'], [el.edSizeM, 'm'], [el.edSizeL, 'l'], [el.edSizeLong, 'long']]
+      .forEach(([b, t]) => { b.classList.toggle('on', editor.size === t); b.classList.toggle('ghost', editor.size !== t); });
+    el.edBlockProps.style.display = editor.tool === 'block' ? 'flex' : 'none';
+    el.edPigProps.style.display = editor.tool === 'pig' ? 'flex' : 'none';
+    el.edPigBonus.checked = !!editor.bonus;
+    el.edStageVal.textContent = String(editor.def.launchPoints.length);
+    el.edBirdVal.textContent = String(editor.def.birds.length);
+    const errs = window.WorkshopLevel.validate(editor.def);
+    const warns = window.WorkshopLevel.warnings(editor.def);
+    el.edStatus.textContent = errs.length
+      ? `⚠️ ${errs[0]}${errs.length > 1 ? `（还有 ${errs.length - 1} 处）` : ''}`
+      : `✅ 可以玩了${warns.length ? ` · ${warns[0]}` : ''}`;
+    el.edStatus.classList.toggle('bad', errs.length > 0);
+    el.edPlay.disabled = errs.length > 0;
+    el.edPlay.style.opacity = errs.length ? 0.45 : 1;
+    el.edUndo.classList.toggle('ghost', !editor.undo.length);
+    el.edRedo.classList.toggle('ghost', !editor.redo.length);
+  };
+  const openEditor = (def) => {
+    editor = {
+      def: window.WorkshopLevel.normalize(def || starterLevel()),
+      tool: 'block', material: 'wood', size: 'm', bonus: false,
+      selected: null, undo: [], redo: [], press: null, drag: null,
+    };
+    el.workshop.classList.add('hide');
+    el.title.classList.add('hide');
+    el.end.classList.add('hide');
+    el.editor.classList.remove('hide');
+    if (shareBox) shareBox.classList.add('hide');
+    el.hint.classList.add('hide');
+    state = 'edit';
+    rebuildEditorScene();
+    // 编辑时的视野：别为了塞下整张图把镜头缩到看不清——保持 0.8~1 倍，
+    // 横向靠拖动查看（滚轮也能缩），纵向让地面落在画面下沿附近，别留半屏土。
+    CAM.zoom = clamp(W / (editor.def.worldW + 400), 0.8, 1);
+    CAM.targetZoom = CAM.zoom;
+    CAM.x = clampCamX(-60);
+    CAM.targetX = CAM.x;
+    CAM.y = clampCamY(GROUND_Y - viewH() * 0.85);
+    updateZoomLabel();
+    syncEditorUI();
+    persistDraft();
+  };
+  const leaveEditor = () => {
+    el.editor.classList.add('hide');
+    if (shareBox) shareBox.classList.add('hide');
+    openWorkshop();
+  };
+
+  const editorSnapshot = () => {
+    editor.undo.push(JSON.stringify(editor.def));
+    if (editor.undo.length > 40) editor.undo.shift();
+    editor.redo.length = 0;
+  };
+  const editorChanged = () => {
+    editor.def = window.WorkshopLevel.normalize(editor.def);   // 取整 + 重算分段/世界长度
+    rebuildEditorScene();
+    syncEditorUI();
+    persistDraft();
+  };
+  const editorHit = (p) => {
+    for (let i = pigs.length - 1; i >= 0; i--) {
+      if (Math.hypot(p.x - pigs[i].position.x, p.y - pigs[i].position.y) <= pigs[i].game.r + 10) return { kind: 'pig', index: i };
+    }
+    for (let i = blocks.length - 1; i >= 0; i--) {
+      const g = blocks[i].game;
+      if (Math.abs(p.x - blocks[i].position.x) <= g.w / 2 + 4 && Math.abs(p.y - blocks[i].position.y) <= g.h / 2 + 4) return { kind: 'block', index: i };
+    }
+    return null;
+  };
+  const editorPlace = (p) => {
+    const x = Math.round(p.x / 10) * 10;
+    const y = Math.round(p.y / 10) * 10;
+    if (editor.tool === 'block') {
+      const [w, h] = BLOCK_SIZES[editor.size] || BLOCK_SIZES.m;
+      editorSnapshot();
+      editor.def.blocks.push({ x: Math.max(40, x), y: Math.min(GROUND_Y - h / 2, y), w, h, material: editor.material });
+      editor.selected = { kind: 'block', index: editor.def.blocks.length - 1 };
+      editorChanged();
+    } else if (editor.tool === 'pig') {
+      editorSnapshot();
+      editor.def.pigs.push({ x: Math.max(300, x), y: Math.min(GROUND_Y - 36, y), r: 36, ...(editor.bonus ? { bonus: true } : {}) });
+      editor.selected = { kind: 'pig', index: editor.def.pigs.length - 1 };
+      editorChanged();
+    }
+  };
+  const editorErase = (sel) => {
+    if (!sel) return false;
+    editorSnapshot();
+    if (sel.kind === 'block') editor.def.blocks.splice(sel.index, 1);
+    else editor.def.pigs.splice(sel.index, 1);
+    editor.selected = null;
+    editorChanged();
+    return true;
+  };
+  const editorMoveItem = (sel, p) => {
+    const list = sel.kind === 'block' ? editor.def.blocks : editor.def.pigs;
+    const it = list[sel.index];
+    if (!it) return;
+    it.x = Math.round(Math.max(40, p.x) / 10) * 10;
+    it.y = Math.round(Math.min(GROUND_Y - (sel.kind === 'block' ? it.h / 2 : it.r), p.y) / 10) * 10;
+  };
+  const edDownAt = (p) => {
+    const hit = editorHit(p);
+    if (editor.tool === 'erase' && hit) {
+      editor.selected = hit;
+      syncEditorUI();
+      editorErase(hit);
+      return;
+    }
+    if (hit) {
+      const it = hit.kind === 'block' ? blocks[hit.index] : pigs[hit.index];
+      editorSnapshot();                       // 记下"拖动之前"，松手时才有得撤销
+      editor.selected = hit;
+      editor.drag = { sel: hit, dx: p.x - it.position.x, dy: p.y - it.position.y };
+      syncEditorUI();
+      return;
+    }
+    editor.press = { p, cam: { x: CAM.x, y: CAM.y }, moved: false };
+  };
+  const edDown = (ev) => edDownAt(pointerToWorld(ev));
+  const edMoveAt = (p) => {
+    if (editor.drag) {
+      const { sel } = editor.drag;
+      editorMoveItem(sel, { x: p.x - editor.drag.dx, y: p.y - editor.drag.dy });
+      rebuildEditorScene();
+      return;
+    }
+    if (!editor.press) return;
+    const dx = p.x - editor.press.p.x;
+    const dy = p.y - editor.press.p.y;
+    if (!editor.press.moved && Math.hypot(dx, dy) * CAM.zoom < 8) return;
+    editor.press.moved = true;
+    CAM.x = clampCamX(editor.press.cam.x - dx);
+    CAM.targetX = CAM.x;
+    CAM.y = clampCamY(editor.press.cam.y - dy);
+  };
+  const edMove = (ev) => { edMoveAt(pointerToWorld(ev)); ev.preventDefault(); };
+  const edUp = () => {
+    if (!editor) return;
+    if (editor.drag) {
+      editor.drag = null;
+      editorChanged();
+      return;
+    }
+    if (!editor.press) return;
+    const press = editor.press;
+    editor.press = null;
+    if (!press.moved) editorPlace(press.p);
+  };
+  const drawEditorOverlay = () => {
+    if (!editor) return;
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.strokeStyle = '#6b4a30';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= editor.def.worldW; x += 100) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, GROUND_Y); ctx.stroke();
+    }
+    for (let y = 100; y < GROUND_Y; y += 100) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(editor.def.worldW, y); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.save();
+    ctx.textAlign = 'center';
+    editor.def.launchPoints.forEach((pt, i) => {
+      ctx.fillStyle = i === 0 ? '#ff8a5b' : '#c98a4b';
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6b4a30';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText(`第${i + 1}段`, pt.x, pt.y - 16);
+    });
+    ctx.restore();
+    const sel = editor.selected;
+    if (!sel) return;
+    const it = (sel.kind === 'block' ? blocks : pigs)[sel.index];
+    if (!it) return;
+    ctx.save();
+    ctx.strokeStyle = '#ff8a5b';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 4]);
+    if (sel.kind === 'block') {
+      ctx.strokeRect(it.position.x - it.game.w / 2 - 4, it.position.y - it.game.h / 2 - 4, it.game.w + 8, it.game.h + 8);
+    } else {
+      ctx.beginPath(); ctx.arc(it.position.x, it.position.y, it.game.r + 6, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  /** 开始玩一份自制关卡：preview=从编辑器点"试玩"（不弹选蛋、不放开场，快进快出） */
+  const startCustom = (def, opts = {}) => {
+    customDef = window.WorkshopLevel.normalize(def);
+    mode = 'custom';
+    cameFromEditor = !!opts.fromEditor;
+    el.hud.classList.remove('hide');
+    el.workshop.classList.add('hide');
+    el.editor.classList.add('hide');
+    el.title.classList.add('hide');
+    el.end.classList.add('hide');
+    score = 0;
+    totalScore = 0;
+    pickChoice = null;
+    bossRetryUsed = false;
+    retryPending = false;
+    updateScore();
+    promptPick(customDef, { quick: true, auto: !!opts.preview, silent: !!opts.preview });
+    updateLevelChip();
+  };
+  const playtest = () => {
+    if (!editor) return;
+    const errs = window.WorkshopLevel.validate(editor.def);
+    if (errs.length) { toast(errs[0], 2200); return; }
+    persistDraft();
+    startCustom(editor.def, { preview: true, fromEditor: true });
+  };
+  const exportJSON = (def) => {
+    const blob = new Blob([window.WorkshopLevel.toJSON(def)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${String(def.name || 'naidan-level').replace(/[\\/:*?"<>|]/g, '_')}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  };
+  const importText = (text) => {
+    const def = window.WorkshopLevel.fromJSON(text);
+    if (!def) { toast('这段内容不是关卡', 2000); return false; }
+    closeWorkshop();
+    openEditor(def);
+    return true;
+  };
+
+  const undoEditor = () => {
+    if (!editor || !editor.undo.length) return;
+    editor.redo.push(JSON.stringify(editor.def));
+    editor.def = JSON.parse(editor.undo.pop());
+    editor.selected = null;
+    rebuildEditorScene();
+    syncEditorUI();
+    persistDraft();
+  };
+  const redoEditor = () => {
+    if (!editor || !editor.redo.length) return;
+    editor.undo.push(JSON.stringify(editor.def));
+    editor.def = JSON.parse(editor.redo.pop());
+    editor.selected = null;
+    rebuildEditorScene();
+    syncEditorUI();
+    persistDraft();
+  };
+
+  // 工坊入口
+  el.btnWkNew.addEventListener('click', () => openEditor(starterLevel()));
+  el.btnWkEdit1.addEventListener('click', () => openEditor({ ...window.LEVEL1, id: `custom-${Date.now().toString(36)}`, name: '第一关（改）' }));
+  el.btnWkPlay1.addEventListener('click', () => { closeWorkshop(); startCustom(window.LEVEL1, {}); });
+  el.btnWkClose.addEventListener('click', closeWorkshop);
+  el.btnWkImport.addEventListener('click', () => el.wkFile.click());
+  el.wkFile.addEventListener('change', () => {
+    const f = el.wkFile.files && el.wkFile.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { importText(String(r.result || '')); el.wkFile.value = ''; };
+    r.readAsText(f);
+  });
+  el.btnWkPaste.addEventListener('click', () => {
+    if (!el.wkPaste.value.trim()) { toast('先把关卡内容粘进来', 1600); return; }
+    importText(el.wkPaste.value);
+  });
+  // 编辑器工具条
+  el.edName.addEventListener('input', () => {
+    if (editor) { editor.def.name = el.edName.value.slice(0, 24); persistDraft(); }
+  });
+  const setTool = (t) => { if (!editor) return; editor.tool = t; editor.selected = null; syncEditorUI(); };
+  el.edToolBlock.addEventListener('click', () => setTool('block'));
+  el.edToolPig.addEventListener('click', () => setTool('pig'));
+  el.edToolMove.addEventListener('click', () => setTool('move'));
+  el.edToolErase.addEventListener('click', () => setTool('erase'));
+  const setMat = (m) => { if (editor) { editor.material = m; syncEditorUI(); } };
+  el.edMatWood.addEventListener('click', () => setMat('wood'));
+  el.edMatIce.addEventListener('click', () => setMat('ice'));
+  el.edMatStone.addEventListener('click', () => setMat('stone'));
+  const setSize = (s) => { if (editor) { editor.size = s; syncEditorUI(); } };
+  el.edSizeS.addEventListener('click', () => setSize('s'));
+  el.edSizeM.addEventListener('click', () => setSize('m'));
+  el.edSizeL.addEventListener('click', () => setSize('l'));
+  el.edSizeLong.addEventListener('click', () => setSize('long'));
+  el.edPigBonus.addEventListener('change', () => { if (editor) editor.bonus = el.edPigBonus.checked; });
+  const setStages = (n) => {
+    if (!editor) return;
+    const next = clamp(n, 1, 3);
+    if (next === editor.def.launchPoints.length) return;
+    editorSnapshot();
+    editor.def.stages = next;
+    editor.def.launchPoints = [];        // 清掉旧发射点 → normalize 会按段数重算
+    editorChanged();
+  };
+  el.edStageMinus.addEventListener('click', () => setStages(editor ? editor.def.launchPoints.length - 1 : 1));
+  el.edStagePlus.addEventListener('click', () => setStages(editor ? editor.def.launchPoints.length + 1 : 1));
+  const setBirds = (n) => {
+    if (!editor) return;
+    const next = clamp(Math.round(n), 2, 8);
+    if (next === editor.def.birds.length) return;
+    editor.def.birds = window.WorkshopLevel.BIRDS.slice(0, next);
+    editorChanged();
+  };
+  el.edBirdMinus.addEventListener('click', () => setBirds(editor ? editor.def.birds.length - 1 : 2));
+  el.edBirdPlus.addEventListener('click', () => setBirds(editor ? editor.def.birds.length + 1 : 2));
+  el.edUndo.addEventListener('click', undoEditor);
+  el.edRedo.addEventListener('click', redoEditor);
+  el.edPlay.addEventListener('click', playtest);
+  el.edShare.addEventListener('click', () => { if (editor) copyText(shareLink(editor.def), '分享链接已复制'); });
+  el.edExport.addEventListener('click', () => { if (editor) { persistDraft(); exportJSON(editor.def); } });
+  el.edWkBack.addEventListener('click', () => { persistDraft(); leaveEditor(); });
+  el.btnBackEditor.addEventListener('click', () => {
+    el.end.classList.add('hide');
+    openEditor(customDef || window.LEVEL1);
+  });
   window.__nai = {
     ready: true,
+    /** 创意工坊（验收/调试用）：和界面按钮走同一套函数 */
+    workshop: {
+      open: () => { openWorkshop(); return state; },
+      create: () => { openEditor(starterLevel()); return !!editor; },
+      edit: (def) => { openEditor(def); return !!editor; },
+      info: () => (editor ? {
+        tool: editor.tool, material: editor.material, size: editor.size, bonus: !!editor.bonus,
+        name: editor.def.name,
+        blocks: editor.def.blocks.length,
+        pigs: editor.def.pigs.length,
+        stages: editor.def.launchPoints.length,
+        birds: editor.def.birds.length,
+        pigStages: editor.def.pigs.map((p) => p.stage),
+        errors: window.WorkshopLevel.validate(editor.def),
+        selected: editor.selected,
+        undo: editor.undo.length,
+        redo: editor.redo.length,
+      } : null),
+      setTool: (t) => { if (editor) { editor.tool = t; syncEditorUI(); } return editor && editor.tool; },
+      setMaterial: (m) => { if (editor) { editor.material = m; syncEditorUI(); } return editor && editor.material; },
+      setSize: (s) => { if (editor) { editor.size = s; syncEditorUI(); } return editor && editor.size; },
+      setBonus: (b) => { if (editor) { editor.bonus = !!b; syncEditorUI(); } return editor && editor.bonus; },
+      setName: (n) => { if (editor) { editor.def.name = String(n).slice(0, 24); el.edName.value = editor.def.name; persistDraft(); } return editor && editor.def.name; },
+      setStages: (n) => { setStages(n); return editor && editor.def.launchPoints.length; },
+      setBirds: (n) => { setBirds(n); return editor && editor.def.birds.length; },
+      /** 在世界坐标"点一下"（放置/删除/选中），和真实点击走同一条逻辑 */
+      tap: (x, y) => { edDownAt({ x, y }); edUp(); return editor && editor.def; },
+      undo: () => { undoEditor(); return editor ? editor.undo.length : 0; },
+      redo: () => { redoEditor(); return editor ? editor.redo.length : 0; },
+      playtest: () => { playtest(); return state; },
+      code: () => (editor ? window.WorkshopLevel.pack(editor.def) : ''),
+      json: () => (editor ? window.WorkshopLevel.toJSON(editor.def) : ''),
+      link: () => (editor ? shareLink(editor.def) : ''),
+      loadText: (text) => importText(text),
+      back: () => { if (editor) leaveEditor(); return state; },
+      drafts: () => drafts().map((d) => ({ id: d.id, name: d.name })),
+      clearDrafts: () => saveDrafts([]),
+    },
     build: BUILD,
     state: () => ({
       state,
@@ -3212,5 +3782,12 @@
     state = 'title';
     render();
     requestAnimationFrame(frame);
+    // 带分享码打开（#level=…）：直接进这份自制关卡（先在选蛋面板挑一颗）
+    const m = /(?:^|[#&])level=([^&]+)/.exec(location.hash || '');
+    const shared = m ? window.WorkshopLevel.unpack(m[1]) : null;
+    if (shared) {
+      startCustom(shared, {});
+      toast(`载入分享关卡：${shared.name}`, 2800);
+    }
   });
 })();

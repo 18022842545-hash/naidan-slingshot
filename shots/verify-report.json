@@ -22,6 +22,7 @@
     "10-endless-over.png",
     "09b-pick-endless.png",
     "09c-queue-swap.png",
+    "09d-workshop-editor.png",
     "11-file-source.png",
     "12-file-single.png"
   ],
@@ -42,8 +43,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-14 · 击败 boss 有真笑声了",
-    "stamp": "版本 2026-10-14 · 击败 boss 有真笑声了"
+    "build": "2026-10-17 · 创意工坊（分享码 + 编辑器）",
+    "stamp": "版本 2026-10-17 · 创意工坊（分享码 + 编辑器）"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -67,6 +68,10 @@
     "near": 1.7,
     "normal": 1
   },
+  "titleButtons": [
+    "创意工坊",
+    "无尽模式"
+  ],
   "pickPanel": {
     "cards": 8,
     "state": "pick",
@@ -91,8 +96,8 @@
     "label": "我方"
   },
   "introEnemy": {
-    "zoom": 1.465,
-    "camX": 654,
+    "zoom": 1.469,
+    "camX": 648,
     "label": "敌方"
   },
   "introEnd": {
@@ -102,9 +107,9 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 19,
-    "minDy": -62.7,
-    "maxDeg": 354
+    "distinctPoses": 12,
+    "minDy": -62.8,
+    "maxDeg": 344
   },
   "initialDrift": 1,
   "fallDamage": {
@@ -127,7 +132,7 @@
   "chargeFx": {
     "power": 1,
     "charge": 0.98,
-    "shakePeak": 1.32
+    "shakePeak": 1.31
   },
   "sweep": [
     {
@@ -245,10 +250,10 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.59,
+      "vxBefore": 24.66,
       "vxMid": 24.29,
       "xMid": 709,
-      "xSoon": 1222
+      "xSoon": 1213
     },
     {
       "type": "dash",
@@ -261,12 +266,12 @@
       "blocksBefore": 3,
       "blocksAfter": 1,
       "pigsBefore": 1,
-      "pigsAfter": 1,
+      "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.79,
-      "vxMid": 33.51,
-      "xMid": 791,
-      "xSoon": 1389
+      "vxBefore": 24.84,
+      "vxMid": 33.53,
+      "xMid": 766,
+      "xSoon": 1341
     },
     {
       "type": "split",
@@ -279,12 +284,12 @@
       "blocksBefore": 3,
       "blocksAfter": 0,
       "pigsBefore": 1,
-      "pigsAfter": 0,
+      "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.69,
-      "vxMid": 23.16,
-      "xMid": 667,
-      "xSoon": 1177
+      "vxBefore": 24.63,
+      "vxMid": 23.2,
+      "xMid": 716,
+      "xSoon": 1186
     },
     {
       "type": "bomb",
@@ -299,7 +304,7 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 1,
-      "vxBefore": 23.68,
+      "vxBefore": 23.6,
       "vxMid": 0,
       "xMid": 0,
       "xSoon": 0
@@ -318,8 +323,8 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.48,
-      "vxMid": 24.14,
-      "xMid": 707,
+      "vxMid": 24.07,
+      "xMid": 731,
       "xSoon": 1222
     },
     {
@@ -336,8 +341,8 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.55,
-      "vxMid": 13.3,
-      "xMid": 667,
+      "vxMid": 13.33,
+      "xMid": 654,
       "xSoon": 988
     },
     {
@@ -353,16 +358,16 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.77,
-      "vxMid": -25.91,
-      "xMid": 407,
-      "xSoon": 101
+      "vxBefore": 24.71,
+      "vxMid": -25.85,
+      "xMid": 432,
+      "xSoon": 100
     },
     {
       "type": "seek",
       "used": true,
       "speedBefore": 25,
-      "speedMid": 29,
+      "speedMid": 28,
       "inFlightMid": 1,
       "bombsMid": 0,
       "bombsAfter": 0,
@@ -371,10 +376,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.92,
-      "vxMid": 28.69,
-      "xMid": 723,
-      "xSoon": 1469
+      "vxBefore": 24.87,
+      "vxMid": 28.03,
+      "xMid": 720,
+      "xSoon": 1493
     }
   ],
   "plowTest": {
@@ -388,20 +393,20 @@
   "seekAim": {
     "used": true,
     "dir": {
-      "nx": 0.927,
-      "ny": -0.375
+      "nx": 0.928,
+      "ny": -0.374
     },
     "wantN": {
       "x": 0.927,
-      "y": -0.376
+      "y": -0.374
     },
-    "straight": 0.8,
-    "guidedFrames": 14,
+    "straight": 0.9,
+    "guidedFrames": 18,
     "maxV": 30,
     "marks": 1
   },
   "spinTest": {
-    "samples": 49,
+    "samples": 59,
     "peak": 0.036,
     "restAv": 0.003
   },
@@ -622,7 +627,7 @@
     {
       "seed": 7,
       "level": 12,
-      "drift": 4.1,
+      "drift": 5.1,
       "pigs": 8,
       "blocks": 27,
       "birds": 7,
@@ -670,7 +675,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5.1,
+      "drift": 5,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1048,14 +1053,14 @@
   },
   "bossCutIn": {
     "label": "BOSS",
-    "maxZoom": 2.35,
+    "maxZoom": 2.349,
     "barShown": true
   },
   "bossDamage": {
     "maxHp": 980,
     "direct": 86,
     "towerIntact": true,
-    "fall": 347,
+    "fall": 288,
     "fallKind": "direct",
     "barWidth": "91.3%"
   },
@@ -1220,6 +1225,46 @@
         "naidan",
         "seek"
       ]
+    }
+  },
+  "workshop": {
+    "hub": "workshop",
+    "starter": {
+      "blocks": 3,
+      "pigs": 1,
+      "errors": []
+    },
+    "placed": {
+      "blocks": 4,
+      "pigs": 2,
+      "errors": []
+    },
+    "stages": 2,
+    "pigStages": [
+      0,
+      1
+    ],
+    "codeLen": 260,
+    "jsonLen": 423,
+    "codeStarts": "eyJ",
+    "unpackOk": true,
+    "undoPigs": 1,
+    "redoPigs": 2,
+    "playing": {
+      "state": "aim",
+      "mode": "custom",
+      "blocks": 4,
+      "pigs": 2,
+      "birds": 4,
+      "name": "验收小关"
+    },
+    "ended": "over",
+    "backShown": true,
+    "backState": "edit",
+    "backKept": {
+      "blocks": 4,
+      "pigs": 2,
+      "name": "验收小关"
     }
   },
   "源码版": {

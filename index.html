@@ -206,6 +206,58 @@
     font-size: 26px; font-weight: 800; color: #fff; opacity: 0;
     text-shadow: 0 3px 0 rgba(120,80,40,.5);
   }
+
+  /* ---------------- 创意工坊 ---------------- */
+  .panel.wide { max-width: min(92vw, 720px); }
+  #workshopScreen .sub { font-size: 13px; color: #8a6a50; margin: 4px 0 10px; }
+  #wkDrafts { display: grid; gap: 8px; max-height: 210px; overflow: auto; margin: 12px 0 4px; text-align: left; }
+  #wkDrafts .draft {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.72); border-radius: 14px; padding: 9px 12px;
+    box-shadow: inset 0 0 0 2px rgba(206,152,42,.14);
+  }
+  #wkDrafts .draft .nm { flex: 1; font-weight: 800; color: #6b4a30; font-size: 14px; }
+  #wkDrafts .draft .meta { font-size: 11px; color: #9a8878; }
+  #wkDrafts .draft button { padding: 6px 12px; font-size: 12px; box-shadow: 0 3px 0 var(--jam-dark); }
+  #wkDrafts .draft button.ghost { box-shadow: 0 3px 0 rgba(74,53,39,.18); }
+  #wkDrafts .empty { font-size: 12.5px; color: #a89383; text-align: center; padding: 10px 0; }
+  #wkPaste {
+    width: 100%; margin-top: 10px; resize: vertical; min-height: 44px;
+    border-radius: 12px; border: 2px solid rgba(206,152,42,.25); padding: 8px 10px;
+    font: inherit; font-size: 12px; color: #6b4a30; background: #fffdf5;
+  }
+
+  /* 编辑器：顶部工具条 + 底部状态 */
+  #editorScreen { align-items: flex-start; justify-content: center; }
+  #edTop {
+    pointer-events: auto; margin-top: 10px; max-width: min(96vw, 1240px);
+    background: rgba(255,246,228,.96); border-radius: 16px; padding: 8px 10px;
+    box-shadow: 0 10px 26px rgba(60,38,20,.28);
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px;
+  }
+  #edTop .grp { display: flex; gap: 4px; align-items: center; padding: 0 6px; border-right: 1px dashed rgba(120,90,60,.25); }
+  #edTop .grp:last-child { border-right: none; }
+  #edTop .lab { font-size: 11px; color: #9a8878; margin-right: 2px; }
+  #edTop button { padding: 6px 10px; font-size: 12px; border-radius: 10px; box-shadow: 0 3px 0 var(--jam-dark); letter-spacing: 0; }
+  #edTop button.ghost { box-shadow: 0 3px 0 rgba(74,53,39,.18); }
+  #edTop button.on { background: var(--jam-dark); box-shadow: 0 3px 0 #a83f16; }
+  #edTop input[type=text] {
+    width: 150px; padding: 6px 10px; border-radius: 10px;
+    border: 2px solid rgba(206,152,42,.3); background: #fffdf5;
+    font: inherit; font-size: 12.5px; font-weight: 700; color: #6b4a30;
+  }
+  #edTop .step { min-width: 22px; text-align: center; font-weight: 800; color: #6b4a30; }
+  #edStatus {
+    pointer-events: none; position: absolute; left: 50%; bottom: 54px; transform: translateX(-50%);
+    background: rgba(255,246,228,.95); border-radius: 999px; padding: 8px 18px;
+    font-size: 12.5px; font-weight: 700; color: #3f7a58; box-shadow: 0 6px 18px rgba(60,38,20,.22);
+  }
+  #edStatus.bad { color: #c2410c; }
+  #edHint {
+    pointer-events: none; position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
+    font-size: 12px; color: #7a5b42; background: rgba(255,246,228,.9);
+    border-radius: 999px; padding: 6px 16px;
+  }
 </style>
 </head>
 <body>
@@ -235,7 +287,7 @@
         <p style="font-size:13px">飞行中<b>点一下屏幕</b>可以放技能 · 每撞飞一只奶蛙 +5000 分 · 剩一发奶蛋 +10000 分</p>
         <div id="roster"></div>
         <div class="row">
-          <button id="btnStart">第一关</button>
+          <button id="btnWorkshop">创意工坊</button>
           <button id="btnEndless" class="ghost">无尽模式</button>
         </div>
         <p id="buildStamp" style="font-size:11px;color:#a89383;margin:12px 0 0"></p>
@@ -249,9 +301,85 @@
         <p id="endNote">奶蛙们笑得更大声了。</p>
         <div class="row">
           <button id="btnAgain">再来一次</button>
+          <button id="btnBackEditor" class="ghost hide">回编辑器</button>
           <button id="btnBackMenu" class="ghost">回主菜单</button>
         </div>
       </div>
+    </div>
+
+    <!-- 创意工坊：入口 -->
+    <div class="layer hide" id="workshopScreen">
+      <div class="panel wide">
+        <h2>创意工坊</h2>
+        <p class="sub">自己搭关卡、随时试玩，搭好把链接发给别人</p>
+        <div class="row">
+          <button id="btnWkNew">新建关卡</button>
+          <button id="btnWkEdit1" class="ghost">改一改第一关</button>
+          <button id="btnWkPlay1" class="ghost">试玩第一关</button>
+        </div>
+        <div id="wkDrafts"></div>
+        <textarea id="wkPaste" placeholder="也可以把关卡 JSON / 分享码粘到这里，再点下面载入"></textarea>
+        <div class="row">
+          <button id="btnWkPaste" class="ghost">载入粘贴的关卡</button>
+          <button id="btnWkImport" class="ghost">导入 JSON 文件…</button>
+          <button id="btnWkClose" class="ghost">返回</button>
+        </div>
+        <input type="file" id="wkFile" accept=".json,application/json" hidden />
+      </div>
+    </div>
+
+    <!-- 编辑器 -->
+    <div class="layer hide" id="editorScreen">
+      <div id="edTop">
+        <div class="grp">
+          <input type="text" id="edName" maxlength="24" placeholder="关卡名" />
+        </div>
+        <div class="grp">
+          <span class="lab">工具</span>
+          <button id="edToolBlock" class="on">放方块</button>
+          <button id="edToolPig" class="ghost">放奶蛙</button>
+          <button id="edToolMove" class="ghost">移动</button>
+          <button id="edToolErase" class="ghost">删除</button>
+        </div>
+        <div class="grp" id="edBlockProps">
+          <span class="lab">材料</span>
+          <button id="edMatWood" class="on">木</button>
+          <button id="edMatIce" class="ghost">冰</button>
+          <button id="edMatStone" class="ghost">石</button>
+          <span class="lab" style="margin-left:6px">尺寸</span>
+          <button id="edSizeS" class="ghost">小</button>
+          <button id="edSizeM" class="on">中</button>
+          <button id="edSizeL" class="ghost">大</button>
+          <button id="edSizeLong" class="ghost">长</button>
+        </div>
+        <div class="grp" id="edPigProps" style="display:none">
+          <label style="display:flex;gap:5px;align-items:center;font-size:12px;color:#6b4a30">
+            <input type="checkbox" id="edPigBonus" /> 补给奶蛙（打掉补一颗）
+          </label>
+        </div>
+        <div class="grp">
+          <span class="lab">分段</span>
+          <button id="edStageMinus" class="ghost">−</button>
+          <span class="step" id="edStageVal">1</span>
+          <button id="edStagePlus" class="ghost">＋</button>
+          <span class="lab" style="margin-left:6px">奶蛋</span>
+          <button id="edBirdMinus" class="ghost">−</button>
+          <span class="step" id="edBirdVal">3</span>
+          <button id="edBirdPlus" class="ghost">＋</button>
+        </div>
+        <div class="grp">
+          <button id="edUndo" class="ghost">撤销</button>
+          <button id="edRedo" class="ghost">重做</button>
+          <button id="edPlay">试玩</button>
+        </div>
+        <div class="grp">
+          <button id="edShare" class="ghost">复制分享链接</button>
+          <button id="edExport" class="ghost">导出</button>
+          <button id="edWkBack" class="ghost">返回工坊</button>
+        </div>
+      </div>
+      <div id="edStatus">可以玩了</div>
+      <div id="edHint">点空地放置 · 拖已有物体移动 · 拖空白处平移 · 滚轮缩放 · Delete 删除选中</div>
     </div>
     <div class="layer hide" id="pickScreen">
       <div class="panel">
@@ -276,6 +404,7 @@
   <script src="js/audio.js"></script>
   <script src="js/birds.js"></script>
   <script src="js/levels.js"></script>
+<script src="js/workshop.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>
