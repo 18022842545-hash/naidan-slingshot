@@ -42,6 +42,20 @@ window.INLINE_WORKSHOP_LEVELS = {
       "author": "奶蛋工坊",
       "submittedAt": "2026-10-12T01:15:00.000Z",
       "code": "eyJ2IjoxLCJuIjoi5LiJ56uZ6L-95Ye7IiwidyI6MzI1MCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdLFsyMTkwLDQ3MF1dLCJiIjpbWzgzMCw1NzAsMzAsMTMwLDBdLFs5NzAsNTcwLDMwLDEzMCwwXSxbOTAwLDQ5MCwxOTAsMzAsMF0sWzE2MzAsNTcwLDMwLDEzMCwyXSxbMTc3MCw1NzAsMzAsMTMwLDJdLFsxNzAwLDQ5MCwxOTAsMzAsMl0sWzIzODAsNTcwLDMwLDEzMCwxXSxbMjUyMCw1NzAsMzAsMTMwLDFdLFsyNDUwLDQ5MCwxOTAsMzAsMV1dLCJwIjpbWzkwMCw2MDAsNDAsMF0sWzE3MDAsNjAwLDQwLDFdLFsyNDUwLDYwMCw0MCwwXV0sImsiOlswLDEsMywyLDddfQ"
+    },
+    {
+      "id": "seed-冰桥回廊",
+      "name": "冰桥回廊",
+      "author": "雪花酥",
+      "submittedAt": "2026-10-11T09:20:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi5Yaw5qGl5Zue5buKIiwidyI6MjQwMCwicyI6W1sxOTAsNDcwXV0sImIiOltbOTEwLDU3MCwzMCwxMzAsMV0sWzEwNTAsNTcwLDMwLDEzMCwxXSxbOTgwLDQ5MCwxOTAsMzAsMV0sWzEyMjAsNTcwLDEyMCwzMCwxXSxbMTIyMCw0NjAsMzAsMTAwLDFdLFsxMzIwLDQ2MCwzMCwxMDAsMV0sWzEyNzAsMzkwLDE0MCwzMCwxXV0sInAiOltbOTgwLDYwMCw0MCwwXSxbMTM5MCw2MDAsNDAsMV1dLCJrIjpbMSwyLDUsM119"
+    },
+    {
+      "id": "seed-奶蛙哨站",
+      "name": "奶蛙哨站",
+      "author": "弹弓小队",
+      "submittedAt": "2026-10-10T04:45:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi5aW26JuZ5ZOo56uZIiwidyI6MjU2MCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdXSwiYiI6W1s4MTAsNTcwLDMwLDEzMCwwXSxbOTUwLDU3MCwzMCwxMzAsMF0sWzg4MCw0OTAsMTkwLDMwLDBdLFsxMDgwLDU3MCw5MCw2MCwyXSxbMTY5MCw1NzAsMzAsMTMwLDJdLFsxODMwLDU3MCwzMCwxMzAsMl0sWzE3NjAsNDkwLDE5MCwzMCwyXSxbMTU1MCw1NzAsOTAsNjAsMV1dLCJwIjpbWzg4MCw2MDAsNDAsMV0sWzE3NjAsNjAwLDQwLDBdXSwiayI6WzAsNCwzLDZdfQ"
     }
   ]
 };

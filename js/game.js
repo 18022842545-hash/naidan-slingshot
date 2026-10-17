@@ -161,6 +161,9 @@
     wkCommunityPane: document.getElementById('wkCommunityPane'),
     wkMinePane: document.getElementById('wkMinePane'),
     wkCommunity: document.getElementById('wkCommunity'),
+    wkWeekly: document.getElementById('wkWeekly'),
+    wkWeeklySection: document.getElementById('wkWeeklySection'),
+    wkMoreTitle: document.getElementById('wkMoreTitle'),
     wkSearch: document.getElementById('wkSearch'),
     wkSort: document.getElementById('wkSort'),
     btnWkRefresh: document.getElementById('btnWkRefresh'),
@@ -238,7 +241,7 @@
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 放置上限提示';
+  const BUILD = '2026-10-17 · 每周热门榜';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -3102,6 +3105,8 @@
   let shareBox = null;
   let wkEntries = [];         // 社区关卡（目录 + 解出来的 def）
   let wkStats = {};           // id → { likes, plays }
+  let wkWeeklyIds = [];       // 本周锁定的点赞前 6
+  let wkWeeklyKey = '';
   let wkSort = 'latest';
   let wkQuery = '';
   let wkTab = 'community';
@@ -3272,16 +3277,24 @@
   const renderCommunity = () => {
     if (!el.wkCommunity || wkTab !== 'community') return;
     const q = wkQuery.trim().toLowerCase();
-    const list = wkEntries.filter((entry) =>
+    const filtered = wkEntries.filter((entry) =>
       !q || entry.name.toLowerCase().includes(q) || entry.author.toLowerCase().includes(q)
     );
     const when = (entry) => new Date(entry.submittedAt || 0).getTime() || 0;
+    const pinned = wkWeeklyIds.map((id) => filtered.find((entry) => entry.id === id)).filter(Boolean);
+    const pinnedSet = new Set(wkWeeklyIds);
+    const list = filtered.filter((entry) => !pinnedSet.has(entry.id));
     list.sort((a, b) => {
       if (wkSort === 'plays') return communityStat(b).plays - communityStat(a).plays || when(b) - when(a);
       if (wkSort === 'likes') return communityStat(b).likes - communityStat(a).likes || when(b) - when(a);
       return when(b) - when(a);
     });
+    el.wkMoreTitle.textContent = wkSort === 'plays' ? '最多游玩' : wkSort === 'likes' ? '最多点赞' : '最新关卡';
+    el.wkWeekly.innerHTML = '';
     el.wkCommunity.innerHTML = '';
+    const weeklyVisible = pinned.length > 0 && wkCatalogState === 'ready';
+    el.wkWeeklySection.classList.toggle('hide', !weeklyVisible);
+    if (weeklyVisible) pinned.forEach((entry) => el.wkWeekly.appendChild(communityCard(entry)));
     if (wkCatalogState === 'loading' && !wkEntries.length) {
       const tip = document.createElement('div');
       tip.className = 'empty';
@@ -3299,12 +3312,34 @@
     if (!list.length) {
       const tip = document.createElement('div');
       tip.className = 'empty';
-      tip.textContent = q ? '没有找到匹配的关卡' : '社区里还没有关卡';
+      tip.textContent = q
+        ? '没有找到更多匹配的关卡'
+        : pinned.length
+          ? '本周前 6 已在上方；新关卡会出现在这里'
+          : '社区里还没有关卡';
       el.wkCommunity.appendChild(tip);
       return;
     }
     list.forEach((entry) => el.wkCommunity.appendChild(communityCard(entry)));
   };
+
+  /** 每周快照：点赞前 6 只在本周五 24:00 重算，新关卡不会把本周名单挤掉 */
+  const prepareWeekly = async () => {
+    const period = window.WorkshopCommunity.weeklyPeriod();
+    wkWeeklyKey = period.key;
+    let ids = await window.WorkshopCommunity.loadWeeklySnapshot(period.key);
+    if (!ids) {
+      const when = (entry) => new Date(entry.submittedAt || 0).getTime() || 0;
+      ids = wkEntries.slice().sort((a, b) =>
+        communityStat(b).likes - communityStat(a).likes
+        || communityStat(b).plays - communityStat(a).plays
+        || when(b) - when(a)
+      ).slice(0, 6).map((entry) => entry.id);
+      if (ids.length) await window.WorkshopCommunity.saveWeeklySnapshot(period.key, ids);
+    }
+    wkWeeklyIds = Array.isArray(ids) ? ids.slice(0, 6) : [];
+  };
+
   const loadCommunity = async (force = false) => {
     if (wkCatalogState === 'loading') return;
     if (wkCatalogState === 'ready' && !force) return;
@@ -3319,6 +3354,7 @@
       renderCommunity();
       const loaded = await window.WorkshopCommunity.loadStats(wkEntries, { force });
       wkStats = loaded.values || {};
+      await prepareWeekly();
       wkStatsLoading = false;
       renderCommunity();
     } catch (e) {
@@ -4049,6 +4085,9 @@
         sort: wkSort,
         query: wkQuery,
         loadingStats: wkStatsLoading,
+        weeklyKey: wkWeeklyKey,
+        weeklyIds: wkWeeklyIds.slice(),
+        weeklyResetAt: window.WorkshopCommunity.weeklyPeriod().nextResetMs,
         entries: wkEntries.map((e) => ({
           id: e.id, name: e.name, author: e.author, submittedAt: e.submittedAt,
           stats: communityStat(e), liked: window.WorkshopCommunity.isLiked(e.code),

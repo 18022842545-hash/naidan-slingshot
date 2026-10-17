@@ -44,8 +44,8 @@
   },
   "rosterCards": 8,
   "build": {
-    "build": "2026-10-17 · 选蛋独占弹窗",
-    "stamp": "版本 2026-10-17 · 选蛋独占弹窗"
+    "build": "2026-10-17 · 放置上限提示",
+    "stamp": "版本 2026-10-17 · 放置上限提示"
   },
   "bossLaughAudio": {
     "ready": 4,
@@ -102,11 +102,11 @@
   },
   "queueIdle": {
     "samples": 70,
-    "distinctPoses": 26,
-    "minDy": -62.5,
-    "maxDeg": 357
+    "distinctPoses": 11,
+    "minDy": -62.1,
+    "maxDeg": 344
   },
-  "initialDrift": 0,
+  "initialDrift": 1.4,
   "fallDamage": {
     "low": {
       "max": 141,
@@ -245,9 +245,9 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.66,
-      "vxMid": 24.29,
-      "xMid": 709,
+      "vxBefore": 24.59,
+      "vxMid": 24.23,
+      "xMid": 733,
       "xSoon": 1222
     },
     {
@@ -284,7 +284,7 @@
       "vxBefore": 24.69,
       "vxMid": 23.1,
       "xMid": 690,
-      "xSoon": 1191
+      "xSoon": 1177
     },
     {
       "type": "bomb",
@@ -317,10 +317,10 @@
       "pigsBefore": 1,
       "pigsAfter": 0,
       "shockwave": 0,
-      "vxBefore": 24.48,
+      "vxBefore": 24.54,
       "vxMid": 24.07,
       "xMid": 731,
-      "xSoon": 1234
+      "xSoon": 1222
     },
     {
       "type": "milk",
@@ -336,8 +336,8 @@
       "pigsAfter": 0,
       "shockwave": 0,
       "vxBefore": 24.55,
-      "vxMid": 13.3,
-      "xMid": 667,
+      "vxMid": 13.33,
+      "xMid": 654,
       "xSoon": 988
     },
     {
@@ -353,16 +353,16 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.71,
-      "vxMid": -25.85,
-      "xMid": 432,
-      "xSoon": 100
+      "vxBefore": 24.77,
+      "vxMid": -25.91,
+      "xMid": 407,
+      "xSoon": 101
     },
     {
       "type": "seek",
       "used": true,
       "speedBefore": 25,
-      "speedMid": 29,
+      "speedMid": 28,
       "inFlightMid": 1,
       "bombsMid": 0,
       "bombsAfter": 0,
@@ -371,10 +371,10 @@
       "pigsBefore": 1,
       "pigsAfter": 1,
       "shockwave": 0,
-      "vxBefore": 24.92,
-      "vxMid": 28.69,
-      "xMid": 723,
-      "xSoon": 1498
+      "vxBefore": 24.87,
+      "vxMid": 28.03,
+      "xMid": 720,
+      "xSoon": 1463
     }
   ],
   "plowTest": {
@@ -388,21 +388,21 @@
   "seekAim": {
     "used": true,
     "dir": {
-      "nx": 0.928,
-      "ny": -0.374
+      "nx": 0.927,
+      "ny": -0.375
     },
     "wantN": {
       "x": 0.927,
-      "y": -0.374
+      "y": -0.376
     },
-    "straight": 0.9,
-    "guidedFrames": 14,
+    "straight": 0.8,
+    "guidedFrames": 17,
     "maxV": 30,
     "marks": 1
   },
   "spinTest": {
     "samples": 52,
-    "peak": 0.033,
+    "peak": 0.036,
     "restAv": 0.003
   },
   "bonusPig": {
@@ -542,7 +542,7 @@
     {
       "seed": 7,
       "level": 5,
-      "drift": 5.1,
+      "drift": 5,
       "pigs": 4,
       "blocks": 16,
       "birds": 5,
@@ -558,7 +558,7 @@
     {
       "seed": 7,
       "level": 6,
-      "drift": 5.1,
+      "drift": 4.1,
       "pigs": 5,
       "blocks": 12,
       "birds": 5,
@@ -622,7 +622,7 @@
     {
       "seed": 7,
       "level": 12,
-      "drift": 5.1,
+      "drift": 4.1,
       "pigs": 8,
       "blocks": 27,
       "birds": 7,
@@ -670,7 +670,7 @@
     {
       "seed": 12345,
       "level": 3,
-      "drift": 5.1,
+      "drift": 5,
       "pigs": 3,
       "blocks": 9,
       "birds": 4,
@@ -1055,7 +1055,7 @@
     "maxHp": 980,
     "direct": 86,
     "towerIntact": true,
-    "fall": 288,
+    "fall": 347,
     "fallKind": "direct",
     "barWidth": "91.3%"
   },
@@ -1123,12 +1123,12 @@
       "fallK": 0
     },
     "state": "aim",
-    "hpAfterFall": 764,
+    "hpAfterFall": 765,
     "falls": [
-      764,
-      639
+      765,
+      640
     ],
-    "shots": 3,
+    "shots": 6,
     "laugh": {
       "ready": 4,
       "attempts": 1,
@@ -1150,16 +1150,16 @@
   "endlessResume": {
     "beforeLevel": 5,
     "beforeBirds": 4,
-    "flyingX": 499,
+    "flyingX": 475,
     "pausedState": "title",
     "pausedLevel": 5,
-    "pausedBirdX": 499,
+    "pausedBirdX": 475,
     "resumeShown": true,
     "resumeText": "继续无尽 · 第 5 关",
     "resumedState": "fly",
     "resumedLevel": 5,
     "resumedBirds": 4,
-    "resumedBirdX": 849
+    "resumedBirdX": 834
   },
   "endlessFlow": {
     "levels": [
@@ -1210,7 +1210,7 @@
       "lead": "naidan",
       "levelBirds": [
         "naidan",
-        "back",
+        "naidan",
         "split",
         "bomb"
       ]
@@ -1258,12 +1258,35 @@
     "badNamePlayDisabled": true,
     "community": {
       "state": "ready",
-      "count": 6,
-      "cards": 6,
+      "count": 8,
+      "cards": 8,
+      "weeklyCards": 6,
+      "moreCards": 2,
+      "weeklyIds": [
+        "seed-冰屋叠叠乐",
+        "seed-奶蛙哨站",
+        "seed-三站追击",
+        "seed-门洞午睡",
+        "seed-石墙三兄弟",
+        "seed-冰桥回廊"
+      ],
+      "expectedWeekly": [
+        "seed-冰屋叠叠乐",
+        "seed-奶蛙哨站",
+        "seed-三站追击",
+        "seed-门洞午睡",
+        "seed-石墙三兄弟",
+        "seed-冰桥回廊"
+      ],
+      "weeklyKey": "2026-10-17",
+      "weeklyProbe": {
+        "before": "2026-10-17",
+        "after": "2026-10-24"
+      },
       "playsSorted": true,
       "searchCards": 1,
-      "likeBefore": "♥ 30",
-      "likeAfter": "♥ 31",
+      "likeBefore": "♥ 35",
+      "likeAfter": "♥ 36",
       "likeDelta": 1,
       "liked": true,
       "playDelta": 1,
@@ -1271,8 +1294,8 @@
       "playing": {
         "state": "intro",
         "mode": "custom",
-        "name": "门洞午睡",
-        "birds": 3,
+        "name": "冰屋叠叠乐",
+        "birds": 4,
         "pickShown": false
       },
       "exitShown": true,
@@ -1324,7 +1347,7 @@
       "id": "mock-1",
       "name": "验收小关",
       "author": "匿名测试员",
-      "submittedAt": "2026-10-17T08:18:45.237Z",
+      "submittedAt": "2026-10-17T08:34:37.933Z",
       "stats": {
         "likes": 0,
         "plays": 0
@@ -1332,6 +1355,14 @@
       "liked": false,
       "played": false
     },
+    "submittedWeeklyIds": [
+      "seed-冰屋叠叠乐",
+      "seed-奶蛙哨站",
+      "seed-三站追击",
+      "seed-门洞午睡",
+      "seed-石墙三兄弟",
+      "seed-冰桥回廊"
+    ],
     "gateAfterRename": false,
     "publishDisabledAfterRename": true,
     "submitDisabledAfterRename": true,
@@ -1362,14 +1393,14 @@
     "canvas": true,
     "roster": 8,
     "images": true,
-    "communityCount": 6,
+    "communityCount": 8,
     "state": "aim"
   },
   "单文件版": {
     "canvas": true,
     "roster": 8,
     "images": true,
-    "communityCount": 6,
+    "communityCount": 8,
     "state": "aim"
   },
   "ok": true

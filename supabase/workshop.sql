@@ -42,6 +42,33 @@ create policy "workshop anonymous insert"
 revoke all on table public.workshop_levels from anon, authenticated;
 grant select, insert on table public.workshop_levels to anon, authenticated;
 
+-- 每周五 24:00 锁定的点赞前 6 名。先写入的客户端决定本周快照，之后只读。
+create table if not exists public.workshop_weekly (
+  week_key text primary key,
+  level_ids text[] not null,
+  created_at timestamptz not null default now(),
+  constraint workshop_weekly_size check (array_length(level_ids, 1) between 1 and 6)
+);
+
+alter table public.workshop_weekly enable row level security;
+
+drop policy if exists "workshop weekly read" on public.workshop_weekly;
+create policy "workshop weekly read"
+  on public.workshop_weekly
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "workshop weekly insert" on public.workshop_weekly;
+create policy "workshop weekly insert"
+  on public.workshop_weekly
+  for insert
+  to anon, authenticated
+  with check (array_length(level_ids, 1) between 1 and 6);
+
+revoke all on table public.workshop_weekly from anon, authenticated;
+grant select, insert on table public.workshop_weekly to anon, authenticated;
+
 -- 关卡名 / 玩家署名的服务端兜底过滤。
 -- 网页端先提示，这里负责拦住绕过网页直接调用 REST API 的请求。
 create or replace function public.workshop_text_blocked(input text)

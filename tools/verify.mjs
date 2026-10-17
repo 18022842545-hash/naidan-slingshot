@@ -106,8 +106,10 @@ const main = async () => {
     });
     // 匿名投稿用 Supabase；验收时模拟 PostgREST，避免往真实社区表插入测试关卡
     const remoteLevels = [];
+    const weeklyRows = [];
     await page.route('https://buueozmrxfjqcaiqyzhq.supabase.co/**', async (route) => {
       const req = route.request();
+      const url = new URL(req.url());
       const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'apikey, content-type, prefer',
@@ -116,6 +118,16 @@ const main = async () => {
       };
       if (req.method() === 'OPTIONS') {
         await route.fulfill({ status: 204, headers, body: '' });
+        return;
+      }
+      if (url.pathname.includes('/workshop_weekly')) {
+        if (req.method() === 'POST') {
+          const row = JSON.parse(req.postData() || '{}');
+          if (!weeklyRows.some((x) => x.week_key === row.week_key)) weeklyRows.push(row);
+          await route.fulfill({ status: 201, headers, body: '[]' });
+          return;
+        }
+        await route.fulfill({ status: 200, headers, body: JSON.stringify(weeklyRows) });
         return;
       }
       if (req.method() === 'POST') {
@@ -1590,15 +1602,28 @@ const main = async () => {
       }
       const communityBefore = W.community();
       const communityCards = document.querySelectorAll('.wkCard').length;
+      const weeklyCards = document.querySelectorAll('#wkWeekly .wkCard').length;
+      const moreCards = document.querySelectorAll('#wkCommunity .wkCard').length;
+      const expectedWeekly = communityBefore.entries.slice()
+        .sort((a, b) =>
+          b.stats.likes - a.stats.likes
+          || b.stats.plays - a.stats.plays
+          || String(b.submittedAt).localeCompare(String(a.submittedAt))
+        )
+        .slice(0, 6)
+        .map((e) => e.id);
       const byPlays = communityBefore.entries.slice()
+        .filter((e) => !communityBefore.weeklyIds.includes(e.id))
         .sort((a, b) => b.stats.plays - a.stats.plays || String(b.submittedAt).localeCompare(String(a.submittedAt)))
         .map((e) => e.id);
       W.setCommunitySort('plays');
-      const shownByPlays = [...document.querySelectorAll('.wkCard')].map((e) => e.dataset.levelId);
+      const shownByPlays = [...document.querySelectorAll('#wkCommunity .wkCard')].map((e) => e.dataset.levelId);
       W.searchCommunity('冰屋');
       const searchCards = document.querySelectorAll('.wkCard').length;
       W.searchCommunity('');
       W.setCommunitySort('latest');
+      const beforeFridayNy = window.WorkshopCommunity.weeklyPeriod(new Date('2026-10-23T15:59:00.000Z').getTime()).key;
+      const afterFridayNy = window.WorkshopCommunity.weeklyPeriod(new Date('2026-10-23T16:00:00.000Z').getTime()).key;
       const firstCard = document.querySelector('.wkCard');
       const firstId = firstCard && firstCard.dataset.levelId;
       const beforeStat = communityBefore.entries.find((e) => e.id === firstId);
@@ -1725,6 +1750,12 @@ const main = async () => {
           state: communityBefore.state,
           count: communityBefore.entries.length,
           cards: communityCards,
+          weeklyCards,
+          moreCards,
+          weeklyIds: communityBefore.weeklyIds,
+          expectedWeekly,
+          weeklyKey: communityBefore.weeklyKey,
+          weeklyProbe: { before: beforeFridayNy, after: afterFridayNy },
           playsSorted: JSON.stringify(shownByPlays) === JSON.stringify(byPlays),
           searchCards,
           likeBefore,
@@ -1754,6 +1785,7 @@ const main = async () => {
         undoPigs, redoPigs,
         gateBefore, publishBefore, gateAfterBack, gateAfterWin, gateInEditor, published,
         submitShown, badAuthorStatus, submitStatus, remoteState: submittedCommunity.remoteState, submittedEntry,
+        submittedWeeklyIds: submittedCommunity.weeklyIds,
         gateAfterRename, publishDisabledAfterRename, submitDisabledAfterRename, gateAfterEdit,
         hudBackShown, hudBackText, hudBackState,
         playing: {
@@ -1785,6 +1817,15 @@ const main = async () => {
       problems.push(`社区关卡没加载出来（${wk.community.state}，${wk.community.count} 张）`);
     }
     if (wk.community.cards !== wk.community.count) problems.push('社区关卡目录和页面卡片数对不上');
+    if (wk.community.weeklyCards !== 6 || wk.community.moreCards !== wk.community.count - 6) {
+      problems.push(`本周前 6 与更多关卡的分布不对（${wk.community.weeklyCards}/${wk.community.moreCards}）`);
+    }
+    if (JSON.stringify(wk.community.weeklyIds) !== JSON.stringify(wk.community.expectedWeekly)) {
+      problems.push(`本周榜单不是点赞前 6（${wk.community.weeklyIds.join('、')}）`);
+    }
+    if (wk.community.weeklyProbe.before !== '2026-10-17' || wk.community.weeklyProbe.after !== '2026-10-24') {
+      problems.push(`周五 24:00 换榜边界不对（${JSON.stringify(wk.community.weeklyProbe)}）`);
+    }
     if (!wk.community.playsSorted) problems.push('“最多游玩”排序没有生效');
     if (wk.community.searchCards !== 1) problems.push(`搜索“冰屋”应该只剩 1 张，实际 ${wk.community.searchCards}`);
     if (wk.community.likeDelta !== 1 || !wk.community.liked) problems.push('点赞没有让数字 +1 或没有记住已点赞');
@@ -1834,6 +1875,9 @@ const main = async () => {
     }
     if (wk.remoteState !== 'ready') problems.push(`Supabase 社区目录状态不对（${wk.remoteState}）`);
     if (!wk.submittedEntry || wk.submittedEntry.author !== '匿名测试员') problems.push('匿名投稿成功后社区目录里没有这张关卡');
+    if (wk.submittedEntry && wk.submittedWeeklyIds.includes(wk.submittedEntry.id)) {
+      problems.push('新投稿关卡覆盖了本周点赞前 6');
+    }
     if (!wk.submitStatus.includes('投稿成功')) problems.push(`匿名投稿状态没有成功提示（${wk.submitStatus}）`);
     if (wk.gateAfterRename || !wk.publishDisabledAfterRename) problems.push('改关卡名之后发布资格没立刻失效');
     if (!wk.submitDisabledAfterRename) problems.push('改关卡名之后投稿按钮没有立刻变灰');

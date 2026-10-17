@@ -240,7 +240,15 @@
   #wkSort button { padding: 6px 12px; font-size: 11.5px; border-radius: 9px; box-shadow: none; background: transparent; color: #8a6a50; }
   #wkSort button.on { background: var(--jam); color: #fff; box-shadow: 0 2px 0 var(--jam-dark); }
   #btnWkRefresh { padding: 7px 12px; font-size: 12px; box-shadow: 0 3px 0 rgba(74,53,39,.18); }
-  #wkCommunity { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left; min-height: 170px; }
+  .wkSectionHead {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    margin: 14px 2px 8px; text-align: left;
+  }
+  .wkSectionHead b { font-size: 14px; color: #5e412f; }
+  .wkSectionHead span { font-size: 11px; color: #a08b78; }
+  #wkWeeklySection.hide { display: none; }
+  #wkCommunity, #wkWeekly { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left; }
+  #wkCommunity { min-height: 170px; }
   #wkCommunity .empty { grid-column: 1 / -1; text-align: center; padding: 34px 10px; color: #a89383; font-size: 13px; }
   .wkCard {
     background: rgba(255,255,255,.82); border-radius: 17px; overflow: hidden;
@@ -278,11 +286,11 @@
     font: inherit; font-size: 12px; color: #6b4a30; background: #fffdf5;
   }
   @media (max-width: 900px) {
-    #wkCommunity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #wkCommunity, #wkWeekly { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     #workshopScreen .panel.wide { padding: 20px 18px; }
   }
   @media (max-width: 620px) {
-    #wkCommunity { grid-template-columns: 1fr; }
+    #wkCommunity, #wkWeekly { grid-template-columns: 1fr; }
     #workshopScreen .wkTop { flex-direction: column; }
   }
 
@@ -415,6 +423,17 @@
               <button data-sort="likes">最多点赞</button>
             </div>
             <button id="btnWkRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="wkWeeklySection">
+            <div class="wkSectionHead">
+              <b>本周热门 · 点赞前 6</b>
+              <span>每周五 24:00 全榜重置</span>
+            </div>
+            <div id="wkWeekly" class="wkGrid"></div>
+          </div>
+          <div class="wkSectionHead">
+            <b id="wkMoreTitle">最新关卡</b>
+            <span>单周内新投稿不会挤掉本周前 6</span>
           </div>
           <div id="wkCommunity"><div class="empty">正在加载社区关卡…</div></div>
         </div>

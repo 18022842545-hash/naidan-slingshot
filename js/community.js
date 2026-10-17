@@ -13,6 +13,7 @@ window.WorkshopCommunity = (() => {
   const CACHE_KEY = 'naidan-workshop-community-stats-v1';
   const LIKED_KEY = 'naidan-workshop-liked-v1';
   const PLAYED_KEY = 'naidan-workshop-played-v1';
+  const WEEKLY_KEY = 'naidan-workshop-weekly-v1';
   const CACHE_MS = 60 * 1000;
   const rateSlots = [];
   let remoteState = 'unknown'; // unknown | ready | missing | error
@@ -80,6 +81,22 @@ window.WorkshopCommunity = (() => {
     return Math.max(0, Number(out && out.value) || 0);
   };
 
+  /** 周五 24:00（即周六 00:00，北京时间）换榜 */
+  const weeklyPeriod = (now = Date.now()) => {
+    const offset = 8 * 60 * 60 * 1000;
+    const shifted = new Date(now + offset);
+    const daysSinceSaturday = (shifted.getUTCDay() + 1) % 7;
+    const shiftedMidnight = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+    const resetMs = shiftedMidnight - offset - daysSinceSaturday * 86400000;
+    const labelDate = new Date(resetMs + offset);
+    const key = [
+      labelDate.getUTCFullYear(),
+      String(labelDate.getUTCMonth() + 1).padStart(2, '0'),
+      String(labelDate.getUTCDate()).padStart(2, '0'),
+    ].join('-');
+    return { key, resetMs, nextResetMs: resetMs + 7 * 86400000 };
+  };
+
   const normalizeEntry = (entry) => {
     const code = String(entry.code || '').trim();
     const def = code ? window.WorkshopLevel.unpack(code) : null;
@@ -134,6 +151,41 @@ window.WorkshopCommunity = (() => {
     } finally {
       clearTimeout(timer);
     }
+  };
+
+  const loadWeeklySnapshot = async (weekKey) => {
+    const cached = readObject(WEEKLY_KEY);
+    if (cached.key === weekKey && Array.isArray(cached.ids)) return cached.ids;
+    try {
+      const res = await fetch(`${SUPABASE_REST}/workshop_weekly?week_key=eq.${encodeURIComponent(weekKey)}&select=level_ids&limit=1`, {
+        cache: 'no-store',
+        headers: { apikey: SUPABASE_KEY, Accept: 'application/json' },
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        const ids = Array.isArray(rows) && rows[0] && Array.isArray(rows[0].level_ids) ? rows[0].level_ids : null;
+        if (ids && ids.length) {
+          writeObject(WEEKLY_KEY, { key: weekKey, ids });
+          return ids;
+        }
+      }
+    } catch (e) { /* 表还没建或网络不可用时用本机快照 */ }
+    return null;
+  };
+
+  const saveWeeklySnapshot = async (weekKey, ids) => {
+    writeObject(WEEKLY_KEY, { key: weekKey, ids });
+    try {
+      await fetch(`${SUPABASE_REST}/workshop_weekly`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ week_key: weekKey, level_ids: ids }),
+      });
+    } catch (e) { /* 本机快照已经保存，远端失败不影响本周展示 */ }
   };
 
   const loadCatalog = async () => {
@@ -267,6 +319,9 @@ window.WorkshopCommunity = (() => {
     cacheKey: CACHE_KEY,
     loadCatalog,
     submitLevel,
+    weeklyPeriod,
+    loadWeeklySnapshot,
+    saveWeeklySnapshot,
     remoteState: () => remoteState,
     loadStats,
     like,

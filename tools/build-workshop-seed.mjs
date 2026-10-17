@@ -103,6 +103,35 @@ const seeds = [
     ],
     birds: ['naidan', 'dash', 'bomb', 'split', 'seek'],
   },
+  {
+    name: '冰桥回廊',
+    author: '雪花酥',
+    submittedAt: '2026-10-11T09:20:00.000Z',
+    blocks: [
+      ...gate(980, 'ice'),
+      { x: 1220, y: 571, w: 120, h: 30, material: 'ice' },
+      { x: 1220, y: 460, w: 30, h: 100, material: 'ice' },
+      { x: 1320, y: 460, w: 30, h: 100, material: 'ice' },
+      { x: 1270, y: 390, w: 140, h: 30, material: 'ice' },
+    ],
+    pigs: [{ x: 980, y: 600 }, { x: 1390, y: 600, bonus: true }],
+    birds: ['dash', 'split', 'milk', 'bomb'],
+  },
+  {
+    name: '奶蛙哨站',
+    author: '弹弓小队',
+    submittedAt: '2026-10-10T04:45:00.000Z',
+    stages: 2,
+    launchPoints: [{ x: 186, y: 470 }, { x: 1186, y: 470 }],
+    blocks: [
+      ...gate(880, 'wood'),
+      { x: 1080, y: 571, w: 90, h: 60, material: 'stone' },
+      ...gate(1760, 'stone'),
+      { x: 1550, y: 571, w: 90, h: 60, material: 'ice' },
+    ],
+    pigs: [{ x: 880, y: 600, bonus: true }, { x: 1760, y: 600 }],
+    birds: ['naidan', 'heavy', 'bomb', 'back'],
+  },
 ];
 
 const levels = seeds.map((seed) => {

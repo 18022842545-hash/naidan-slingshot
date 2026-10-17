@@ -240,7 +240,15 @@
   #wkSort button { padding: 6px 12px; font-size: 11.5px; border-radius: 9px; box-shadow: none; background: transparent; color: #8a6a50; }
   #wkSort button.on { background: var(--jam); color: #fff; box-shadow: 0 2px 0 var(--jam-dark); }
   #btnWkRefresh { padding: 7px 12px; font-size: 12px; box-shadow: 0 3px 0 rgba(74,53,39,.18); }
-  #wkCommunity { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left; min-height: 170px; }
+  .wkSectionHead {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    margin: 14px 2px 8px; text-align: left;
+  }
+  .wkSectionHead b { font-size: 14px; color: #5e412f; }
+  .wkSectionHead span { font-size: 11px; color: #a08b78; }
+  #wkWeeklySection.hide { display: none; }
+  #wkCommunity, #wkWeekly { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left; }
+  #wkCommunity { min-height: 170px; }
   #wkCommunity .empty { grid-column: 1 / -1; text-align: center; padding: 34px 10px; color: #a89383; font-size: 13px; }
   .wkCard {
     background: rgba(255,255,255,.82); border-radius: 17px; overflow: hidden;
@@ -278,11 +286,11 @@
     font: inherit; font-size: 12px; color: #6b4a30; background: #fffdf5;
   }
   @media (max-width: 900px) {
-    #wkCommunity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #wkCommunity, #wkWeekly { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     #workshopScreen .panel.wide { padding: 20px 18px; }
   }
   @media (max-width: 620px) {
-    #wkCommunity { grid-template-columns: 1fr; }
+    #wkCommunity, #wkWeekly { grid-template-columns: 1fr; }
     #workshopScreen .wkTop { flex-direction: column; }
   }
 
@@ -415,6 +423,17 @@
               <button data-sort="likes">最多点赞</button>
             </div>
             <button id="btnWkRefresh" class="ghost">刷新</button>
+          </div>
+          <div id="wkWeeklySection">
+            <div class="wkSectionHead">
+              <b>本周热门 · 点赞前 6</b>
+              <span>每周五 24:00 全榜重置</span>
+            </div>
+            <div id="wkWeekly" class="wkGrid"></div>
+          </div>
+          <div class="wkSectionHead">
+            <b id="wkMoreTitle">最新关卡</b>
+            <span>单周内新投稿不会挤掉本周前 6</span>
           </div>
           <div id="wkCommunity"><div class="empty">正在加载社区关卡…</div></div>
         </div>
@@ -1768,6 +1787,20 @@ window.INLINE_WORKSHOP_LEVELS = {
       "author": "奶蛋工坊",
       "submittedAt": "2026-10-12T01:15:00.000Z",
       "code": "eyJ2IjoxLCJuIjoi5LiJ56uZ6L-95Ye7IiwidyI6MzI1MCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdLFsyMTkwLDQ3MF1dLCJiIjpbWzgzMCw1NzAsMzAsMTMwLDBdLFs5NzAsNTcwLDMwLDEzMCwwXSxbOTAwLDQ5MCwxOTAsMzAsMF0sWzE2MzAsNTcwLDMwLDEzMCwyXSxbMTc3MCw1NzAsMzAsMTMwLDJdLFsxNzAwLDQ5MCwxOTAsMzAsMl0sWzIzODAsNTcwLDMwLDEzMCwxXSxbMjUyMCw1NzAsMzAsMTMwLDFdLFsyNDUwLDQ5MCwxOTAsMzAsMV1dLCJwIjpbWzkwMCw2MDAsNDAsMF0sWzE3MDAsNjAwLDQwLDFdLFsyNDUwLDYwMCw0MCwwXV0sImsiOlswLDEsMywyLDddfQ"
+    },
+    {
+      "id": "seed-冰桥回廊",
+      "name": "冰桥回廊",
+      "author": "雪花酥",
+      "submittedAt": "2026-10-11T09:20:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi5Yaw5qGl5Zue5buKIiwidyI6MjQwMCwicyI6W1sxOTAsNDcwXV0sImIiOltbOTEwLDU3MCwzMCwxMzAsMV0sWzEwNTAsNTcwLDMwLDEzMCwxXSxbOTgwLDQ5MCwxOTAsMzAsMV0sWzEyMjAsNTcwLDEyMCwzMCwxXSxbMTIyMCw0NjAsMzAsMTAwLDFdLFsxMzIwLDQ2MCwzMCwxMDAsMV0sWzEyNzAsMzkwLDE0MCwzMCwxXV0sInAiOltbOTgwLDYwMCw0MCwwXSxbMTM5MCw2MDAsNDAsMV1dLCJrIjpbMSwyLDUsM119"
+    },
+    {
+      "id": "seed-奶蛙哨站",
+      "name": "奶蛙哨站",
+      "author": "弹弓小队",
+      "submittedAt": "2026-10-10T04:45:00.000Z",
+      "code": "eyJ2IjoxLCJuIjoi5aW26JuZ5ZOo56uZIiwidyI6MjU2MCwicyI6W1sxOTAsNDcwXSxbMTE5MCw0NzBdXSwiYiI6W1s4MTAsNTcwLDMwLDEzMCwwXSxbOTUwLDU3MCwzMCwxMzAsMF0sWzg4MCw0OTAsMTkwLDMwLDBdLFsxMDgwLDU3MCw5MCw2MCwyXSxbMTY5MCw1NzAsMzAsMTMwLDJdLFsxODMwLDU3MCwzMCwxMzAsMl0sWzE3NjAsNDkwLDE5MCwzMCwyXSxbMTU1MCw1NzAsOTAsNjAsMV1dLCJwIjpbWzg4MCw2MDAsNDAsMV0sWzE3NjAsNjAwLDQwLDBdXSwiayI6WzAsNCwzLDZdfQ"
     }
   ]
 };
@@ -1789,6 +1822,7 @@ window.WorkshopCommunity = (() => {
   const CACHE_KEY = 'naidan-workshop-community-stats-v1';
   const LIKED_KEY = 'naidan-workshop-liked-v1';
   const PLAYED_KEY = 'naidan-workshop-played-v1';
+  const WEEKLY_KEY = 'naidan-workshop-weekly-v1';
   const CACHE_MS = 60 * 1000;
   const rateSlots = [];
   let remoteState = 'unknown'; // unknown | ready | missing | error
@@ -1856,6 +1890,22 @@ window.WorkshopCommunity = (() => {
     return Math.max(0, Number(out && out.value) || 0);
   };
 
+  /** 周五 24:00（即周六 00:00，北京时间）换榜 */
+  const weeklyPeriod = (now = Date.now()) => {
+    const offset = 8 * 60 * 60 * 1000;
+    const shifted = new Date(now + offset);
+    const daysSinceSaturday = (shifted.getUTCDay() + 1) % 7;
+    const shiftedMidnight = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+    const resetMs = shiftedMidnight - offset - daysSinceSaturday * 86400000;
+    const labelDate = new Date(resetMs + offset);
+    const key = [
+      labelDate.getUTCFullYear(),
+      String(labelDate.getUTCMonth() + 1).padStart(2, '0'),
+      String(labelDate.getUTCDate()).padStart(2, '0'),
+    ].join('-');
+    return { key, resetMs, nextResetMs: resetMs + 7 * 86400000 };
+  };
+
   const normalizeEntry = (entry) => {
     const code = String(entry.code || '').trim();
     const def = code ? window.WorkshopLevel.unpack(code) : null;
@@ -1910,6 +1960,41 @@ window.WorkshopCommunity = (() => {
     } finally {
       clearTimeout(timer);
     }
+  };
+
+  const loadWeeklySnapshot = async (weekKey) => {
+    const cached = readObject(WEEKLY_KEY);
+    if (cached.key === weekKey && Array.isArray(cached.ids)) return cached.ids;
+    try {
+      const res = await fetch(`${SUPABASE_REST}/workshop_weekly?week_key=eq.${encodeURIComponent(weekKey)}&select=level_ids&limit=1`, {
+        cache: 'no-store',
+        headers: { apikey: SUPABASE_KEY, Accept: 'application/json' },
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        const ids = Array.isArray(rows) && rows[0] && Array.isArray(rows[0].level_ids) ? rows[0].level_ids : null;
+        if (ids && ids.length) {
+          writeObject(WEEKLY_KEY, { key: weekKey, ids });
+          return ids;
+        }
+      }
+    } catch (e) { /* 表还没建或网络不可用时用本机快照 */ }
+    return null;
+  };
+
+  const saveWeeklySnapshot = async (weekKey, ids) => {
+    writeObject(WEEKLY_KEY, { key: weekKey, ids });
+    try {
+      await fetch(`${SUPABASE_REST}/workshop_weekly`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ week_key: weekKey, level_ids: ids }),
+      });
+    } catch (e) { /* 本机快照已经保存，远端失败不影响本周展示 */ }
   };
 
   const loadCatalog = async () => {
@@ -2043,6 +2128,9 @@ window.WorkshopCommunity = (() => {
     cacheKey: CACHE_KEY,
     loadCatalog,
     submitLevel,
+    weeklyPeriod,
+    loadWeeklySnapshot,
+    saveWeeklySnapshot,
     remoteState: () => remoteState,
     loadStats,
     like,
@@ -2217,6 +2305,9 @@ window.WorkshopCommunity = (() => {
     wkCommunityPane: document.getElementById('wkCommunityPane'),
     wkMinePane: document.getElementById('wkMinePane'),
     wkCommunity: document.getElementById('wkCommunity'),
+    wkWeekly: document.getElementById('wkWeekly'),
+    wkWeeklySection: document.getElementById('wkWeeklySection'),
+    wkMoreTitle: document.getElementById('wkMoreTitle'),
     wkSearch: document.getElementById('wkSearch'),
     wkSort: document.getElementById('wkSort'),
     btnWkRefresh: document.getElementById('btnWkRefresh'),
@@ -2294,7 +2385,7 @@ window.WorkshopCommunity = (() => {
   const world = engine.world;
   /** 版本戳：每次改完随手改一下，标题页角落和 window.__nai.build 都能看到，
    *  方便确认浏览器里跑的是不是最新那份（file:// 打开时页面不会自己刷新） */
-  const BUILD = '2026-10-17 · 放置上限提示';
+  const BUILD = '2026-10-17 · 每周热门榜';
   let state = 'title'; // title | pick | intro | aim | fly | settling | clearing | over
   let score = 0;
   let birdsLeft = 0;
@@ -5158,6 +5249,8 @@ window.WorkshopCommunity = (() => {
   let shareBox = null;
   let wkEntries = [];         // 社区关卡（目录 + 解出来的 def）
   let wkStats = {};           // id → { likes, plays }
+  let wkWeeklyIds = [];       // 本周锁定的点赞前 6
+  let wkWeeklyKey = '';
   let wkSort = 'latest';
   let wkQuery = '';
   let wkTab = 'community';
@@ -5328,16 +5421,24 @@ window.WorkshopCommunity = (() => {
   const renderCommunity = () => {
     if (!el.wkCommunity || wkTab !== 'community') return;
     const q = wkQuery.trim().toLowerCase();
-    const list = wkEntries.filter((entry) =>
+    const filtered = wkEntries.filter((entry) =>
       !q || entry.name.toLowerCase().includes(q) || entry.author.toLowerCase().includes(q)
     );
     const when = (entry) => new Date(entry.submittedAt || 0).getTime() || 0;
+    const pinned = wkWeeklyIds.map((id) => filtered.find((entry) => entry.id === id)).filter(Boolean);
+    const pinnedSet = new Set(wkWeeklyIds);
+    const list = filtered.filter((entry) => !pinnedSet.has(entry.id));
     list.sort((a, b) => {
       if (wkSort === 'plays') return communityStat(b).plays - communityStat(a).plays || when(b) - when(a);
       if (wkSort === 'likes') return communityStat(b).likes - communityStat(a).likes || when(b) - when(a);
       return when(b) - when(a);
     });
+    el.wkMoreTitle.textContent = wkSort === 'plays' ? '最多游玩' : wkSort === 'likes' ? '最多点赞' : '最新关卡';
+    el.wkWeekly.innerHTML = '';
     el.wkCommunity.innerHTML = '';
+    const weeklyVisible = pinned.length > 0 && wkCatalogState === 'ready';
+    el.wkWeeklySection.classList.toggle('hide', !weeklyVisible);
+    if (weeklyVisible) pinned.forEach((entry) => el.wkWeekly.appendChild(communityCard(entry)));
     if (wkCatalogState === 'loading' && !wkEntries.length) {
       const tip = document.createElement('div');
       tip.className = 'empty';
@@ -5355,12 +5456,34 @@ window.WorkshopCommunity = (() => {
     if (!list.length) {
       const tip = document.createElement('div');
       tip.className = 'empty';
-      tip.textContent = q ? '没有找到匹配的关卡' : '社区里还没有关卡';
+      tip.textContent = q
+        ? '没有找到更多匹配的关卡'
+        : pinned.length
+          ? '本周前 6 已在上方；新关卡会出现在这里'
+          : '社区里还没有关卡';
       el.wkCommunity.appendChild(tip);
       return;
     }
     list.forEach((entry) => el.wkCommunity.appendChild(communityCard(entry)));
   };
+
+  /** 每周快照：点赞前 6 只在本周五 24:00 重算，新关卡不会把本周名单挤掉 */
+  const prepareWeekly = async () => {
+    const period = window.WorkshopCommunity.weeklyPeriod();
+    wkWeeklyKey = period.key;
+    let ids = await window.WorkshopCommunity.loadWeeklySnapshot(period.key);
+    if (!ids) {
+      const when = (entry) => new Date(entry.submittedAt || 0).getTime() || 0;
+      ids = wkEntries.slice().sort((a, b) =>
+        communityStat(b).likes - communityStat(a).likes
+        || communityStat(b).plays - communityStat(a).plays
+        || when(b) - when(a)
+      ).slice(0, 6).map((entry) => entry.id);
+      if (ids.length) await window.WorkshopCommunity.saveWeeklySnapshot(period.key, ids);
+    }
+    wkWeeklyIds = Array.isArray(ids) ? ids.slice(0, 6) : [];
+  };
+
   const loadCommunity = async (force = false) => {
     if (wkCatalogState === 'loading') return;
     if (wkCatalogState === 'ready' && !force) return;
@@ -5375,6 +5498,7 @@ window.WorkshopCommunity = (() => {
       renderCommunity();
       const loaded = await window.WorkshopCommunity.loadStats(wkEntries, { force });
       wkStats = loaded.values || {};
+      await prepareWeekly();
       wkStatsLoading = false;
       renderCommunity();
     } catch (e) {
@@ -6105,6 +6229,9 @@ window.WorkshopCommunity = (() => {
         sort: wkSort,
         query: wkQuery,
         loadingStats: wkStatsLoading,
+        weeklyKey: wkWeeklyKey,
+        weeklyIds: wkWeeklyIds.slice(),
+        weeklyResetAt: window.WorkshopCommunity.weeklyPeriod().nextResetMs,
         entries: wkEntries.map((e) => ({
           id: e.id, name: e.name, author: e.author, submittedAt: e.submittedAt,
           stats: communityStat(e), liked: window.WorkshopCommunity.isLiked(e.code),
